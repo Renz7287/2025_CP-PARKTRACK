@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkTrack</title>
+    <link rel="icon" type="image/png" href="{% static 'images/parktrack-logo-favicon.png' %}"/>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://kit.fontawesome.com/3ea0af40f5.js" crossorigin="anonymous"></script>
+</head>
+<body class="flex">
+    {% if user.is_authenticated %}
+
+        {% include 'navbar.html' %}
+
+    {% endif %}
+
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% block content %}
+
+    {% endblock %}
+
+    <script src="{% static 'javascript/navbar.js' %}"></script>
+</body>
+</html>

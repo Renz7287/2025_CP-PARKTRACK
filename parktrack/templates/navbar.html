@@ -1,0 +1,70 @@
+{% load static %}
+
+<span class="js-open-sidebar absolute text-4xl top-3 left-3 cursor-pointer" >
+  <i class="fa-solid fa-bars px-2"></i>
+</span>
+
+<aside class="
+  js-sidebar md:relative fixed top-0 bottom-0 md:left-0 left-[-300] p-2 md:min-w-[300px]
+  w-[300px] overflow-y-auto text-center bg-[#940B26]"
+>
+  <header class="flex items-center">
+    <img src="{% static 'images/parktrack-logo-white.png' %}" class="
+      w-[50px] h-[50px]
+      "
+    >
+    <h1 class="font-bold text-white text-3xl">ParkTrack</h1>
+    <span class="js-close-sidebar md:hidden text-4xl text-white mt-1 ml-14 cursor-pointer">
+      <i class="fa-solid fa-xmark"></i>
+    </span>
+  </header>
+  
+  <hr class="text-[#F95858] mt-8">
+
+  <section class="flex items-center ml-2 py-4 gap-2">
+    <span class="text-[#d9d9d9] text-4xl">
+      <i class="fa-solid fa-circle-user"></i>
+    </span>
+    <div class="flex flex-col items-start">
+      <p class="font-semibold text-white">Dela Cruz, Juan G.</p>
+      <small class="text-white">User</small>
+    </div>
+  </section>
+  
+  <hr class="text-[#F95858] mb-8">
+
+  <nav>
+    <ul class="space-y-2">
+      <li>        
+        <a href="#" class="flex items-center font-semibold text-white
+          text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
+          transition-colors
+         "
+        >
+          <i class="fa-solid fa-square-parking"></i>
+          Parking Allotment
+        </a>
+      </li>
+      <li>        
+        <a href="#" class="flex items-center font-semibold text-white
+          text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
+          transition-colors
+          "
+        >
+          <i class="fa-solid fa-gear"></i>
+          Settings
+        </a>
+      </li>
+    </ul>  
+  </nav>
+  
+  <footer class="fixed bottom-0 mb-2">    
+    <a href="{% url 'users:logout' %}" class="font-semibold
+       text-white p-2 hover:text-red-100
+      "
+    >
+      <i class="fa-solid fa-right-from-bracket"></i>
+      Logout
+    </a>
+  </footer>
+</aside>
