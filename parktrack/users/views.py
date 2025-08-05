@@ -6,6 +6,10 @@ from django.contrib.auth.models import User
 # Create your views here.
 
 def login_user(request):
+    if request.user.is_authenticated:
+        # redirect location subject to change
+        return redirect('parking-allotment:view-allotment')
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
