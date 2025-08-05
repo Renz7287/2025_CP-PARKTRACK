@@ -1,3 +1,4 @@
+{% if not is_partial %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -10,22 +11,27 @@
     <script src="https://kit.fontawesome.com/3ea0af40f5.js" crossorigin="anonymous"></script>
 </head>
 <body class="flex">
-    {% if user.is_authenticated %}
+  {% if user.is_authenticated %}
 
-        {% include 'navbar.html' %}
+      {% include 'navbar.html' %}
 
-    {% endif %}
+  {% endif %}
 
-    {% if messages %}
-      <ul class="messages">
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
 
+  <main id="content" class="h-screen w-full">
+{% endif %}
     {% block content %}
 
     {% endblock %}
+{% if not is_partial %}
+  </main>    
 </body>
 </html>
+{% endif %}

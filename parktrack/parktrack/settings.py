@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'users',
     'parking_allotment',
+    'settings',
 ]
 
 MIDDLEWARE = [

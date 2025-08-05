@@ -1,6 +1,6 @@
 {% load static %}
 
-<span class="js-open-sidebar absolute text-4xl top-3 left-3 cursor-pointer" >
+<span class="absolute text-4xl top-3 left-3 cursor-pointer" onclick="openCloseSidebar();">
   <i class="fa-solid fa-bars px-2"></i>
 </span>
 
@@ -14,7 +14,7 @@
       "
     >
     <h1 class="font-bold text-white text-3xl">ParkTrack</h1>
-    <span class="js-close-sidebar md:hidden text-4xl text-white mt-1 ml-14 cursor-pointer">
+    <span class="md:hidden text-4xl text-white mt-1 ml-14 cursor-pointer" onclick="openCloseSidebar();">
       <i class="fa-solid fa-xmark"></i>
     </span>
   </header>
@@ -36,7 +36,7 @@
   <nav>
     <ul class="space-y-2">
       <li>        
-        <a href="#" class="flex items-center font-semibold text-white
+        <a href="{% url 'parking_allotment:view-allotment' %}" class="js-link flex items-center font-semibold text-white
           text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
           transition-colors
          "
@@ -46,7 +46,7 @@
         </a>
       </li>
       <li>        
-        <a href="#" class="flex items-center font-semibold text-white
+        <a href="{% url 'settings:view-settings' %}" class="js-link flex items-center font-semibold text-white
           text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
           transition-colors
           "

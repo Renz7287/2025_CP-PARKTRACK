@@ -20,4 +20,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls', namespace='users')),
     path('parking-allotment/', include('parking_allotment.urls', namespace='parking-allotment')),
+    path('settings/', include('settings.urls', namespace='settings')),
 ]
