@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 05, 2025 at 08:45 AM
+-- Generation Time: Aug 06, 2025 at 02:46 PM
 -- Server version: 11.8.2-MariaDB
 -- PHP Version: 8.2.12
 
@@ -107,6 +107,13 @@ CREATE TABLE `auth_user` (
   `date_joined` datetime(6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `auth_user`
+--
+
+INSERT INTO `auth_user` (`id`, `password`, `last_login`, `is_superuser`, `username`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`) VALUES
+(2, 'pbkdf2_sha256$1000000$uTvOhI1lzUZUmvlxIVHfgB$ihSOL6A7TsiKbjh24jNGPO1CXLVzhoqGgA5iNnhNTbc=', '2025-08-06 12:37:37.000000', 1, 'admin', '', '', 'admin@gmail.com', 1, 1, '2025-08-06 12:36:13.000000');
+
 -- --------------------------------------------------------
 
 --
@@ -147,6 +154,14 @@ CREATE TABLE `django_admin_log` (
   `content_type_id` int(11) DEFAULT NULL,
   `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `django_admin_log`
+--
+
+INSERT INTO `django_admin_log` (`id`, `action_time`, `object_id`, `object_repr`, `action_flag`, `change_message`, `content_type_id`, `user_id`) VALUES
+(2, '2025-08-06 12:38:13.362647', '1', 'admin', 3, '', 4, 2),
+(3, '2025-08-06 12:44:46.426916', '2', 'admin', 2, '[{\"changed\": {\"fields\": [\"Username\"]}}]', 4, 2);
 
 -- --------------------------------------------------------
 
@@ -220,6 +235,13 @@ CREATE TABLE `django_session` (
   `session_data` longtext NOT NULL,
   `expire_date` datetime(6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `django_session`
+--
+
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES
+('tauyayx1qmq7oown72sn288d1gffbyfi', '.eJxVjEEOwiAQRe_C2pAO1DK4dN8zkGEYpGpoUtqV8e7apAvd_vfef6lA21rC1mQJU1IXZdTpd4vED6k7SHeqt1nzXNdlinpX9EGbHuckz-vh_h0UauVbZwti0JEksDn3HAckgYzgxJpIHq2gRYeOM0BE6qJn7oczJ3TGd6DeH_pQOBM:1ujdOj:wJQaIOTHJB30N9n5uySjpsPSDUSbZIgQR87FDejXUYs', '2025-08-20 12:37:37.520231');
 
 --
 -- Indexes for dumped tables
@@ -324,7 +346,7 @@ ALTER TABLE `auth_permission`
 -- AUTO_INCREMENT for table `auth_user`
 --
 ALTER TABLE `auth_user`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `auth_user_groups`
@@ -342,7 +364,7 @@ ALTER TABLE `auth_user_user_permissions`
 -- AUTO_INCREMENT for table `django_admin_log`
 --
 ALTER TABLE `django_admin_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `django_content_type`
