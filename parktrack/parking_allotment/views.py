@@ -10,3 +10,6 @@ def view_allotment(request):
         'is_partial': is_ajax,
     }
     return render(request, 'parking_allotment/index.html', context)
+
+def motorcycle_allotment(request):
+    return render(request, 'parking_allotment/motorcycle.html')

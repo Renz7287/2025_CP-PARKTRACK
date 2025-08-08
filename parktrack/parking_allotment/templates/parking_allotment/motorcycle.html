@@ -1,0 +1,115 @@
+{% extends 'base.html ' %}
+{% load static %} 
+{% block content %}
+  <header class="shadow-xl">
+    <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Parking Allotment</h1>
+  </header>
+
+  <!-- Toggle Buttons and Status Box -->
+  <div class="flex flex-col md:flex-row items-center justify-center md:justify-between px-6 md:px-12 py-6 gap-6 md:gap-12">
+    <div class="flex gap-4">
+      <button onclick="location.href='/parking-allotment/'" class="flex items-center gap-3 px-6 py-4 rounded-xl bg-gray-200 text-black font-semibold shadow-md">
+        <img src="{% static 'images/car_icon2.png' %}" alt="Car" class="w-9 h-7" />
+        4 - Wheels
+      </button>
+       <button class="flex items-center gap-3 px-8 py-5 rounded-xl bg-red-600 text-white font-semibold shadow-md">
+        <img src="{% static 'images/motor_icon2.png' %}" alt="motor" class="w-9 h-7" />
+        Motorcycles
+      </button>
+    </div>
+
+  <!-- Side Info Box -->
+      <div class="w-[280px] h-[130px] bg-white border border-gray-300 rounded-lg shadow px-4 py-2 text-center flex flex-col justify-center">
+        <p class="text-[20px] text-black-500">Available Parking</p>
+        <p class="text-5xl font-bold text-black">8</p>
+      </div>
+    </div>
+
+    <!-- Parking Area -->
+<div class="px-12 pb-10">
+ <!-- Top Gray Box with Text -->
+<div class="mx-auto w-[1100px] h-12 bg-gray-400 mb-6 rounded flex items-center justify-center">
+  <p class="text-white font-bold text-lg">College of Asian and Islamic Studies</p>
+</div>
+
+<!-- Parking Area Wrapper: Parking + Right Section -->
+<div class="w-[1100px] mx-auto flex justify-between items-start gap-6">
+
+  <!-- Parking Rows -->
+<div class="flex flex-col gap-[4px]">
+  <!-- First Row -->
+   <div class="flex gap-[2px]">
+    <!-- P1 to P11 MOTORCYCLE -->
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P1</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P2</div>
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P3</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P4</div>
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P5</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P6</div>
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P7</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P8</div>
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P9</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P10</div>
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P11</div>
+  </div>
+
+  <!-- Divider Line -->
+  <div class="h-[1px] bg-gray-400 w-full my-[1px]"></div>
+
+  <!-- Second Row -->
+  <div class="flex gap-[2px]">
+    <!-- P12 to P22 -->
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P12</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P13</div>
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P14</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P15</div>
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P16</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P17</div>
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P18</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P19</div>
+    <div class="w-16 h-24 bg-green-500 rounded-md flex items-center justify-center text-black font-semibold text-sm">P20</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P21</div>
+    <div class="w-16 h-24 bg-red-500 rounded-md flex items-center justify-center text-white font-semibold text-sm">P22</div>
+  </div>
+
+  <!-- 4 WHEELS PARKING -->
+ <div class="grid grid-cols-5 gap-[2px] mt-12">
+    
+    <div class="col-span-5">
+      <hr class="w-full h-[1px] bg-black my-[2px]" />
+    </div>
+  </div>
+</div>
+
+  <!-- Right Section 4 WHEELS-->
+  <div class="flex gap-4">
+    <div class="flex flex-col gap-3 pt-2">
+    </div>
+    <div class="flex flex-col gap-24">
+  <div class="w-48 h-72 bg-gray-400 border border-gray-600 rounded-lg shadow-inner flex items-center justify-center">
+    <p class="text-white font-bold text-center p-4">College of Criminal Justice Education</p>
+  </div>
+  <div class="w-48 h-48 bg-gray-400 border border-gray-600 rounded-lg shadow-inner flex items-center justify-center">
+    <p class="text-white font-bold text-center p-4">WMSU ILS HS</p>
+  </div>
+</div>
+  </div>
+</div>
+
+
+    <!-- Legend at Bottom -->
+  <div class="px-12 pb-6">
+    <div class="flex flex-col gap-3">
+      <!-- Occupied -->
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 bg-red-500 rounded-full"></div>
+        <span class="text-1xl font-semibold text-black">Occupied</span>
+      </div>
+      <!-- Vacant -->
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 bg-green-500 rounded-full"></div>
+        <span class="text-1xl font-semibold text-black">Vacant</span>
+      </div>
+    </div>
+  </div>
+{% endblock %}

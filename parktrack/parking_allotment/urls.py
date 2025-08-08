@@ -5,4 +5,6 @@ app_name = 'parking_allotment'
 
 urlpatterns = [
     path('', views.view_allotment, name='view-allotment'),
+    path('parking-allotment/', views.view_allotment, name='view-allotment'),
+    path('motorcycles/', views.motorcycle_allotment, name='motorcycles'),
 ]

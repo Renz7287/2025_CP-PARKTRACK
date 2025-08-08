@@ -1,7 +1,101 @@
 {% extends 'base.html ' %}
 
+{% load static %}
 {% block content %}
   <header class="shadow-xl">
     <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Parking Allotment</h1>
   </header>
+
+  <!-- Toggle Buttons and Status Box -->
+  <div class="flex flex-col md:flex-row items-center justify-center md:justify-between px-6 md:px-12 py-6 gap-6 md:gap-12">
+    <div class="flex gap-4">
+      <button class="flex items-center gap-3 px-6 py-4 rounded-xl bg-red-600 text-white font-semibold shadow-md">
+        <img src="{% static 'images/car_icon.png' %}" alt="Car" class="w-9 h-7" />
+        4 - Wheels
+      </button>
+      <button onclick="location.href='/parking-allotment/motorcycles/'" class="flex items-center gap-3 px-6 py-4 rounded-xl bg-gray-200 text-black font-semibold shadow-md">
+        <img src="{% static 'images/motor_icon.png' %}" alt="motor" class="w-9 h-7" />
+        Motorcycles
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div class="w-full md:w-[280px] h-[130px] bg-white border border-gray-300 rounded-lg shadow px-4 py-2 text-center flex flex-col justify-center mt-4 md:mt-0">
+      <p class="text-lg md:text-xl text-black-500">Available Parking</p>
+      <p class="text-4xl font-bold text-black">10</p>
+    </div>
+  </div>
+
+  <!-- Parking Layout -->
+  <div class="pb-6 px-2 md:px-0">
+    <div class="max-w-screen-lg mx-auto flex flex-col lg:flex-row justify-center items-start gap-10 scale-[0.9] sm:scale-[0.85] md:scale-100 origin-top">
+      <!-- Left Section -->
+      <div class="flex flex-col gap-4">
+        <!-- P1–P10 -->
+        <div class="grid grid-cols-5 gap-[2px] mt-4">
+          <div class="bg-red-500 text-white rounded-lg w-20 h-24 flex items-center justify-center font-bold">P1</div>
+          <div class="bg-green-400 text-black rounded-lg w-20 h-24 flex items-center justify-center font-bold">P2</div>
+          <div class="bg-red-500 text-white rounded-lg w-20 h-24 flex items-center justify-center font-bold">P3</div>
+          <div class="bg-green-400 text-black rounded-lg w-20 h-24 flex items-center justify-center font-bold">P4</div>
+          <div class="bg-red-500 text-white rounded-lg w-20 h-24 flex items-center justify-center font-bold">P5</div>
+
+          <div class="col-span-5">
+            <hr class="w-full h-[1px] bg-black my-[2px]" />
+          </div>
+
+          <div class="bg-green-400 text-black rounded-lg w-20 h-24 flex items-center justify-center font-bold">P6</div>
+          <div class="bg-red-500 text-white rounded-lg w-20 h-24 flex items-center justify-center font-bold">P7</div>
+          <div class="bg-green-400 text-black rounded-lg w-20 h-24 flex items-center justify-center font-bold">P8</div>
+          <div class="bg-red-500 text-white rounded-lg w-20 h-24 flex items-center justify-center font-bold">P9</div>
+          <div class="bg-green-400 text-black rounded-lg w-20 h-24 flex items-center justify-center font-bold">P10</div>
+        </div>
+
+        <!-- Spacer -->
+        <div class="h-20 md:h-32"></div>
+
+        <!-- P11–P16 -->
+        <div class="flex flex-col gap-1">
+          <div class="flex flex-wrap gap-2">
+            <div class="bg-green-400 text-black rounded-lg w-20 h-24 flex items-center justify-center font-bold">P11</div>
+            <div class="bg-red-500 text-white rounded-lg w-20 h-24 flex items-center justify-center font-bold">P12</div>
+            <div class="bg-red-500 text-white rounded-lg w-20 h-24 flex items-center justify-center font-bold">P13</div>
+            <div class="bg-green-400 text-black rounded-lg w-20 h-24 flex items-center justify-center font-bold">P14</div>
+            <div class="bg-green-400 text-black rounded-lg w-20 h-24 flex items-center justify-center font-bold">P15</div>
+            <div class="bg-green-400 text-black rounded-lg w-20 h-24 flex items-center justify-center font-bold">P16</div>
+          </div>
+          <hr class="border-t-2 border-black mt-1 w-full" />
+        </div>
+      </div>
+
+      <!-- Right Section -->
+      <div class="flex gap-4">
+        <div class="flex flex-col gap-3 pt-2">
+          <div class="bg-green-400 text-black rounded-lg p-6 w-24 text-center font-bold">P17</div>
+          <div class="bg-red-500 text-white rounded-lg p-6 w-24 text-center font-bold">P18</div>
+          <div class="bg-green-400 text-black rounded-lg p-6 w-24 text-center font-bold">P19</div>
+        </div>
+        <div class="flex flex-col gap-24">
+  <div class="w-48 h-48 md:h-64 bg-gray-400 border border-gray-600 rounded-lg shadow-inner flex items-center justify-center">
+    <p class="text-center text-white font-bold p-4">College of Criminal Justice Education</p>
+  </div>
+  <div class="w-48 h-48 md:h-64 bg-gray-400 border border-gray-600 rounded-lg shadow-inner flex items-center justify-center">
+    <p class="text-center text-white font-bold p-4">WMSU ILS HS</p>
+  </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="px-6 md:px-12 pb-10">
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 bg-red-500 rounded-full"></div>
+        <span class="text-base font-semibold text-black">Occupied</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 bg-green-500 rounded-full"></div>
+        <span class="text-base font-semibold text-black">Vacant</span>
+      </div>
+    </div>
+  </div>
 {% endblock %}
