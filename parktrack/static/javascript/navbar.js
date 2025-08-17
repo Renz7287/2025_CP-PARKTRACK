@@ -3,7 +3,7 @@ function openCloseSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const contentArea = document.getElementById('content');
+    const contentArea = document.getElementById('js-content');
    
     async function loadContent(url, addToHistory = true) {
         try {

@@ -11,7 +11,7 @@
     <script src="https://kit.fontawesome.com/3ea0af40f5.js" crossorigin="anonymous"></script>
 </head>
 <body class="flex">
-  {% if user.is_authenticated %}
+  {% if request.user.is_authenticated %}
 
       {% include 'navbar.html' %}
 
@@ -25,13 +25,15 @@
     </ul>
   {% endif %}
 
-  <main id="content" class="h-screen w-full">
+  <main id="js-content" class="h-screen w-full">
 {% endif %}
     {% block content %}
 
     {% endblock %}
 {% if not is_partial %}
-  </main>    
+  </main>
+  
+  <script src="{% static 'javascript/navbar.js' %}"></script>
 </body>
 </html>
 {% endif %}
