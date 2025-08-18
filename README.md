@@ -2,34 +2,33 @@
 
 ## 📖 Project Description
 
-**ParkTrack** is a **Computer Vision-Based Smart Parking Management System** designed to provide a **low-cost, scalable, and efficient alternative** to traditional parking systems. Instead of relying on expensive ground sensors or manual monitoring, ParkTrack leverages **real-time video processing** and **deep learning (YOLOv8)** to detect vehicles, determine parking slot availability, and recognize license plates.
+**ParkTrack** is a **Computer Vision-Based Smart Parking Management System** that aims to offer a **low-cost, scalable, and efficient alternative** to existing parking systems. Rather than using costly ground sensors or manual checking, ParkTrack uses **real-time video processing** and **deep learning (YOLOv8)** to identify vehicles, determine the availability of parking slots, and identify license plates.
 
 The system is built to address the challenges of **urban parking inefficiency**, such as congestion, wasted fuel, and prolonged vehicle search times. By using a simple **USB camera setup** combined with computer vision.
 
-A **Django-based web dashboard** serves as the central platform for both drivers and administrators:
+A **Django-based web dashboard** is the centralized interface for both drivers and administrators:
 
-- **Drivers** can view real-time parking slot availability and receive notifications for violations.
-- **Administrators** can monitor all slots, review vehicle entry/exit logs, manage violations, and generate visitor passes.
+- **Drivers** can access real-time parking slot availability and violation notifications.
+- **Administrators** are able to oversee all slots, check vehicle entry/exit history, handle violations, and issue visitor passes.
 
-In addition to **slot occupancy detection**, ParkTrack integrates **License Plate Recognition (LPR)** using YOLOv8 and Tesseract OCR. This allows the system to automatically log vehicle plates, track unregistered entries, and enhance parking enforcement measures.
 
 ### 🔑 Key Highlights
 
-- **Real-Time Detection**: Identifies vacant and occupied slots.
-- **License Plate Recognition**: Enhances security and vehicle tracking.
-- **Violation Monitoring**: Detects improper parking and unregistered vehicles.
-- **Web Dashboard**: Provides drivers and admins with live updates and analytics.
-- **Low-Cost Deployment**: Eliminates the need for per-slot sensors.
-- **Scalable Design**: Easily expandable to multiple cameras and larger parking areas.
+- **Real-Time Detection**: Detects empty and occupied slots.
+- **License Plate Recognition**: Boosts security and vehicle monitoring.
+- **Violation Monitoring**: Catches unauthorized parking and unregistered cars.
+- **Web Dashboard**: Offers admins and drivers real-time updates and insights.
+- **Low-Cost Deployment**: Does away with the use of per-slot sensors.
+- **Scalable Design**: Highly expansible to several cameras and extensive parking lots.
 
 ---
 
 ## 🚀 Features
 
-- Real-time parking slot detection with YOLOv8
-- License Plate Recognition (LPR) for vehicle logging and security
-- Django-powered web dashboard with TailwindCSS frontend
-- Role-based access control (Drivers & Admins)
-- Violation alerts and notifications
-- Daily analytics and usage reports
-- Camera-only setup (no per-slot sensors required)
+- Real-time parking slot detection using YOLOv8
+- License Plate Recognition (LPR) for logging and security of vehicles
+- Web dashboard powered by Django with TailwindCSS frontend
+- Role-based authorization (Drivers & Admins)
+- Slot violation alerts and warnings
+- Daily usage reports and analytics
+- Camera-only installation (no sensors per-slot required)
