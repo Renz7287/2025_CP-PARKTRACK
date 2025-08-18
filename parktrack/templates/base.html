@@ -11,6 +11,7 @@
     <script src="https://kit.fontawesome.com/3ea0af40f5.js" crossorigin="anonymous"></script>
 </head>
 <body class="flex">
+
   {% if request.user.is_authenticated %}
 
       {% include 'navbar.html' %}
@@ -25,8 +26,14 @@
     </ul>
   {% endif %}
 
-  <main id="js-content" class="h-screen w-full">
-{% endif %}
+  <main id="js-content" class="h-screen w-full overflow-auto">
+    {% endif %}
+    <header class="top-0 sticky bg-white shadow-xl">
+      {% block header %}
+
+      {% endblock header %}
+    </header>
+    
     {% block content %}
 
     {% endblock %}
