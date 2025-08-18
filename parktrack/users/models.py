@@ -84,5 +84,17 @@ class DriverProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-# class Vehicle(models.Model):
-#     driver = models.ForeignKey(DriverProfile, on_delete=models.CASCADE, related_name='vehicles')
+class Vehicle(models.Model):
+    class VehicleType(models.TextChoices):
+        FOURWHEELS = 'FW', 'Four-wheels'
+        TWOWHEELS = 'TW', 'Two-wheels'
+
+    owner = models.ForeignKey(DriverProfile, on_delete=models.CASCADE, related_name='vehicles')
+    vehicle_type = models.CharField(max_length=2, choices=VehicleType.choices)
+    plate_number = models.CharField(max_length=100)
+    gate_pass = models.CharField(max_length=100, null=True, blank=True) 
+    is_registered = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        self.is_registered = bool(self.gate_pass)
+        super().save(*args, **kwargs)
