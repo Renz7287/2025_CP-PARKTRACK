@@ -8,7 +8,7 @@ class City(models.Model):
     id = models.AutoField(primary_key=True)
     psgcCode = models.CharField(max_length=10)
     citymunDesc = models.CharField(max_length=255)
-    regDesc = models.CharField(max_length=10)
+    regCode = models.CharField(max_length=10)
     provCode = models.CharField(max_length=10)
     citymunCode = models.CharField(max_length=10)
 
@@ -25,7 +25,7 @@ class Barangay(models.Model):
     brgyCode = models.CharField(max_length=10)
 
     class Meta:
-        db_table = 'refcitymun'
+        db_table = 'refbrgy'
         managed = False
 
 class UserManager(BaseUserManager):

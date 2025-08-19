@@ -3,6 +3,7 @@ from django.db import transaction
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserForm, DriverProfileForm, VehicleForm
+from .models import City
 
 # Create your views here.
 
@@ -53,9 +54,12 @@ def register_user(request):
         driver_profile_form = DriverProfileForm(request.POST, prefix='driver_profile')
         vehicle_form = VehicleForm(request.POST, prefix='vehicle')
 
+    cities = list(City.objects.all().values('citymunDesc', 'citymunCode'))
+
     context = {
         'user_form': user_form,
         'driver_profile_form': driver_profile_form,
-        'vehicle_form': vehicle_form
+        'vehicle_form': vehicle_form,
+        'cities': cities
     }
     return render(request, 'users/register.html', context)

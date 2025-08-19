@@ -1,5 +1,228 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
+{% block title %}
+	Register
+{% endblock title %}
+
 {% block content %}
+<div class="md:hidden block w-full h-[260px] bg-[#940B26] rounded-b-full absolute top-0 left-0 -z-10">
+	<div class="flex flex-col items-center mt-2">
+		<img 
+			src="{% static 'images/parktrack-logo-white.png' %}" 
+			class="w-18 h-18"
+		>
+		<h1 class="font-bold text-2xl text-white">Registration</h1>
+	</div>
+</div>
+
+<section class="min-h-screen min-w-screen flex justify-center items-center">
+  
+  	<div class="
+  		flex justify-center bg-[#EEEAEA] md:bg-[#FFFFFF] rounded-3xl shadow-2xl h-[450px] max-w-3xl
+		min-w-xs mt-16
+	">
+
+		<div class="w-2/5 md:block hidden">
+		<img 
+			src="{% static 'images/register-image.jpg' %}" 
+			class="rounded-l-2xl h-full"
+		>
+		</div>
+	
+		<div class="md:w-3/5 px-8 w-xs">
+			
+			<h1 class="hidden md:block font-bold text-2xl">Registration</h1>
+
+			<form method="POST" class="flex flex-col gap-2 mt-5" novalidate>
+				{% csrf_token %}
+
+				<div class="steps">
+
+					<section id="step-personal" class="step active flex flex-col gap-2" data-step="0">
+
+						<h1 class="md:hidden font-bold text-2xl text-center mb-3">Personal Info</h1>
+						
+						<label for="{{ user_form.first_name.id_for_label }}" class="font-semibold text-sm">First Name</label>
+						{{ user_form.first_name }}
+
+						<label for="{{ user_form.middle_name.id_for_label }}" class="font-semibold text-sm">Middle Name (optional)</label>
+						{{ user_form.middle_name }}
+
+						<label for="{{ user_form.last_name.id_for_label }}" class="font-semibold text-sm">Last Name</label>
+						{{ user_form.last_name }}
+
+						<label for="{{ driver_profile_form.gender.id_for_label }}" class="font-semibold text-sm">Gender</label>
+						{{ driver_profile_form.gender }}
+
+						<div class="md:hidden flex justify-end">
+							<button type="button" id="next-to-contact" class="
+								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-4
+								hover:scale-105 cursor-pointer
+							">
+								Next
+							</button>
+						</div>
+
+						<p class="md:hidden font-semibold text-center text-xs mt-2">
+							Already have an account?
+							<a class="text-[#940B26] decoration-solid underline" href="{% url 'users:login' %}">
+								Login
+							</a>
+						</p>
+
+					</section>
+
+					<section id="step-contact" class="step hidden flex flex-col gap-2" data-step="1">
+
+						<h1 class="md:hidden font-bold text-2xl text-center mb-3">Contact Info</h1>
+
+						<label for="{{ driver_profile_form.contact_number.id_for_label}}"class="font-semibold text-sm">Contact Number</label>
+						{{ driver_profile_form.contact_number }}
+
+						<label for="{{ driver_profile_form.city.id_for_label }}" class="font-semibold text-sm">City</label>
+						{{ driver_profile_form.city }}
+						<datalist id="city-list">
+							{% for city in cities %}
+								<option value="{{ city.citymunDesc}}" data-code="{{ city.citymunCode }}"></option>
+							{% endfor %}
+						</datalist>
+
+						<label for="{{ driver_profile_form.barangay.id_for_label }}" class="font-semibold text-sm">Barangay</label>
+						{{ driver_profile_form.barangay }}
+						<datalist id="barangay-list">
+						</datalist>
+
+						<div class="md:hidden flex justify-between mt-[69px]">
+							<button type="button" id="back-to-personal" class="
+								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-4
+								hover:scale-105 cursor-pointer
+							">
+								Back
+							</button>
+							<button type="button" id="next-to-vehicle" class="
+								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-4
+								hover:scale-105 cursor-pointer
+							">
+								Next
+							</button>
+						</div>
+
+						<p class="md:hidden font-semibold text-center text-xs mt-2">
+							Already have an account?
+							<a class="text-[#940B26] decoration-solid underline" href="{% url 'users:login' %}">
+								Login
+							</a>
+						</p>
+
+					</section>
+
+					<section id="step-vehicle" class="step hidden flex flex-col gap-2" data-step="2">
+
+						<h1 class="md:hidden font-bold text-2xl text-center mb-3">Vehicle Info</h1>
+						
+						<label for="{{ vehicle_form.vehicle_type.id_for_label }}" class="font-semibold text-sm">Vehicle Type</label>
+						{{ vehicle_form.vehicle_type }}
+
+						<label for="{{ vehicle_form.plate_number.id_for_label }}" class="font-semibold text-sm">Plate Number</label>
+						{{ vehicle_form.plate_number }}
+
+						<label for="{{ vehicle_form.gate_pass.id_for_label }}" class="font-semibold text-sm">Gate Pass</label>
+						{{ vehicle_form.gate_pass }}
+
+						</datalist>
+
+						<div class="md:hidden flex justify-between mt-[68px]">
+							<button type="button" id="back-to-contact" class="
+								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-4
+								hover:scale-105 cursor-pointer
+							">
+								Back
+							</button>
+							<button type="button" id="next-to-credentials" class="
+								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-4
+								hover:scale-105 cursor-pointer
+							">
+								Next
+							</button>
+						</div>
+
+						<p class="md:hidden font-semibold text-center text-xs mt-2">
+							Already have an account?
+							<a class="text-[#940B26] decoration-solid underline" href="{% url 'users:login' %}">
+								Login
+							</a>
+						</p>
+
+					</section>
+					
+					<section id="step-credentials" class="step hidden flex flex-col gap-2" data-step="3">
+						<h1 class="md:hidden font-bold text-2xl text-center mb-3">Credentials</h1>
+
+						<label for="{{ user_form.email.id_for_label}}" class="font-semibold text-sm">Email</label>
+						{{ user_form.email }}
+
+						<label for="{{ user_form.password1.id_for_label}}" class="font-semibold text-sm">Password</label>
+						{{ user_form.password1 }}
+
+						<label for="{{ user_form.password2.id_for_label}}" class="font-semibold text-sm">Confirm Password</label>
+						{{ user_form.password2 }}
+
+						<div class="md:hidden flex justify-between mt-[69px]">
+							<button type="button" id="back-to-vehicle" class="
+								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-4
+								hover:scale-105 cursor-pointer
+							">
+								Back
+							</button>
+							<button type="submit" class="
+								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-4
+								hover:scale-105 cursor-pointer
+							">
+								Register
+							</button>
+						</div>
+
+						<p class="md:hidden font-semibold text-center text-xs mt-2">
+							Already have an account?
+							<a class="text-[#940B26] decoration-solid underline" href="{% url 'users:login' %}">
+								Login
+							</a>
+						</p>
+
+					</section>
+
+				</div>
+
+				<div class="hidden md:block">
+					<button 
+					type="submit" 
+					class="
+						bg-[#940B26] rounded-lg font-bold text-white p-1 mt-4
+						hover:scale-105 cursor-pointer
+					"
+					>
+					Register
+					</button>
+					<p class="font-semibold text-center text-xs">
+					Already have an account?
+					<a class="text-[#940B26] decoration-solid underline" href="{% url 'users:login' %}">
+						Login
+					</a>
+					</p>
+				</div>
+				
+			</form>
+
+		</div>
+
+  	</div>
+
+</section>
 
 {% endblock%}
+
+{% block script %}
+<script src="{% static 'javascript/register.js' %}"></script>
+{% endblock script %}
