@@ -1,4 +1,4 @@
-{% extends 'base.html ' %}
+{% extends 'base.html' %}
 
 {% load static %}
 
@@ -7,5 +7,135 @@
 {% endblock header %}
 
 {% block content %}
-  
+  <main class="p-5 bg-[#dcdbdb] min-h-screen">
+    <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8">
+      <div class="flex items-center gap-6 w-full max-w-[2560px] mx-auto">
+        <div class="text-6xl xl:text-[72px] text-gray-400 flex-shrink-0">
+          <i class="fa-solid fa-circle-user"></i>
+        </div>
+        
+        <div class="flex-1 min-w-0">
+          <h2 class="text-2xl xl:text-3xl font-bold text-black mb-2 xl:mb-3 break-words">Juan Dela Cruz</h2>
+          
+          <!-- Email Field with Edit -->
+          <div class="text-black xl:text-lg break-words flex items-center mb-2 group">
+            <span class="font-medium">EMAIL:</span>
+            <span id="current-email" class="ml-1">admin@email.com</span>
+            <button id="edit-email-btn" class="ml-2">
+              <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
+            </button>
+          </div>
+          
+          <!-- Phone Field with Edit -->
+          <div class="text-black xl:text-lg break-words flex items-center group">
+            <span class="font-medium">PHONE:</span>
+            <span id="current-phone" class="ml-1">09123456789</span>
+            <button id="edit-phone-btn" class="ml-2">
+              <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email Edit Modal -->
+    <div id="email-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+      <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm"></div>
+      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 relative z-10">
+        <h3 class="text-lg font-semibold mb-4">Update Email Address</h3>
+        <input type="email" id="new-email" class="w-full p-3 border rounded-lg mb-4" placeholder="Enter new email address">
+        <div class="flex justify-end gap-3">
+          <button id="cancel-email-edit-btn" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+            Cancel
+          </button>
+          <button id="save-email-btn" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-lg hover:bg-[#78cbf2] transition-colors">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phone Edit Modal -->
+    <div id="phone-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+      <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm"></div>
+      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 relative z-10">
+        <h3 class="text-lg font-semibold mb-4">Update Phone Number</h3>
+        <input type="tel" id="new-phone" class="w-full p-3 border rounded-lg mb-4" placeholder="Enter new phone number">
+        <div class="flex justify-end gap-3">
+          <button id="cancel-edit-btn" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+            Cancel
+          </button>
+          <button id="save-phone-btn" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-lg hover:bg-[#78cbf2] transition-colors">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Phone Edit Functionality
+      const editPhoneBtn = document.getElementById('edit-phone-btn');
+      const phoneModal = document.getElementById('phone-edit-modal');
+      const cancelPhoneBtn = document.getElementById('cancel-edit-btn');
+      const savePhoneBtn = document.getElementById('save-phone-btn');
+      const currentPhone = document.getElementById('current-phone');
+      const newPhoneInput = document.getElementById('new-phone');
+
+      if (editPhoneBtn) {
+        editPhoneBtn.addEventListener('click', function() {
+          newPhoneInput.value = currentPhone.innerText.trim();
+          phoneModal.classList.remove('hidden');
+        });
+      }
+
+      if (cancelPhoneBtn) {
+        cancelPhoneBtn.addEventListener('click', function() {
+          phoneModal.classList.add('hidden');
+        });
+      }
+
+      if (savePhoneBtn) {
+        savePhoneBtn.addEventListener('click', function() {
+          const newNumber = newPhoneInput.value.trim();
+          if (newNumber) {
+            currentPhone.innerText = newNumber;
+            phoneModal.classList.add('hidden');
+          }
+        });
+      }
+
+      // Email Edit Functionality
+      const editEmailBtn = document.getElementById('edit-email-btn');
+      const emailModal = document.getElementById('email-edit-modal');
+      const cancelEmailBtn = document.getElementById('cancel-email-edit-btn');
+      const saveEmailBtn = document.getElementById('save-email-btn');
+      const currentEmail = document.getElementById('current-email');
+      const newEmailInput = document.getElementById('new-email');
+
+      if (editEmailBtn) {
+        editEmailBtn.addEventListener('click', function() {
+          newEmailInput.value = currentEmail.innerText.trim();
+          emailModal.classList.remove('hidden');
+        });
+      }
+
+      if (cancelEmailBtn) {
+        cancelEmailBtn.addEventListener('click', function() {
+          emailModal.classList.add('hidden');
+        });
+      }
+
+      if (saveEmailBtn) {
+        saveEmailBtn.addEventListener('click', function() {
+          const newEmail = newEmailInput.value.trim();
+          if (newEmail) {
+            currentEmail.innerText = newEmail;
+            emailModal.classList.add('hidden');
+          }
+        });
+      }
+    });
+  </script>
 {% endblock %}

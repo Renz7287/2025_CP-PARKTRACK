@@ -1,12 +1,12 @@
 {% load static %}
 
-<span class="absolute text-4xl top-3 left-3 cursor-pointer" onclick="openCloseSidebar();">
+<span class="absolute text-4xl top-3 left-3 cursor-pointer z-10" onclick="openCloseSidebar();">
   <i class="fa-solid fa-bars px-2"></i>
 </span>
 
 <aside class="
   js-sidebar md:relative fixed top-0 bottom-0 md:left-0 left-[-300] p-2 md:min-w-[300px]
-  w-[300px] overflow-y-auto text-center bg-[#940B26]"
+  w-[300px] overflow-y-auto text-center bg-[#940B26] z-10"
 >
   <header class="flex items-center">
     <img src="{% static 'images/parktrack-logo-white.png' %}" class="
