@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect
 from django.db import transaction
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.http import JsonResponse
 from .forms import UserForm, DriverProfileForm, VehicleForm
-from .models import City
+from .models import City, Barangay
 
 # Create your views here.
 
@@ -63,3 +64,8 @@ def register_user(request):
         'cities': cities
     }
     return render(request, 'users/register.html', context)
+
+def get_barangays(request):
+    city_code = request.GET.get('city')
+    barangays = list(Barangay.objects.filter(citymunCode = city_code).values('brgyDesc', 'brgyCode'))
+    return JsonResponse({'barangays': barangays})

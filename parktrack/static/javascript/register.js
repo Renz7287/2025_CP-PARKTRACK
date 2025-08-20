@@ -1,3 +1,5 @@
+import { initializeBarangayField } from "./barangay.js";
+
 (function () {
     const mediaQuery = window.matchMedia('(min-width: 768px)');
     const steps = [
@@ -36,3 +38,15 @@
     toggleStepper();
     
 })();
+
+document.addEventListener('DOMContentLoaded', () => {
+    initializeBarangayField(
+        {
+            cityInputId: 'city-dropdown',
+            barangayInputId: 'barangay-dropdown',
+            cityListId: 'city-list',
+            barangayListId: 'barangay-list',
+            baseUrl: '/address' 
+        }
+    );
+});

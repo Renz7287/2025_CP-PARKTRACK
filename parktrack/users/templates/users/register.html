@@ -109,7 +109,7 @@
 							{{ driver_profile_form.city }}
 							<datalist id="city-list">
 								{% for city in cities %}
-									<option value="{{ city.citymunDesc}}" data-code="{{ city.citymunCode }}"></option>
+									<option value="{{ city.citymunDesc }}" data-code="{{ city.citymunCode }}"></option>
 								{% endfor %}
 							</datalist>
 						</div>
@@ -252,5 +252,5 @@
 {% endblock%}
 
 {% block script %}
-<script src="{% static 'javascript/register.js' %}"></script>
+<script type="module" src="{% static 'javascript/register.js' %}"></script>
 {% endblock script %}
