@@ -6,11 +6,11 @@
         document.getElementById('step-vehicle'),
         document.getElementById('step-credentials')
     ];
-    let index = 0;
+    let page = 0;
 
     function setStep(newIndex) {
-        index = newIndex;
-        steps.forEach((step, i) => step.classList.toggle('hidden', i !== index));
+        page = newIndex;
+        steps.forEach((step, index) => step.classList.toggle('hidden', index !== page));
     }
 
     function toggleStepper() {

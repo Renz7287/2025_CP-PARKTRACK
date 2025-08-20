@@ -37,7 +37,8 @@ class UserForm(UserCreationForm):
             ),
             'middle_name': forms.TextInput(
                 attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',    
+                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
+                    'placeholder': 'optional'    
                 }
             ),
             'last_name': forms.TextInput(
@@ -68,7 +69,7 @@ class DriverProfileForm(forms.ModelForm):
             ),
             'gender': forms.Select(
                 attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
+                    'class': 'text-xs p-2  shadow-xl rounded-lg bg-[#F4F2F2]',
                 }
             ),
             'city': forms.TextInput(

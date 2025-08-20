@@ -10,7 +10,7 @@
 
 <section class="min-h-screen min-w-screen flex justify-center items-center">
   
-  <div class="flex justify-center rounded-2xl shadow-xl h-[400px] max-w-2xl min-w-xs">
+  <div class="flex justify-center rounded-3xl shadow-xl h-[400px] max-w-2xl min-w-xs bg-white">
 
     <div class="w-2/5 md:block hidden">
       <img 
@@ -21,7 +21,7 @@
   
     <div class="md:w-3/5 px-8 w-xs">
 
-      <div class="flex flex-col justify-center items-center">
+      <div class="flex flex-col justify-center items-center mt-2">
         <img 
           src="{% static 'images/parktrack-logo-red.png' %}" 
           class="w-18 h-18"
@@ -44,7 +44,7 @@
         >
           Login
         </button>
-        <p class="font-semibold text-center text-xs">
+        <p class="font-semibold text-center text-xs mt-2">
           Don't have an account?
           <a class="text-[#940B26] decoration-solid underline" href="{% url 'users:register' %}">
             Register
