@@ -11,7 +11,7 @@ from .models import City, Barangay
 def login_user(request):
     if request.user.is_authenticated:
         # redirect location subject to change
-        return redirect('parking-allotment:view-allotment')
+        return redirect('parking_allotment:parking-allotment')
 
     if request.method == 'POST':
         email = request.POST.get('email').lower()

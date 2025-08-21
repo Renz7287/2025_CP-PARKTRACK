@@ -16,11 +16,7 @@
 </head>
 <body class="flex bg-[#dcdbdb]">
 
-  {% if request.user.is_authenticated %}
-
-      {% include 'navbar.html' %}
-
-  {% endif %}
+  {% include 'navbar.html' %}
 
   {% if messages %}
     <ul class="messages">
@@ -32,18 +28,17 @@
 
   <main id="js-content" class="h-screen w-full overflow-auto">
     {% endif %}
+    
+    <header class="top-0 sticky bg-white shadow-xl z-[5] pb-3 pt-[0.5px]">
+      {% block header %}
 
-    {% if request.user.is_authenticated %}
-      <header class="top-0 sticky bg-white shadow-xl z-[5] pb-3 pt-[0.5px]">
-        {% block header %}
-
-        {% endblock header %}
-      </header>
-    {% endif %}
+      {% endblock header %}
+    </header>
     
     {% block content %}
 
     {% endblock %}
+    
 {% if not is_partial %}
   </main>
   

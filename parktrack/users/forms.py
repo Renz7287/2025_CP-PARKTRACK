@@ -34,7 +34,6 @@ class UserForm(UserCreationForm):
             'first_name': forms.TextInput(
                 attrs={
                     'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',  
-                    'autofocus': True  
                 }
             ),
             'middle_name': forms.TextInput(
@@ -49,6 +48,11 @@ class UserForm(UserCreationForm):
                 }
             )
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['email'].widget.attrs.pop('autofocus', None)
 
     def save(self, commit=True):
         user = super().save(commit=False)
