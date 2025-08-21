@@ -36,13 +36,23 @@
   <nav>
     <ul class="space-y-2">
       <li>        
-        <a href="{% url 'parking_allotment:view-allotment' %}" class="js-link flex items-center font-semibold text-white
+        <a href="{% url 'parking_allotment:parking-allotment' %}" class="js-link flex items-center font-semibold text-white
           text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
           transition-colors
          "
         >
           <i class="fa-solid fa-square-parking"></i>
           Parking Allotment
+        </a>
+      </li>
+      <li>        
+        <a href="{% url 'parking_usage:parking-usage' %}" class="js-link flex items-center font-semibold text-white
+          text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
+          transition-colors
+         "
+        >
+          <i class="fa-solid fa-chart-line"></i>
+          Parking Usage
         </a>
       </li>
       <li>        

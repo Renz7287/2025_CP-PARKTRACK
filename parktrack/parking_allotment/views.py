@@ -6,7 +6,7 @@ from django.shortcuts import render
 # Create your views here.
 
 @login_required(login_url='/')
-def view_allotment(request):
+def parking_allotment(request):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     context = {
         'is_partial': is_ajax,
@@ -15,6 +15,3 @@ def view_allotment(request):
 
 def motorcycle_allotment(request):
     return render(request, 'parking_allotment/motorcycle.html')
-
-def admin_statistics(request):
-    return render(request, 'parking_allotment/admin_statistics.html')
