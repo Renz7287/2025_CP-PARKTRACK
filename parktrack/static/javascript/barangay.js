@@ -1,5 +1,4 @@
 export function initializeBarangayField(config) {
-    console.log('Debug1');
     const cityInput = document.getElementById(config.cityInputId);
     const barangayInput = document.getElementById(config.barangayInputId);
 
@@ -16,16 +15,13 @@ export function initializeBarangayField(config) {
         fetch(`${baseUrl}/get-barangays/?city=${cityCode}`)
             .then(response => response.json())
             .then(data => {
-                console.log('Debug3');
                 if (barangayList) {
-                    console.log('Debug4');
                     barangayList.innerHTML = '';
                     data.barangays.forEach(barangay => {
                         const option = document.createElement('option');
                         option.value = barangay.brgyDesc;
                         option.setAttribute('data-code', barangay.brgyCode);
                         barangayList.appendChild(option);
-                        console.log('Debug5');
                     });
 
                     if (barangayInput && barangayInput.value ) {
@@ -34,7 +30,6 @@ export function initializeBarangayField(config) {
                     }
                 }
             })
-            .catch(error => console.error("Error fetching barangays:", error));
     }
 
     if (cityInput) {

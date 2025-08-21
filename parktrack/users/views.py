@@ -49,7 +49,7 @@ def register_user(request):
                 vehicle.save()
 
             return redirect('users:login')
-        
+                
     else:
         user_form = UserForm(request.POST, prefix='user')
         driver_profile_form = DriverProfileForm(request.POST, prefix='driver_profile')

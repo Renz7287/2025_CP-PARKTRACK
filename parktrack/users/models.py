@@ -77,7 +77,7 @@ class DriverProfile(models.Model):
         related_name='driver_profile', 
         limit_choices_to={'role': User.Role.DRIVER}
     )
-    contact_number = models.IntegerField()
+    contact_number = models.CharField(max_length=11)
     gender = models.CharField(max_length=1, choices=Gender.choices)
     city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, to_field='id')
     barangay = models.ForeignKey(Barangay, on_delete=models.SET_NULL, null=True, to_field='id')

@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, DriverProfile, Vehicle
+from django.core.exceptions import ValidationError
+from .models import City, Barangay, User, DriverProfile, Vehicle
 
 class UserForm(UserCreationForm):
     email = forms.EmailField(
@@ -32,7 +33,8 @@ class UserForm(UserCreationForm):
         widgets = {
             'first_name': forms.TextInput(
                 attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',    
+                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',  
+                    'autofocus': True  
                 }
             ),
             'middle_name': forms.TextInput(
@@ -58,6 +60,23 @@ class UserForm(UserCreationForm):
         return user
     
 class DriverProfileForm(forms.ModelForm):
+    city = forms.CharField(
+        widget=forms.TextInput(
+            attrs={
+                'id': 'city-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]', 
+                'list': 'city-list'
+            }
+        )
+    )
+    barangay = forms.CharField(
+        widget=forms.TextInput(
+            attrs={
+                'id': 'barangay-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
+                'list': 'barangay-list'
+            }
+        )
+    )
+
     class Meta:
         model = DriverProfile
         fields = ('contact_number', 'gender', 'city', 'barangay')
@@ -72,19 +91,28 @@ class DriverProfileForm(forms.ModelForm):
                     'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
                 }
             ),
-            'city': forms.TextInput(
-                attrs={
-                    'id': 'city-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]', 
-                    'list': 'city-list'
-                }
-            ),
-            'barangay': forms.TextInput(
-                attrs={
-                    'id': 'barangay-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
-                    'list': 'barangay-list'
-                }
-            ),
         }
+
+    def clean_city(self):
+        city_name = self.cleaned_data['city']
+
+        city = City.objects.filter(citymunDesc=city_name).first()
+
+        if not city:
+            raise ValidationError("Invalid city selected.")
+        
+        return city
+    
+    def clean_barangay(self):
+        barangay_name = self.cleaned_data['barangay']
+        city = self.cleaned_data.get('city')
+
+        barangay = Barangay.objects.filter(brgyDesc=barangay_name, citymunCode=city.citymunCode).first()
+
+        if not barangay:
+            raise ValidationError("Invalid barangay selected.")
+
+        return barangay
 
 class VehicleForm(forms.ModelForm):
     class Meta:
