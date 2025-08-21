@@ -53,6 +53,7 @@ class User(AbstractUser):
         ADMIN = 'A', 'Admin'
         DRIVER = 'D', 'Driver'
 
+    username = None
     first_name = models.CharField(max_length=255)
     middle_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255)
@@ -61,7 +62,7 @@ class User(AbstractUser):
     profile_picture = models.ImageField(upload_to='images/', default='images/avatar.svg')
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    REQUIRED_FIELDS = []
 
     objects = UserManager()
 
