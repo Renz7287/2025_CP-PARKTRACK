@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
 
 # Create your views here.
 
@@ -13,3 +15,6 @@ def view_allotment(request):
 
 def motorcycle_allotment(request):
     return render(request, 'parking_allotment/motorcycle.html')
+
+def admin_statistics(request):
+    return render(request, 'parking_allotment/admin_statistics.html')
