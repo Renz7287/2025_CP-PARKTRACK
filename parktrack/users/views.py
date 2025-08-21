@@ -21,7 +21,7 @@ def login_user(request):
 
         if user is not None:
             login(request, user)
-            return redirect('parking_allotment:view-allotment')
+            return redirect('parking_allotment:parking-allotment')
         else:
             messages.error(request, 'Email OR password does not exists')
         
