@@ -53,15 +53,6 @@ class UserForm(UserCreationForm):
         super().__init__(*args, **kwargs)
 
         self.fields['email'].widget.attrs.pop('autofocus', None)
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.role = 'DRIVER'
-        
-        if commit:
-            user.save()
-
-        return user
     
 class DriverProfileForm(forms.ModelForm):
     city = forms.CharField(

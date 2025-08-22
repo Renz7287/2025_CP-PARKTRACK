@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
-@login_required(login_url='/')
+@login_required
 def view_settings(request):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     context = {

@@ -32,6 +32,7 @@ class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault('is_admin', False)
         email = self.normalize_email(email)
 
         user = self.model(email=email, **extra_fields)
@@ -43,22 +44,18 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('role', User.Role.ADMIN)
+        extra_fields.setdefault('is_admin', True)
         email = self.normalize_email(email)
 
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
-    class Role(models.TextChoices):
-        ADMIN = 'A', 'Admin'
-        DRIVER = 'D', 'Driver'
-
     username = None
     first_name = models.CharField(max_length=255)
     middle_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=1, choices=Role.choices, default=Role.DRIVER)
+    is_admin = models.BooleanField(default=False)
     profile_picture = models.ImageField(upload_to='images/', default='images/avatar.svg')
 
     USERNAME_FIELD = 'email'
@@ -75,8 +72,7 @@ class DriverProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='driver_profile', 
-        limit_choices_to={'role': User.Role.DRIVER}
+        related_name='driver_profile'
     )
     contact_number = models.CharField(max_length=11)
     gender = models.CharField(max_length=1, choices=Gender.choices)
@@ -92,6 +88,9 @@ class Vehicle(models.Model):
 
     owner = models.ForeignKey(DriverProfile, on_delete=models.CASCADE, related_name='vehicles')
     vehicle_type = models.CharField(max_length=2, choices=VehicleType.choices)
+    brand = models.CharField(max_length=100)
+    model = models.CharField(max_length=100)
+    color = models.CharField(max_length=100)
     plate_number = models.CharField(max_length=100)
     gate_pass = models.CharField(max_length=100, null=True, blank=True) 
     is_registered = models.BooleanField(default=False)

@@ -25,14 +25,14 @@
     <img class="w-9 h-9" src="{{ user.profile_picture.url }}">
     <div class="flex flex-col items-start">
       <p class="font-semibold text-white">
-        {% if user.role == 'A'%}
+        {% if user.is_admin %}
           Administrator
         {% else %}
           {{ user.last_name }}, {{ user.first_name }}
         {% endif %}
       </p>
       <small class="text-white">
-        {% if user.role == 'A'%}
+        {% if user.is_admin %}
           Admin
         {% else %}
           Driver
@@ -55,7 +55,7 @@
           Parking Allotment
         </a>
       </li>
-      {% if user.role == 'A' %}
+      {% if user.is_admin %}
       <li>        
         <a href="{% url 'parking_usage:parking-usage' %}" class="js-link flex items-center font-semibold text-white
           text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
@@ -80,13 +80,15 @@
     </ul>  
   </nav>
   
-  <footer class="fixed bottom-0 mb-2">    
-    <a href="{% url 'users:logout' %}" class="font-semibold
+  <footer class="fixed bottom-0 mb-2">
+    <form action="{% url 'users:logout' %}" method="POST">
+      {% csrf_token %}
+      <button class="font-semibold
        text-white p-2 hover:text-red-100
-      "
-    >
-      <i class="fa-solid fa-right-from-bracket"></i>
-      Logout
-    </a>
+      ">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Logout
+      </button>
+    </form>
   </footer>
 </aside>

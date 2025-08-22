@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 18, 2025 at 01:59 PM
+-- Generation Time: Aug 22, 2025 at 03:02 PM
 -- Server version: 11.8.2-MariaDB
 -- PHP Version: 8.2.12
 
@@ -166,26 +166,25 @@ CREATE TABLE `django_migrations` (
 --
 
 INSERT INTO `django_migrations` (`id`, `app`, `name`, `applied`) VALUES
-(1, 'contenttypes', '0001_initial', '2025-08-17 14:21:52.732777'),
-(2, 'contenttypes', '0002_remove_content_type_name', '2025-08-17 14:21:52.770560'),
-(3, 'auth', '0001_initial', '2025-08-17 14:21:52.915484'),
-(4, 'auth', '0002_alter_permission_name_max_length', '2025-08-17 14:21:52.942642'),
-(5, 'auth', '0003_alter_user_email_max_length', '2025-08-17 14:21:52.951826'),
-(6, 'auth', '0004_alter_user_username_opts', '2025-08-17 14:21:52.962123'),
-(7, 'auth', '0005_alter_user_last_login_null', '2025-08-17 14:21:52.971286'),
-(8, 'auth', '0006_require_contenttypes_0002', '2025-08-17 14:21:52.974275'),
-(9, 'auth', '0007_alter_validators_add_error_messages', '2025-08-17 14:21:52.984743'),
-(10, 'auth', '0008_alter_user_username_max_length', '2025-08-17 14:21:52.994323'),
-(11, 'auth', '0009_alter_user_last_name_max_length', '2025-08-17 14:21:53.004307'),
-(12, 'auth', '0010_alter_group_name_max_length', '2025-08-17 14:21:53.020765'),
-(13, 'auth', '0011_update_proxy_permissions', '2025-08-17 14:21:53.032797'),
-(14, 'auth', '0012_alter_user_first_name_max_length', '2025-08-17 14:21:53.040166'),
-(15, 'users', '0001_initial', '2025-08-17 14:21:53.261383'),
-(16, 'admin', '0001_initial', '2025-08-17 14:21:53.344372'),
-(17, 'admin', '0002_logentry_remove_auto_add', '2025-08-17 14:21:53.354386'),
-(18, 'admin', '0003_logentry_add_action_flag_choices', '2025-08-17 14:21:53.363941'),
-(19, 'sessions', '0001_initial', '2025-08-17 14:21:53.395785'),
-(20, 'users', '0002_vehicle', '2025-08-18 11:58:32.794079');
+(1, 'contenttypes', '0001_initial', '2025-08-22 12:59:03.690256'),
+(2, 'contenttypes', '0002_remove_content_type_name', '2025-08-22 12:59:03.729225'),
+(3, 'auth', '0001_initial', '2025-08-22 12:59:03.808574'),
+(4, 'auth', '0002_alter_permission_name_max_length', '2025-08-22 12:59:03.821627'),
+(5, 'auth', '0003_alter_user_email_max_length', '2025-08-22 12:59:03.826637'),
+(6, 'auth', '0004_alter_user_username_opts', '2025-08-22 12:59:03.831642'),
+(7, 'auth', '0005_alter_user_last_login_null', '2025-08-22 12:59:03.837574'),
+(8, 'auth', '0006_require_contenttypes_0002', '2025-08-22 12:59:03.839591'),
+(9, 'auth', '0007_alter_validators_add_error_messages', '2025-08-22 12:59:03.845118'),
+(10, 'auth', '0008_alter_user_username_max_length', '2025-08-22 12:59:03.850319'),
+(11, 'auth', '0009_alter_user_last_name_max_length', '2025-08-22 12:59:03.856247'),
+(12, 'auth', '0010_alter_group_name_max_length', '2025-08-22 12:59:03.866143'),
+(13, 'auth', '0011_update_proxy_permissions', '2025-08-22 12:59:03.872279'),
+(14, 'auth', '0012_alter_user_first_name_max_length', '2025-08-22 12:59:03.876582'),
+(15, 'users', '0001_initial', '2025-08-22 12:59:04.037607'),
+(16, 'admin', '0001_initial', '2025-08-22 12:59:04.077978'),
+(17, 'admin', '0002_logentry_remove_auto_add', '2025-08-22 12:59:04.085012'),
+(18, 'admin', '0003_logentry_add_action_flag_choices', '2025-08-22 12:59:04.094574'),
+(19, 'sessions', '0001_initial', '2025-08-22 12:59:04.111144');
 
 -- --------------------------------------------------------
 
@@ -42307,7 +42306,7 @@ CREATE TABLE `refcitymun` (
   `id` int(255) NOT NULL,
   `psgcCode` varchar(255) DEFAULT NULL,
   `citymunDesc` mediumtext DEFAULT NULL,
-  `regDesc` varchar(255) DEFAULT NULL,
+  `regCode` varchar(255) DEFAULT NULL,
   `provCode` varchar(255) DEFAULT NULL,
   `citymunCode` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -42316,7 +42315,7 @@ CREATE TABLE `refcitymun` (
 -- Dumping data for table `refcitymun`
 --
 
-INSERT INTO `refcitymun` (`id`, `psgcCode`, `citymunDesc`, `regDesc`, `provCode`, `citymunCode`) VALUES
+INSERT INTO `refcitymun` (`id`, `psgcCode`, `citymunDesc`, `regCode`, `provCode`, `citymunCode`) VALUES
 (1, '012801000', 'ADAMS', '01', '0128', '012801'),
 (2, '012802000', 'BACARRA', '01', '0128', '012802'),
 (3, '012803000', 'BADOC', '01', '0128', '012803'),
@@ -43224,7 +43223,7 @@ INSERT INTO `refcitymun` (`id`, `psgcCode`, `citymunDesc`, `regDesc`, `provCode`
 (905, '072247000', 'SOGOD', '07', '0722', '072247'),
 (906, '072248000', 'TABOGON', '07', '0722', '072248'),
 (907, '072249000', 'TABUELAN', '07', '0722', '072249');
-INSERT INTO `refcitymun` (`id`, `psgcCode`, `citymunDesc`, `regDesc`, `provCode`, `citymunCode`) VALUES
+INSERT INTO `refcitymun` (`id`, `psgcCode`, `citymunDesc`, `regCode`, `provCode`, `citymunCode`) VALUES
 (908, '072250000', 'CITY OF TALISAY', '07', '0722', '072250'),
 (909, '072251000', 'TOLEDO CITY', '07', '0722', '072251'),
 (910, '072252000', 'TUBURAN', '07', '0722', '072252'),
@@ -43974,7 +43973,7 @@ INSERT INTO `refcitymun` (`id`, `psgcCode`, `citymunDesc`, `regDesc`, `provCode`
 
 CREATE TABLE `users_driverprofile` (
   `id` bigint(20) NOT NULL,
-  `contact_number` int(11) NOT NULL,
+  `contact_number` varchar(11) NOT NULL,
   `gender` varchar(1) NOT NULL,
   `created_at` datetime(6) NOT NULL,
   `updated_at` datetime(6) NOT NULL,
@@ -43994,7 +43993,6 @@ CREATE TABLE `users_user` (
   `password` varchar(128) NOT NULL,
   `last_login` datetime(6) DEFAULT NULL,
   `is_superuser` tinyint(1) NOT NULL,
-  `username` varchar(150) NOT NULL,
   `is_staff` tinyint(1) NOT NULL,
   `is_active` tinyint(1) NOT NULL,
   `date_joined` datetime(6) NOT NULL,
@@ -44002,7 +44000,7 @@ CREATE TABLE `users_user` (
   `middle_name` varchar(255) DEFAULT NULL,
   `last_name` varchar(255) NOT NULL,
   `email` varchar(254) NOT NULL,
-  `role` varchar(1) NOT NULL,
+  `is_admin` tinyint(1) NOT NULL,
   `profile_picture` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -44010,8 +44008,8 @@ CREATE TABLE `users_user` (
 -- Dumping data for table `users_user`
 --
 
-INSERT INTO `users_user` (`id`, `password`, `last_login`, `is_superuser`, `username`, `is_staff`, `is_active`, `date_joined`, `first_name`, `middle_name`, `last_name`, `email`, `role`, `profile_picture`) VALUES
-(1, 'pbkdf2_sha256$1000000$mzHTGUEUv8JmbHAk73jlIW$5VmEBMtAN0O8972chEHzBkvpnsuIaw/Edm62nxjFwSk=', '2025-08-17 14:39:11.952223', 1, 'admin', 1, 1, '2025-08-17 14:22:28.623886', '', NULL, '', 'admin@email.com', 'A', 'images/avatar.svg');
+INSERT INTO `users_user` (`id`, `password`, `last_login`, `is_superuser`, `is_staff`, `is_active`, `date_joined`, `first_name`, `middle_name`, `last_name`, `email`, `is_admin`, `profile_picture`) VALUES
+(1, 'pbkdf2_sha256$1000000$fy87VQK38muE7k72IR6HFF$Lb1gF/dNTneoMLB3sLAS213+ozf4GDcctidXsnPYJQU=', '2025-08-22 12:59:47.226364', 1, 1, 1, '2025-08-22 12:59:21.039983', '', NULL, '', 'admin@email.com', 1, 'images/avatar.svg');
 
 -- --------------------------------------------------------
 
@@ -44046,6 +44044,9 @@ CREATE TABLE `users_user_user_permissions` (
 CREATE TABLE `users_vehicle` (
   `id` bigint(20) NOT NULL,
   `vehicle_type` varchar(2) NOT NULL,
+  `brand` varchar(100) NOT NULL,
+  `model` varchar(100) NOT NULL,
+  `color` varchar(100) NOT NULL,
   `plate_number` varchar(100) NOT NULL,
   `gate_pass` varchar(100) DEFAULT NULL,
   `is_registered` tinyint(1) NOT NULL,
@@ -44124,7 +44125,7 @@ ALTER TABLE `refcitymun`
 ALTER TABLE `users_driverprofile`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `user_id` (`user_id`),
-  ADD KEY `users_driverprofile_barangay_id_f604b8e1_fk_refcitymun_id` (`barangay_id`),
+  ADD KEY `users_driverprofile_barangay_id_f604b8e1_fk_refbrgy_id` (`barangay_id`),
   ADD KEY `users_driverprofile_city_id_2f67f577_fk_refcitymun_id` (`city_id`);
 
 --
@@ -44132,7 +44133,6 @@ ALTER TABLE `users_driverprofile`
 --
 ALTER TABLE `users_user`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `username` (`username`),
   ADD UNIQUE KEY `email` (`email`);
 
 --
@@ -44196,7 +44196,7 @@ ALTER TABLE `django_content_type`
 -- AUTO_INCREMENT for table `django_migrations`
 --
 ALTER TABLE `django_migrations`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `refbrgy`
@@ -44268,7 +44268,7 @@ ALTER TABLE `django_admin_log`
 -- Constraints for table `users_driverprofile`
 --
 ALTER TABLE `users_driverprofile`
-  ADD CONSTRAINT `users_driverprofile_barangay_id_f604b8e1_fk_refcitymun_id` FOREIGN KEY (`barangay_id`) REFERENCES `refcitymun` (`id`),
+  ADD CONSTRAINT `users_driverprofile_barangay_id_f604b8e1_fk_refbrgy_id` FOREIGN KEY (`barangay_id`) REFERENCES `refbrgy` (`id`),
   ADD CONSTRAINT `users_driverprofile_city_id_2f67f577_fk_refcitymun_id` FOREIGN KEY (`city_id`) REFERENCES `refcitymun` (`id`),
   ADD CONSTRAINT `users_driverprofile_user_id_43b7f1ec_fk_users_user_id` FOREIGN KEY (`user_id`) REFERENCES `users_user` (`id`);
 

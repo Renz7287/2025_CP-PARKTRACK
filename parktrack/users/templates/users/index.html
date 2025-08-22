@@ -32,7 +32,7 @@
       <form method="POST" class="flex flex-col gap-2 mt-8">
         {% csrf_token %}
         <label for="email" class="font-semibold text-sm">Email</label>
-        <input type="text" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="email" id="email">
+        <input type="email" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="username" id="email">
         <label for="password" class="font-semibold text-sm">Password</label>
         <input type="password" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="password" id="password">
         <button 
