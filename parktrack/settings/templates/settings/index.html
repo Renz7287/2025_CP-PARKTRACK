@@ -8,28 +8,26 @@
 
 {% block content %}
   <div class="p-5 bg-[#dcdbdb] min-h-screen">
-    <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8">
-      <div class="flex items-center gap-6 w-full max-w-[2560px] mx-auto">
-        <div class="text-6xl xl:text-[72px] text-gray-400 flex-shrink-0">
-          <i class="fa-solid fa-circle-user"></i>
+    <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
+      <div class="flex items-center gap-6 w-full mx-auto">
+        <div class="flex-shrink-0">
+          <img class="w-[60px] h-[60px] xl:w-[96px] xl:h-[96px]" src="{{ user.profile_picture.url }}" alt="User profile picture">
         </div>
         
         <div class="flex-1 min-w-0">
           <h2 class="text-2xl xl:text-3xl font-bold text-black mb-2 xl:mb-3 break-words">Juan Dela Cruz</h2>
           
-          <!-- Email Field with Edit -->
           <div class="text-black xl:text-lg break-words flex items-center mb-2 group">
             <span class="font-medium">EMAIL:</span>
-            <span id="current-email" class="ml-1">admin@email.com</span>
+            <span id="current-email" class="ml-1">juandelacruz@gmail.com</span>
             <button id="edit-email-btn" class="ml-2">
               <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
             </button>
           </div>
           
-          <!-- Phone Field with Edit -->
           <div class="text-black xl:text-lg break-words flex items-center group">
             <span class="font-medium">PHONE:</span>
-            <span id="current-phone" class="ml-1">09123456789</span>
+            <span id="current-phone" class="ml-1">0927403379</span>
             <button id="edit-phone-btn" class="ml-2">
               <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
             </button>
@@ -38,7 +36,63 @@
       </div>
     </div>
 
-    <!-- Email Edit Modal -->
+    <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8">
+      <h2 class="text-2xl font-bold text-black">Vehicle Details</h2>
+      <hr class="mb-6 border-gray-300">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="flex flex-col">
+          <label class="text-gray-600 mb-1">Plate Number</label>
+          <div class="flex items-center group">
+            <span id="plate-number" class="text-lg font-medium">JAL S312</span>
+            <button id="edit-plate-btn" class="ml-2">
+              <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="flex flex-col">
+          <label class="text-gray-600 mb-1">Brand</label>
+          <div class="flex items-center group">
+            <span id="vehicle-brand" class="text-lg font-medium">TOYOTA</span>
+            <button id="edit-brand-btn" class="ml-2">
+              <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-gray-600 mb-1">Model</label>
+          <div class="flex items-center group">
+            <span id="vehicle-model" class="text-lg font-medium">Vios XLE</span>
+            <button id="edit-model-btn" class="ml-2">
+              <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-gray-600 mb-1">Vehicle Type</label>
+          <div class="flex items-center group">
+            <span id="vehicle-type" class="text-lg font-medium">Sedan (4 Wheeled)</span>
+            <button id="edit-type-btn" class="ml-2">
+              <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="flex flex-col">
+          <label class="text-gray-600 mb-1">Color</label>
+          <div class="flex items-center group">
+            <span id="vehicle-color" class="text-lg font-medium">Blackish Red</span>
+            <button id="edit-color-btn" class="ml-2">
+              <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="email-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
       <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm"></div>
       <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 relative z-10">
@@ -55,7 +109,6 @@
       </div>
     </div>
 
-    <!-- Phone Edit Modal -->
     <div id="phone-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
       <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm"></div>
       <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 relative z-10">
@@ -71,11 +124,26 @@
         </div>
       </div>
     </div>
+
+    <div id="vehicle-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+      <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm"></div>
+      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 relative z-10">
+        <h3 id="vehicle-modal-title" class="text-lg font-semibold mb-4">Update Vehicle Information</h3>
+        <input type="text" id="new-vehicle-value" class="w-full p-3 border rounded-lg mb-4" placeholder="">
+        <div class="flex justify-end gap-3">
+          <button id="cancel-vehicle-edit-btn" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+            Cancel
+          </button>
+          <button id="save-vehicle-btn" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-lg hover:bg-[#78cbf2] transition-colors">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Phone Edit Functionality
       const editPhoneBtn = document.getElementById('edit-phone-btn');
       const phoneModal = document.getElementById('phone-edit-modal');
       const cancelPhoneBtn = document.getElementById('cancel-edit-btn');
@@ -106,7 +174,6 @@
         });
       }
 
-      // Email Edit Functionality
       const editEmailBtn = document.getElementById('edit-email-btn');
       const emailModal = document.getElementById('email-edit-modal');
       const cancelEmailBtn = document.getElementById('cancel-email-edit-btn');
@@ -133,6 +200,55 @@
           if (newEmail) {
             currentEmail.innerText = newEmail;
             emailModal.classList.add('hidden');
+          }
+        });
+      }
+
+      const vehicleModal = document.getElementById('vehicle-edit-modal');
+      const cancelVehicleBtn = document.getElementById('cancel-vehicle-edit-btn');
+      const saveVehicleBtn = document.getElementById('save-vehicle-btn');
+      const vehicleModalTitle = document.getElementById('vehicle-modal-title');
+      const newVehicleValueInput = document.getElementById('new-vehicle-value');
+      
+      let currentVehicleField = null;
+
+      const vehicleEditButtons = [
+        { id: 'edit-plate-btn', field: 'plate-number', label: 'Plate Number' },
+        { id: 'edit-brand-btn', field: 'vehicle-brand', label: 'Brand' },
+        { id: 'edit-model-btn', field: 'vehicle-model', label: 'Model' },
+        { id: 'edit-type-btn', field: 'vehicle-type', label: 'Vehicle Type' },
+        { id: 'edit-color-btn', field: 'vehicle-color', label: 'Color' }
+      ];
+      
+      vehicleEditButtons.forEach(button => {
+        const btnElement = document.getElementById(button.id);
+        const fieldElement = document.getElementById(button.field);
+        
+        if (btnElement && fieldElement) {
+          btnElement.addEventListener('click', function() {
+            vehicleModalTitle.textContent = `Update ${button.label}`;
+            newVehicleValueInput.value = fieldElement.innerText.trim();
+            newVehicleValueInput.placeholder = `Enter new ${button.label.toLowerCase()}`;
+            currentVehicleField = fieldElement;
+            vehicleModal.classList.remove('hidden');
+          });
+        }
+      });
+      
+      if (cancelVehicleBtn) {
+        cancelVehicleBtn.addEventListener('click', function() {
+          vehicleModal.classList.add('hidden');
+          currentVehicleField = null;
+        });
+      }
+      
+      if (saveVehicleBtn) {
+        saveVehicleBtn.addEventListener('click', function() {
+          const newValue = newVehicleValueInput.value.trim();
+          if (newValue && currentVehicleField) {
+            currentVehicleField.innerText = newValue;
+            vehicleModal.classList.add('hidden');
+            currentVehicleField = null;
           }
         });
       }
