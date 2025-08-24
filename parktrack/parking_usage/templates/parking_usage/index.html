@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Daily Analytics Dashboard</h1>
+  <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Parking Usage Dashboard</h1>
 {% endblock header %}
 
 {% block content %}
@@ -75,6 +75,7 @@
 
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       const ctx = document.getElementById('peakOccupancyChart').getContext('2d');
       new Chart(ctx, {
