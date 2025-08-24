@@ -68,14 +68,28 @@
       </li>
       {% endif %}
       <li>        
-        <a href="{% url 'settings:view-settings' %}" class="js-link flex items-center font-semibold text-white
+        <div class="flex items-center font-semibold text-white
           text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
-          transition-colors
+          transition-colors cursor-pointer
           "
+          onclick="openSubmenu();"
         >
           <i class="fa-solid fa-gear"></i>
-          Settings
-        </a>
+          <div class="flex justify-between w-full items-center">
+            <span>Settings</span>
+            <span class="text-sm rotate-180" id="arrow">
+              <i class="fa-solid fa-chevron-down"></i>
+            </span>
+          </div>          
+        </div>
+
+        <div class="text-left text-sm text-white font-thin mt-2 w-4/5 mx-auto" id="submenu">
+          <a href="{% url 'settings:account-settings' %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
+            <i class="fa-solid fa-circle-user"></i>
+            Account Settings
+          </a>
+          <a href="" class="js-link"></a>
+        </div>
       </li>
     </ul>  
   </nav>
@@ -84,7 +98,7 @@
     <form action="{% url 'users:logout' %}" method="POST">
       {% csrf_token %}
       <button class="font-semibold
-       text-white p-2 hover:text-red-100
+       text-white p-2 hover:text-red-100 cursor-pointer
       ">
         <i class="fa-solid fa-right-from-bracket"></i>
         Logout

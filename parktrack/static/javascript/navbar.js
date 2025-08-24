@@ -1,3 +1,10 @@
+function openSubmenu() {
+    document.getElementById('submenu').classList.toggle('hidden');
+    document.getElementById('arrow').classList.toggle('rotate-180');
+}
+
+openSubmenu();
+
 function openCloseSidebar() {
     document.querySelector('.js-sidebar').classList.toggle('left-[-300px]');
 }

@@ -1,12 +1,20 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.views import LoginView
 from django.db import transaction
-from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from .forms import UserForm, DriverProfileForm, VehicleForm
 from .models import City, Barangay
 
 # Create your views here.
+
+class CustomLoginView(LoginView):
+    template_name = 'users/index.html'
+
+    def dispatch(self, request, *args, **kwargs):
+
+        if request.user.is_authenticated:
+            return redirect('parking_allotment:parking-allotment')
+        return super().dispatch(request, *args, **kwargs)
 
 def register_user(request):
     if request.method == 'POST':
