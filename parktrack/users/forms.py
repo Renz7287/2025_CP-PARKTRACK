@@ -112,9 +112,19 @@ class DriverProfileForm(forms.ModelForm):
 class VehicleForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ('vehicle_type', 'plate_number', 'gate_pass')
+        fields = ('vehicle_type', 'brand', 'model', 'plate_number', 'gate_pass')
         widgets = {
             'vehicle_type': forms.Select(
+                attrs={
+                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
+                }
+            ),
+            'brand': forms.Select(  # subject to change
+                attrs={
+                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
+                }
+            ),
+            'model': forms.Select(  # subject to change
                 attrs={
                     'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
                 }

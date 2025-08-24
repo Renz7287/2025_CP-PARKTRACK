@@ -2,26 +2,45 @@ import { initializeBarangayField } from "./barangay.js";
 
 (function () {
     const mediaQuery = window.matchMedia('(min-width: 768px)');
-    const steps = [
+
+    const stepsSmallDevices = [
         document.getElementById('step-personal'),
         document.getElementById('step-contact'),
         document.getElementById('step-vehicle'),
         document.getElementById('step-credentials')
     ];
+    const stepsLargeDevices = [
+        document.getElementById('step-1'),
+        document.getElementById('step-2')
+    ]
+
+    let currentSteps = stepsSmallDevices;
+
     let page = 0;
 
     function setStep(newIndex) {
         page = newIndex;
-        steps.forEach((step, index) => step.classList.toggle('hidden', index !== page));
+        currentSteps.forEach((step, index) => step.classList.toggle('hidden', index !== page));
+
+        if (page === 1) {
+            document.getElementById('back-to-step-1')?.classList.remove('hidden');
+        } else {
+            document.getElementById('back-to-step-1')?.classList.add('hidden');
+        }
     }
 
     function toggleStepper() {
         if (mediaQuery.matches) {
-            steps.forEach(step => step.classList.remove('hidden'));
+            currentSteps = stepsLargeDevices;
         } else {
-            steps.forEach(step => step.classList.add('hidden'));
-            setStep(0);
+            document.getElementById('step-1').classList.remove('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            currentSteps = stepsSmallDevices;
         }
+
+        currentSteps.forEach(step => step.classList.add('hidden') );
+
+        setStep(0);
     }
 
     document.getElementById('next-to-contact')?.addEventListener('click', () => setStep(1));
@@ -30,6 +49,9 @@ import { initializeBarangayField } from "./barangay.js";
     document.getElementById('back-to-contact')?.addEventListener('click', () => setStep(1));
     document.getElementById('next-to-credentials')?.addEventListener('click', () => setStep(3));
     document.getElementById('back-to-vehicle')?.addEventListener('click', () => setStep(2));
+    
+    document.getElementById('next-to-step-2')?.addEventListener('click', () => setStep(1));
+    document.getElementById('back-to-step-1')?.addEventListener('click', () => setStep(0));
 
     mediaQuery.addEventListener 
         ? mediaQuery.addEventListener('change', toggleStepper) 
