@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'parking_allotment',
     'settings',
     'parking_usage',
+    'notification',
 ]
 
 MIDDLEWARE = [
