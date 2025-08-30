@@ -1,5 +1,7 @@
 import { initializeBarangayField } from "./barangay.js";
+import { initializeVehicleField } from "./vehicle.js";
 
+// Activates stepper form for small devices
 (function () {
     const mediaQuery = window.matchMedia('(min-width: 768px)');
 
@@ -71,4 +73,15 @@ document.addEventListener('DOMContentLoaded', () => {
             baseUrl: '/address' 
         }
     );
+
+    initializeVehicleField(
+        {
+            vehicleTypeInputId: 'vehicle-type-dropdown',
+            brandInputId: 'brand-dropdown',
+            modelInputId: 'model-dropdown',
+            brandListId: 'brand-list',
+            modelListId: 'model-list',
+            baseUrl: '/vehicles'
+        }
+    )
 });

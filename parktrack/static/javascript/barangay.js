@@ -9,6 +9,21 @@ export function initializeBarangayField(config) {
 
     let currentCityCode = '';
 
+    if (cityInput) {
+        cityInput.addEventListener("input", () => {
+            const selectedOption = Array.from(cityList.querySelectorAll('option'))
+                .find(option => option.value === cityInput.value);
+                
+            if (selectedOption) {
+                currentCityCode = selectedOption.dataset.code;
+                
+                if (barangayInput) barangayInput.value = "";
+                
+                fetchBarangays(currentCityCode);
+            }
+        });
+    }
+
     function fetchBarangays(cityCode) {
         if (!cityCode) return;
 
@@ -30,20 +45,5 @@ export function initializeBarangayField(config) {
                     }
                 }
             })
-    }
-
-    if (cityInput) {
-        cityInput.addEventListener("input", () => {
-            const selectedOption = Array.from(cityList.querySelectorAll('option'))
-                .find(option => option.value === cityInput.value);
-                
-            if (selectedOption) {
-                currentCityCode = selectedOption.dataset.code;
-                
-                if (barangayInput) barangayInput.value = "";
-                
-                fetchBarangays(currentCityCode);
-            }
-        });
     }
 }

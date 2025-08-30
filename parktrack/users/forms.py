@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from .models import City, Barangay, User, DriverProfile, Vehicle
+from .models import City, Barangay, VehicleType, User, DriverProfile, Vehicle
 
 class UserForm(UserCreationForm):
     email = forms.EmailField(
@@ -110,21 +110,37 @@ class DriverProfileForm(forms.ModelForm):
         return barangay
 
 class VehicleForm(forms.ModelForm):
+    vehicle_type = forms.ModelChoiceField(
+        queryset = VehicleType.objects.all(),
+        empty_label = 'Select Vehicle Type',
+        widget = forms.Select(
+            attrs={
+                'id': 'vehicle-type-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
+            }
+        )
+    )
+    brand = forms.CharField(
+        widget = forms.TextInput(  
+            attrs={
+                'id': 'brand-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
+                'list': 'brand-list'
+            }
+        )
+    )
+    model = forms.CharField(
+        widget = forms.TextInput(  
+            attrs={
+                'id': 'model-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
+                'list': 'model-list'
+            }
+        )
+    )
+
     class Meta:
         model = Vehicle
-        fields = ('vehicle_type', 'brand', 'model', 'plate_number', 'gate_pass')
+        fields = ('vehicle_type', 'brand', 'model', 'color', 'plate_number', 'gate_pass')
         widgets = {
-            'vehicle_type': forms.Select(
-                attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
-                }
-            ),
-            'brand': forms.Select(  # subject to change
-                attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
-                }
-            ),
-            'model': forms.Select(  # subject to change
+            'color': forms.TextInput(
                 attrs={
                     'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
                 }

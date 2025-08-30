@@ -28,6 +28,20 @@ class Barangay(models.Model):
         db_table = 'refbrgy'
         managed = False
 
+class VehicleType(models.Model):
+    type_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.type_name
+
+class VehicleBrand(models.Model):
+    brand_name = models.CharField(max_length=100)
+    type = models.CharField(max_length=10)
+
+class VehicleModel(models.Model):
+    model_name = models.CharField(max_length=100)
+    brand = models.CharField(max_length=10)
+
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
@@ -82,14 +96,10 @@ class DriverProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 class Vehicle(models.Model):
-    class VehicleType(models.TextChoices):
-        FOURWHEELS = 'FW', 'Four-wheels'
-        TWOWHEELS = 'TW', 'Two-wheels'
-
     owner = models.ForeignKey(DriverProfile, on_delete=models.CASCADE, related_name='vehicles')
-    vehicle_type = models.CharField(max_length=2, choices=VehicleType.choices)
-    brand = models.CharField(max_length=100)
-    model = models.CharField(max_length=100)
+    vehicle_type = models.ForeignKey(VehicleType, on_delete=models.SET_NULL, null=True)
+    brand = models.ForeignKey(VehicleBrand, on_delete=models.SET_NULL, null=True)
+    model = models.ForeignKey(VehicleModel, on_delete=models.SET_NULL, null=True)
     color = models.CharField(max_length=100)
     plate_number = models.CharField(max_length=100)
     gate_pass = models.CharField(max_length=100, null=True, blank=True) 

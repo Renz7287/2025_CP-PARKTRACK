@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'settings',
     'parking_usage',
     'notification',
+
+    'django_extensions',
 ]
 
 MIDDLEWARE = [

@@ -3,7 +3,7 @@ from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.http import JsonResponse
 from .forms import UserForm, DriverProfileForm, VehicleForm
-from .models import City, Barangay
+from .models import City, Barangay, VehicleBrand, VehicleModel
 
 # Create your views here.
 
@@ -54,3 +54,13 @@ def get_barangays(request):
     city_code = request.GET.get('city')
     barangays = list(Barangay.objects.filter(citymunCode = city_code).values('brgyDesc', 'brgyCode'))
     return JsonResponse({'barangays': barangays})
+
+def get_brands(request):
+    vehicle_type_code = request.GET.get('vehicle_type')
+    brands = list(VehicleBrand.objects.filter(type = vehicle_type_code).values('id', 'brand_name'))
+    return JsonResponse({'brands': brands })
+
+def get_models(request):
+    brand_code = request.GET.get('brand')
+    models = list(VehicleModel.objects.filter(brand = brand_code).values('id', 'model_name'))
+    return JsonResponse({'models': models })
