@@ -24,9 +24,9 @@
         <span>Motorcycles</span>
       </button>
       {% if user.is_admin %}
-      <button id="liveToggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-gray-200 text-black font-semibold shadow-md">
-        <span>Live Feed</span>
-      </button>
+        <button id="liveToggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-gray-200 text-black font-semibold shadow-md">
+          <span>Live Feed</span>
+        </button>
       {% endif %}
     </div>
 
@@ -203,7 +203,9 @@
       </div>
     </div>
   </div>
+{% endblock %}
 
+{% block script %}
 <script>
   const carToggle = document.getElementById('carToggle');
   const motorToggle = document.getElementById('motorToggle');
@@ -278,4 +280,4 @@
 
   showSection('car');
 </script>
-{% endblock %}
+{% endblock script %}

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from users.models import User, DriverProfile, Vehicle
+from users.models import DriverProfile
 
 # Create your views here.
 

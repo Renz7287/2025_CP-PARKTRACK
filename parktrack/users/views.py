@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib import messages
 from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.http import JsonResponse
@@ -33,6 +34,7 @@ def register_user(request):
                 vehicle.owner = driver_profile
                 vehicle.save()
 
+            messages.success(request, 'You have been registered successfully.')
             return redirect('users:login')
                 
     else:

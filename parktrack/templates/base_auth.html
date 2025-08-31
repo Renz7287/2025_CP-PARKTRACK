@@ -12,20 +12,30 @@
     <link rel="icon" type="image/png" href="{% static 'images/parktrack-logo-favicon.png' %}"/>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://kit.fontawesome.com/3ea0af40f5.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="flex bg-[#dcdbdb]">
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
     {% block content %}
 
     {% endblock content%}
 
+    {% if messages %}
+        <script>
+            {% for message in messages%}  
+                let icon = 'info';
+
+                if ('{{ message.tags }}' === 'success') icon = 'success';
+                if ('{{ message.tags }}' === 'error') icon = 'error';
+                if ('{{ message.tags }}' === 'warning') icon = 'warning';
+
+                Swal.fire({
+                    icon: icon,
+                    text: '{{ message|escapejs }}',
+                    showConfirmationButton: true,
+                });
+            {% endfor %}
+        </script>
+    {% endif %}
     {% block script %}
 
     {% endblock script %}
