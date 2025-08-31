@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from .models import City, Barangay, VehicleType, User, DriverProfile, Vehicle
+from .models import City, Barangay, VehicleType, VehicleBrand, VehicleModel, User, DriverProfile, Vehicle
 
 class UserForm(UserCreationForm):
     email = forms.EmailField(
@@ -156,3 +156,26 @@ class VehicleForm(forms.ModelForm):
                 }
             )
         }
+
+    def clean_vehicle_type(self):
+        vehicle_type_name = self.cleaned_data['vehicle_type']
+
+        vehicle_type = VehicleType.objects.filter(type_name=vehicle_type_name).first()
+
+        return vehicle_type
+    
+    def clean_brand(self):
+        brand_name = self.cleaned_data['brand']
+        vehicle_type = self.cleaned_data.get('vehicle_type')
+
+        brand = VehicleBrand.objects.filter(brand_name=brand_name, type=vehicle_type.id).first()
+
+        return brand
+    
+    def clean_model(self):
+        model_name = self.cleaned_data['model']
+        brand = self.cleaned_data.get('brand')
+
+        model = VehicleModel.objects.filter(model_name=model_name, brand=brand.id).first()
+
+        return model

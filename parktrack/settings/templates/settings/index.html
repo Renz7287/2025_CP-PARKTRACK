@@ -19,27 +19,36 @@
         </div>
         
         <div class="flex-1 min-w-0">
-          <h2 class="text-2xl xl:text-3xl font-bold text-black mb-2 xl:mb-3 break-words">Juan Dela Cruz</h2>
+          <h2 class="text-2xl xl:text-3xl font-bold text-black mb-2 xl:mb-3 break-words">
+            {% if user.is_admin %}
+              Administrator
+            {% else %}
+              {{ user.first_name }} {% if user.middle_name %} {{ user.middle_name }} {% endif %} {{ user.last_name }}
+            {% endif %}
+          </h2>
           
           <div class="text-black xl:text-lg break-words flex items-center mb-2 group">
             <span class="font-medium">EMAIL:</span>
-            <span id="current-email" class="ml-1">juandelacruz@gmail.com</span>
+            <span id="current-email" class="ml-1">{{ user.email }}</span>
             <button id="edit-email-btn" class="ml-2">
               <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
             </button>
           </div>
           
-          <div class="text-black xl:text-lg break-words flex items-center group">
-            <span class="font-medium">PHONE:</span>
-            <span id="current-phone" class="ml-1">0927403379</span>
-            <button id="edit-phone-btn" class="ml-2">
-              <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
-            </button>
-          </div>
+          {% if not user.is_admin %}
+            <div class="text-black xl:text-lg break-words flex items-center group">
+              <span class="font-medium">PHONE:</span>
+              <span id="current-phone" class="ml-1">{{ driver_profile.contact_number }}</span>
+              <button id="edit-phone-btn" class="ml-2">
+                <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
+              </button>
+            </div>
+          {% endif %}
         </div>
       </div>
     </div>
 
+    {% for vehicle in vehicles %}
     <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8">
       <h2 class="text-2xl font-bold text-black">Vehicle Details</h2>
       <hr class="mb-6 border-gray-300">
@@ -48,7 +57,7 @@
         <div class="flex flex-col">
           <label class="text-gray-600 mb-1">Plate Number</label>
           <div class="flex items-center group">
-            <span id="plate-number" class="text-lg font-medium">JAL S312</span>
+            <span id="plate-number" class="text-lg font-medium">{{ vehicle.plate_number }}</span>
             <button id="edit-plate-btn" class="ml-2">
               <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
             </button>
@@ -58,7 +67,7 @@
         <div class="flex flex-col">
           <label class="text-gray-600 mb-1">Brand</label>
           <div class="flex items-center group">
-            <span id="vehicle-brand" class="text-lg font-medium">TOYOTA</span>
+            <span id="vehicle-brand" class="text-lg font-medium">{{ vehicle.brand }}</span>
             <button id="edit-brand-btn" class="ml-2">
               <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
             </button>
@@ -68,7 +77,7 @@
         <div class="flex flex-col">
           <label class="text-gray-600 mb-1">Model</label>
           <div class="flex items-center group">
-            <span id="vehicle-model" class="text-lg font-medium">Vios XLE</span>
+            <span id="vehicle-model" class="text-lg font-medium">{{ vehicle.model }}</span>
             <button id="edit-model-btn" class="ml-2">
               <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
             </button>
@@ -78,7 +87,7 @@
         <div class="flex flex-col">
           <label class="text-gray-600 mb-1">Vehicle Type</label>
           <div class="flex items-center group">
-            <span id="vehicle-type" class="text-lg font-medium">Sedan (4 Wheeled)</span>
+            <span id="vehicle-type" class="text-lg font-medium">{{ vehicle.vehicle_type }}</span>
             <button id="edit-type-btn" class="ml-2">
               <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
             </button>
@@ -88,7 +97,7 @@
         <div class="flex flex-col">
           <label class="text-gray-600 mb-1">Color</label>
           <div class="flex items-center group">
-            <span id="vehicle-color" class="text-lg font-medium">Blackish Red</span>
+            <span id="vehicle-color" class="text-lg font-medium">{{ vehicle.color }}</span>
             <button id="edit-color-btn" class="ml-2">
               <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
             </button>
@@ -96,6 +105,7 @@
         </div>
       </div>
     </div>
+    {% endfor %}
 
     <div id="email-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
       <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm"></div>

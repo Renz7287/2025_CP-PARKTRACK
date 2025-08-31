@@ -38,9 +38,15 @@ class VehicleBrand(models.Model):
     brand_name = models.CharField(max_length=100)
     type = models.CharField(max_length=10)
 
+    def __str__(self):
+        return self.brand_name
+
 class VehicleModel(models.Model):
     model_name = models.CharField(max_length=100)
     brand = models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.model_name
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
