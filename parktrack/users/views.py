@@ -36,6 +36,12 @@ def register_user(request):
 
             messages.success(request, 'You have been registered successfully.')
             return redirect('users:login')
+        
+        else:
+            print('Form is invalid!')
+            print(user_form.errors.as_text())
+            print(driver_profile_form.errors.as_text())
+            print(vehicle_form.errors.as_text())
                 
     else:
         user_form = UserForm(request.POST, prefix='user')
@@ -59,30 +65,10 @@ def get_barangays(request):
 
 def get_brands(request):
     vehicle_type_code = request.GET.get('vehicle_type')
-    brand_name = request.GET.get('brand')
-
-    if brand_name:
-        brand, created = VehicleBrand.objects.get_or_create(
-            type = vehicle_type_code,
-            brand_name = brand_name
-        )
-        brands = [{'id': brand.id, 'brand_name': brand.brand_name}]
-    else:
-        brands = list(VehicleBrand.objects.filter(type = vehicle_type_code).values('id', 'brand_name'))
-
+    brands = list(VehicleBrand.objects.filter(type_code = vehicle_type_code).values('id', 'brand_name'))
     return JsonResponse({'brands': brands })
 
 def get_models(request):
     brand_code = request.GET.get('brand')
-    model_name = request.GET.get('model')
-
-    if model_name:
-        model, created = VehicleModel.objects.get_or_create(
-            brand = brand_code,
-            model_name = model_name
-        )
-        models = [{'id': model.id, 'model_name': model.brand_name}]
-    else:
-        models = list(VehicleModel.objects.filter(brand = brand_code).values('id', 'model_name'))
-
+    models = list(VehicleModel.objects.filter(brand_code = brand_code).values('id', 'model_name'))
     return JsonResponse({'models': models })

@@ -138,6 +138,7 @@ class VehicleForm(forms.ModelForm):
 
     class Meta:
         model = Vehicle
+        exclude = ['brand', 'model']
         fields = ('vehicle_type', 'brand', 'model', 'color', 'plate_number', 'gate_pass')
         widgets = {
             'color': forms.TextInput(
@@ -166,16 +167,35 @@ class VehicleForm(forms.ModelForm):
     
     def clean_brand(self):
         brand_name = self.cleaned_data['brand']
-        vehicle_type = self.cleaned_data.get('vehicle_type')
-
-        brand = VehicleBrand.objects.filter(brand_name=brand_name, type=vehicle_type.id).first()
-
-        return brand
+        
+        return brand_name
     
     def clean_model(self):
         model_name = self.cleaned_data['model']
-        brand = self.cleaned_data.get('brand')
+        
+        return model_name
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
 
-        model = VehicleModel.objects.filter(model_name=model_name, brand=brand.id).first()
+        vehicle_type = self.cleaned_data.get('vehicle_type')
+        brand_name = self.cleaned_data['brand']
+        model_name = self.cleaned_data['model']
 
-        return model
+        brand, _ = VehicleBrand.objects.get_or_create(
+            brand_name = brand_name,
+            type_code = vehicle_type.id
+        )
+
+        model, _ = VehicleModel.objects.get_or_create(
+            model_name = model_name,
+            brand_code = brand.id
+        )
+
+        instance.brand = brand
+        instance.model = model
+
+        if commit:
+            instance.save()
+
+        return instance

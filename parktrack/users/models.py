@@ -29,21 +29,36 @@ class Barangay(models.Model):
         managed = False
 
 class VehicleType(models.Model):
+    id = models.AutoField(primary_key=True)
     type_name = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'vehicle_type'
+        managed = False
 
     def __str__(self):
         return self.type_name
 
 class VehicleBrand(models.Model):
+    id = models.AutoField(primary_key=True)
     brand_name = models.CharField(max_length=100)
-    type = models.CharField(max_length=10)
+    type_code = models.CharField(max_length=10)
+
+    class Meta:
+        db_table = 'vehicle_brand'
+        managed = False
 
     def __str__(self):
         return self.brand_name
 
 class VehicleModel(models.Model):
+    id = models.AutoField(primary_key=True)
     model_name = models.CharField(max_length=100)
-    brand = models.CharField(max_length=10)
+    brand_code = models.CharField(max_length=10)
+
+    class Meta:
+        db_table = 'vehicle_model'
+        managed = False
 
     def __str__(self):
         return self.model_name

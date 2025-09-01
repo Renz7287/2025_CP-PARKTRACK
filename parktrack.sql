@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 31, 2025 at 05:35 AM
+-- Generation Time: Sep 01, 2025 at 05:45 PM
 -- Server version: 11.8.2-MariaDB
 -- PHP Version: 8.2.12
 
@@ -181,25 +181,25 @@ CREATE TABLE `django_migrations` (
 --
 
 INSERT INTO `django_migrations` (`id`, `app`, `name`, `applied`) VALUES
-(1, 'contenttypes', '0001_initial', '2025-08-30 14:37:53.183853'),
-(2, 'contenttypes', '0002_remove_content_type_name', '2025-08-30 14:37:53.222248'),
-(3, 'auth', '0001_initial', '2025-08-30 14:37:53.348377'),
-(4, 'auth', '0002_alter_permission_name_max_length', '2025-08-30 14:37:53.376351'),
-(5, 'auth', '0003_alter_user_email_max_length', '2025-08-30 14:37:53.386836'),
-(6, 'auth', '0004_alter_user_username_opts', '2025-08-30 14:37:53.397841'),
-(7, 'auth', '0005_alter_user_last_login_null', '2025-08-30 14:37:53.408375'),
-(8, 'auth', '0006_require_contenttypes_0002', '2025-08-30 14:37:53.411267'),
-(9, 'auth', '0007_alter_validators_add_error_messages', '2025-08-30 14:37:53.420353'),
-(10, 'auth', '0008_alter_user_username_max_length', '2025-08-30 14:37:53.432196'),
-(11, 'auth', '0009_alter_user_last_name_max_length', '2025-08-30 14:37:53.441147'),
-(12, 'auth', '0010_alter_group_name_max_length', '2025-08-30 14:37:53.460360'),
-(13, 'auth', '0011_update_proxy_permissions', '2025-08-30 14:37:53.471897'),
-(14, 'auth', '0012_alter_user_first_name_max_length', '2025-08-30 14:37:53.483816'),
-(15, 'users', '0001_initial', '2025-08-30 14:37:53.860587'),
-(16, 'admin', '0001_initial', '2025-08-30 14:37:53.958048'),
-(17, 'admin', '0002_logentry_remove_auto_add', '2025-08-30 14:37:53.974327'),
-(18, 'admin', '0003_logentry_add_action_flag_choices', '2025-08-30 14:37:53.993337'),
-(19, 'sessions', '0001_initial', '2025-08-30 14:37:54.026734');
+(1, 'contenttypes', '0001_initial', '2025-09-01 15:35:51.385468'),
+(2, 'contenttypes', '0002_remove_content_type_name', '2025-09-01 15:35:51.420739'),
+(3, 'auth', '0001_initial', '2025-09-01 15:35:51.535429'),
+(4, 'auth', '0002_alter_permission_name_max_length', '2025-09-01 15:35:51.574149'),
+(5, 'auth', '0003_alter_user_email_max_length', '2025-09-01 15:35:51.587632'),
+(6, 'auth', '0004_alter_user_username_opts', '2025-09-01 15:35:51.600976'),
+(7, 'auth', '0005_alter_user_last_login_null', '2025-09-01 15:35:51.613558'),
+(8, 'auth', '0006_require_contenttypes_0002', '2025-09-01 15:35:51.616925'),
+(9, 'auth', '0007_alter_validators_add_error_messages', '2025-09-01 15:35:51.625086'),
+(10, 'auth', '0008_alter_user_username_max_length', '2025-09-01 15:35:51.632925'),
+(11, 'auth', '0009_alter_user_last_name_max_length', '2025-09-01 15:35:51.641311'),
+(12, 'auth', '0010_alter_group_name_max_length', '2025-09-01 15:35:51.662821'),
+(13, 'auth', '0011_update_proxy_permissions', '2025-09-01 15:35:51.673802'),
+(14, 'auth', '0012_alter_user_first_name_max_length', '2025-09-01 15:35:51.684473'),
+(15, 'users', '0001_initial', '2025-09-01 15:35:51.994308'),
+(16, 'admin', '0001_initial', '2025-09-01 15:35:52.062739'),
+(17, 'admin', '0002_logentry_remove_auto_add', '2025-09-01 15:35:52.073187'),
+(18, 'admin', '0003_logentry_add_action_flag_choices', '2025-09-01 15:35:52.087334'),
+(19, 'sessions', '0001_initial', '2025-09-01 15:35:52.105770');
 
 -- --------------------------------------------------------
 
@@ -212,13 +212,6 @@ CREATE TABLE `django_session` (
   `session_data` longtext NOT NULL,
   `expire_date` datetime(6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `django_session`
---
-
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES
-('faz08glyfr03p7qm5bg89ey9x3dmvs0t', '.eJxVjMsOwiAUBf-FtSEEBHpduvcbyH0pVUOT0q6M_65NutDtmZnzMgXXpZa161xGMSfjzeF3I-SHtg3IHdttsjy1ZR7JbordabeXSfR53t2_g4q9fmsCnzUKXMGx15zJSUINFIglHxk9KegAMcWBMQbNIJnUibAmEojm_QEK9Tk_:1usYpw:Y6nKbmU8m4BhcLRCu3ZYbhrAs4LQnu4C3e57axHmamc', '2025-09-14 03:34:36.751874');
 
 -- --------------------------------------------------------
 
@@ -44009,7 +44002,9 @@ CREATE TABLE `users_driverprofile` (
 --
 
 INSERT INTO `users_driverprofile` (`id`, `contact_number`, `gender`, `created_at`, `updated_at`, `barangay_id`, `city_id`, `user_id`) VALUES
-(1, '09123456789', 'M', '2025-08-31 01:58:08.856474', '2025-08-31 01:58:08.856474', 30328, 1133, 2);
+(1, '09123456789', 'M', '2025-09-01 15:38:48.002094', '2025-09-01 15:38:48.002094', 30328, 1133, 2),
+(2, '09223456789', 'M', '2025-09-01 15:42:16.078447', '2025-09-01 15:42:16.078447', 30393, 1133, 3),
+(3, '09323456789', 'F', '2025-09-01 15:44:51.384187', '2025-09-01 15:44:51.385350', 30389, 1133, 4);
 
 -- --------------------------------------------------------
 
@@ -44038,8 +44033,10 @@ CREATE TABLE `users_user` (
 --
 
 INSERT INTO `users_user` (`id`, `password`, `last_login`, `is_superuser`, `is_staff`, `is_active`, `date_joined`, `first_name`, `middle_name`, `last_name`, `email`, `is_admin`, `profile_picture`) VALUES
-(1, 'pbkdf2_sha256$1000000$4nx9TDZj9yg4xOtZ39Ug2x$wR70RlsDAVwzZ1b7R5ITEAa+lPau/jDVMatbNaf/6fw=', '2025-08-31 03:31:39.928809', 1, 1, 1, '2025-08-30 14:38:11.729856', '', NULL, '', 'admin@email.com', 1, 'images/avatar.svg'),
-(2, 'pbkdf2_sha256$1000000$P71iAwiCtJQznRTmRHl8Qn$+Xh+JIGRaPgPcDeZ8hQCB7wqFvw0oQs0Io/4aFXDytQ=', '2025-08-31 03:34:36.749402', 0, 0, 1, '2025-08-31 01:58:07.607803', 'John', NULL, 'Doe', 'johndoe@email.com', 0, 'images/avatar.svg');
+(1, 'pbkdf2_sha256$1000000$QvzQfZVUDArw4r8sJkWjbR$WjxiQee6DxC0GjrgYVs2j5TtQjoAH/o7+EsWW/0ljtA=', NULL, 1, 1, 1, '2025-09-01 15:36:14.039680', '', NULL, '', 'admin@email.com', 1, 'images/avatar.svg'),
+(2, 'pbkdf2_sha256$1000000$aEfjTzXaznKdErpKuBU23R$fs4saspglu4UBJJ5U0ydDEf3jBs7jQoKR7SREvQjxg4=', NULL, 0, 0, 1, '2025-09-01 15:38:46.854418', 'John', NULL, 'Doe', 'johndoe@email.com', 0, 'images/avatar.svg'),
+(3, 'pbkdf2_sha256$1000000$qYo9TQSZVLlSolPCy9r43J$GipRBHvZMJ4Pu6UOjrTAfTGgrda8jTEhN448kgWy5I4=', NULL, 0, 0, 1, '2025-09-01 15:42:14.990869', 'Richard', NULL, 'Roe', 'richardroe@gmail.com', 0, 'images/avatar.svg'),
+(4, 'pbkdf2_sha256$1000000$XqNoMQQhqthT8zM8fuSgbr$gQCea27sNKU2UHBfBTeqeKHolRyr5a7iLtpb02Qg+mc=', NULL, 0, 0, 1, '2025-09-01 15:44:50.259758', 'Jane', NULL, 'Doe', 'janedoe@email.com', 0, 'images/avatar.svg');
 
 -- --------------------------------------------------------
 
@@ -44077,36 +44074,38 @@ CREATE TABLE `users_vehicle` (
   `plate_number` varchar(100) NOT NULL,
   `gate_pass` varchar(100) DEFAULT NULL,
   `is_registered` tinyint(1) NOT NULL,
+  `brand_id` int(11) DEFAULT NULL,
+  `model_id` int(11) DEFAULT NULL,
   `owner_id` bigint(20) NOT NULL,
-  `brand_id` bigint(20) DEFAULT NULL,
-  `model_id` bigint(20) DEFAULT NULL,
-  `vehicle_type_id` bigint(20) DEFAULT NULL
+  `vehicle_type_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users_vehicle`
 --
 
-INSERT INTO `users_vehicle` (`id`, `color`, `plate_number`, `gate_pass`, `is_registered`, `owner_id`, `brand_id`, `model_id`, `vehicle_type_id`) VALUES
-(1, 'Black', 'KQD915', 'gatepass1', 1, 1, 10, 38, 2);
+INSERT INTO `users_vehicle` (`id`, `color`, `plate_number`, `gate_pass`, `is_registered`, `brand_id`, `model_id`, `owner_id`, `vehicle_type_id`) VALUES
+(1, 'Black', 'ABC123', NULL, 0, 10, 38, 1, 2),
+(2, 'Black', 'DEF456', NULL, 0, 1, 69, 2, 1),
+(3, 'Silver', 'GHI789', NULL, 0, 18, 70, 3, 2);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users_vehiclebrand`
+-- Table structure for table `vehicle_brand`
 --
 
-CREATE TABLE `users_vehiclebrand` (
-  `id` bigint(20) NOT NULL,
+CREATE TABLE `vehicle_brand` (
+  `id` int(11) NOT NULL,
   `brand_name` varchar(100) NOT NULL,
-  `type` varchar(10) NOT NULL
+  `type_code` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `users_vehiclebrand`
+-- Dumping data for table `vehicle_brand`
 --
 
-INSERT INTO `users_vehiclebrand` (`id`, `brand_name`, `type`) VALUES
+INSERT INTO `vehicle_brand` (`id`, `brand_name`, `type_code`) VALUES
 (1, 'Honda (Motorcycles)', '1'),
 (2, 'Yamaha', '1'),
 (3, 'Kawasaki', '1'),
@@ -44123,25 +44122,26 @@ INSERT INTO `users_vehiclebrand` (`id`, `brand_name`, `type`) VALUES
 (14, 'Kia', '2'),
 (15, 'Ford', '2'),
 (16, 'Chevrolet', '2'),
-(17, 'Isuzu', '2');
+(17, 'Isuzu', '2'),
+(18, 'MG', '2');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users_vehiclemodel`
+-- Table structure for table `vehicle_model`
 --
 
-CREATE TABLE `users_vehiclemodel` (
-  `id` bigint(20) NOT NULL,
+CREATE TABLE `vehicle_model` (
+  `id` int(11) NOT NULL,
   `model_name` varchar(100) NOT NULL,
-  `brand` varchar(10) NOT NULL
+  `brand_code` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `users_vehiclemodel`
+-- Dumping data for table `vehicle_model`
 --
 
-INSERT INTO `users_vehiclemodel` (`id`, `model_name`, `brand`) VALUES
+INSERT INTO `vehicle_model` (`id`, `model_name`, `brand_code`) VALUES
 (1, 'Click 125i', '1'),
 (2, 'PCX 160', '1'),
 (3, 'ADV 160', '1'),
@@ -44209,24 +44209,26 @@ INSERT INTO `users_vehiclemodel` (`id`, `model_name`, `brand`) VALUES
 (65, 'Camaro', '16'),
 (66, 'D-Max', '17'),
 (67, 'mu-X', '17'),
-(68, 'Crosswind', '17');
+(68, 'Crosswind', '17'),
+(69, 'Beat 110', '1'),
+(70, 'HS', '18');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users_vehicletype`
+-- Table structure for table `vehicle_type`
 --
 
-CREATE TABLE `users_vehicletype` (
-  `id` bigint(20) NOT NULL,
-  `type_name` varchar(100) NOT NULL
+CREATE TABLE `vehicle_type` (
+  `id` int(11) NOT NULL,
+  `type_name` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `users_vehicletype`
+-- Dumping data for table `vehicle_type`
 --
 
-INSERT INTO `users_vehicletype` (`id`, `type_name`) VALUES
+INSERT INTO `vehicle_type` (`id`, `type_name`) VALUES
 (1, 'Two-Wheels'),
 (2, 'Four-Wheels');
 
@@ -44333,27 +44335,27 @@ ALTER TABLE `users_user_user_permissions`
 --
 ALTER TABLE `users_vehicle`
   ADD PRIMARY KEY (`id`),
+  ADD KEY `users_vehicle_brand_id_e22b3578_fk_vehicle_brand_id` (`brand_id`),
+  ADD KEY `users_vehicle_model_id_8f543f5e_fk_vehicle_model_id` (`model_id`),
   ADD KEY `users_vehicle_owner_id_0a5763bf_fk_users_driverprofile_id` (`owner_id`),
-  ADD KEY `users_vehicle_brand_id_e22b3578_fk_users_vehiclebrand_id` (`brand_id`),
-  ADD KEY `users_vehicle_model_id_8f543f5e_fk_users_vehiclemodel_id` (`model_id`),
-  ADD KEY `users_vehicle_vehicle_type_id_de0f14f7_fk_users_vehicletype_id` (`vehicle_type_id`);
+  ADD KEY `users_vehicle_vehicle_type_id_de0f14f7_fk_vehicle_type_id` (`vehicle_type_id`);
 
 --
--- Indexes for table `users_vehiclebrand`
+-- Indexes for table `vehicle_brand`
 --
-ALTER TABLE `users_vehiclebrand`
+ALTER TABLE `vehicle_brand`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `users_vehiclemodel`
+-- Indexes for table `vehicle_model`
 --
-ALTER TABLE `users_vehiclemodel`
+ALTER TABLE `vehicle_model`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `users_vehicletype`
+-- Indexes for table `vehicle_type`
 --
-ALTER TABLE `users_vehicletype`
+ALTER TABLE `vehicle_type`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -44394,7 +44396,7 @@ ALTER TABLE `django_content_type`
 -- AUTO_INCREMENT for table `django_migrations`
 --
 ALTER TABLE `django_migrations`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `refbrgy`
@@ -44412,13 +44414,13 @@ ALTER TABLE `refcitymun`
 -- AUTO_INCREMENT for table `users_driverprofile`
 --
 ALTER TABLE `users_driverprofile`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `users_user`
 --
 ALTER TABLE `users_user`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `users_user_groups`
@@ -44436,25 +44438,25 @@ ALTER TABLE `users_user_user_permissions`
 -- AUTO_INCREMENT for table `users_vehicle`
 --
 ALTER TABLE `users_vehicle`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `users_vehiclebrand`
+-- AUTO_INCREMENT for table `vehicle_brand`
 --
-ALTER TABLE `users_vehiclebrand`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+ALTER TABLE `vehicle_brand`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
--- AUTO_INCREMENT for table `users_vehiclemodel`
+-- AUTO_INCREMENT for table `vehicle_model`
 --
-ALTER TABLE `users_vehiclemodel`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+ALTER TABLE `vehicle_model`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
 
 --
--- AUTO_INCREMENT for table `users_vehicletype`
+-- AUTO_INCREMENT for table `vehicle_type`
 --
-ALTER TABLE `users_vehicletype`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+ALTER TABLE `vehicle_type`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables
@@ -44506,10 +44508,10 @@ ALTER TABLE `users_user_user_permissions`
 -- Constraints for table `users_vehicle`
 --
 ALTER TABLE `users_vehicle`
-  ADD CONSTRAINT `users_vehicle_brand_id_e22b3578_fk_users_vehiclebrand_id` FOREIGN KEY (`brand_id`) REFERENCES `users_vehiclebrand` (`id`),
-  ADD CONSTRAINT `users_vehicle_model_id_8f543f5e_fk_users_vehiclemodel_id` FOREIGN KEY (`model_id`) REFERENCES `users_vehiclemodel` (`id`),
+  ADD CONSTRAINT `users_vehicle_brand_id_e22b3578_fk_vehicle_brand_id` FOREIGN KEY (`brand_id`) REFERENCES `vehicle_brand` (`id`),
+  ADD CONSTRAINT `users_vehicle_model_id_8f543f5e_fk_vehicle_model_id` FOREIGN KEY (`model_id`) REFERENCES `vehicle_model` (`id`),
   ADD CONSTRAINT `users_vehicle_owner_id_0a5763bf_fk_users_driverprofile_id` FOREIGN KEY (`owner_id`) REFERENCES `users_driverprofile` (`id`),
-  ADD CONSTRAINT `users_vehicle_vehicle_type_id_de0f14f7_fk_users_vehicletype_id` FOREIGN KEY (`vehicle_type_id`) REFERENCES `users_vehicletype` (`id`);
+  ADD CONSTRAINT `users_vehicle_vehicle_type_id_de0f14f7_fk_vehicle_type_id` FOREIGN KEY (`vehicle_type_id`) REFERENCES `vehicle_type` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
