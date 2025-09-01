@@ -18,7 +18,6 @@ export function initializeVehicleField(config) {
                 
             if (selectedOption) {
                 currentVehicleTypeCode = selectedOption.value;
-                console.log(currentVehicleTypeCode)
                 
                 if (brandInput) brandInput.value = "";
                 
@@ -34,13 +33,24 @@ export function initializeVehicleField(config) {
                 
             if (selectedOption) {
                 currentBrandCode = selectedOption.dataset.code;
-                console.log(currentBrandCode)
                 
                 if (modelInput) modelInput.value = "";
                 
                 fetchModels(currentBrandCode);
+            } else if (brandInput.value) {
+                createBrandOrModelOption('brand', currentVehicleTypeCode, brandInput.value);
             }
+
         });
+    }
+
+    if (modelInput) {
+        modelInput.addEventListener('input', () => {
+            
+            if (modelInput.value) {
+                createBrandOrModelOption('model', currentBrandCode, modelInput.value);
+            }
+        })
     }
 
     function fetchBrands(vehicleTypeCode) {
@@ -63,7 +73,7 @@ export function initializeVehicleField(config) {
                         brandInput.dispatchEvent(event);
                     }
                 }
-            })
+            });
     }
     
     function fetchModels(brandCode) {
@@ -86,6 +96,30 @@ export function initializeVehicleField(config) {
                         modelInput.dispatchEvent(event);
                     }
                 }
-            })
+            });
+    }
+
+    function createBrandOrModelOption(type, code, inputValue) {
+        if (!inputValue) return;
+
+        let url = '';
+
+        if (type === 'brand') {
+            url = `${baseUrl}/get-brands/?vehicle_type=${code}&brand=${encodeURIComponent(inputValue)}`;
+        } else {
+            url = `${baseUrl}/get-models/?brand=${code}&model=${encodeURIComponent(inputValue)}`;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const items = type === 'brand' ? data.brands : data.models;
+                const newOption = items[0];
+
+                const option = document.createElement('option');
+                option.value = type === 'brand' ? newOption.brand_name : newOption.model_name;
+                option.setAttribute('data-code', newOption.id);
+                brandList.appendChild(option);
+            });
     }
 }
