@@ -61,27 +61,27 @@
             <tbody class="text-black">
               <tr>
                 <td class="py-2 pl-10 font-semibold w-1/3">Plate Number</td>
-                <td class="py-2 pl-10">{{ vehicle.plate_number }}</td>
+                <td class="py-2 pl-10 plate">{{ vehicle.plate_number }}</td>
               </tr>
               <tr>
                 <td class="py-2 pl-10 font-semibold">Brand</td>
-                <td class="py-2 pl-10">{{ vehicle.brand }}</td>
+                <td class="py-2 pl-10 brand">{{ vehicle.brand }}</td>
               </tr>
               <tr>
                 <td class="py-2 pl-10 font-semibold">Model</td>
-                <td class="py-2 pl-10">{{ vehicle.model }}</td>
+                <td class="py-2 pl-10 model">{{ vehicle.model }}</td>
               </tr>
               <tr>
                 <td class="py-2 pl-10 font-semibold">Vehicle Type</td>
-                <td class="py-2 pl-10">{{ vehicle.vehicle_type }}</td>
+                <td class="py-2 pl-10 type">{{ vehicle.vehicle_type }}</td>
               </tr>
               <tr>
                 <td class="py-2 pl-10 font-semibold">Color</td>
-                <td class="py-2 pl-10">{{ vehicle.color }}</td>
+                <td class="py-2 pl-10 color">{{ vehicle.color }}</td>
               </tr>
               <tr>
                 <td class="py-2 pl-10 font-semibold">Gate Pass</td>
-                <td class="py-2 pl-10">{{ vehicle.gate_pass }}</td>
+                <td class="py-2 pl-10 gate">{{ vehicle.gate_pass }}</td>
               </tr>
             </tbody>
           </table>
@@ -89,7 +89,7 @@
 
         <!-- Edit Button -->
         <div class="flex justify-end mt-6">
-          <button class="bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md">
+          <button class="edit-vehicle-btn bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md">
             Edit
           </button>
         </div>
@@ -125,67 +125,164 @@
       </div>
     </div>
 
+    <div id="vehicle-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
+      <div class="bg-white rounded-xl p-6 w-full max-w-lg mx-4 relative z-10 shadow-lg">
+        <h3 class="text-lg font-semibold mb-4">Edit Vehicle Details</h3>
+
+        <form id="vehicle-edit-form" class="space-y-4">
+          <input type="hidden" id="vehicle-id">
+
+          <div>
+            <label class="block text-sm font-medium">Plate Number</label>
+            <input type="text" id="edit-plate" class="w-full p-2 border rounded-lg" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Brand</label>
+            <input type="text" id="edit-brand" class="w-full p-2 border rounded-lg" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Model</label>
+            <input type="text" id="edit-model" class="w-full p-2 border rounded-lg" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Vehicle Type</label>
+            <input type="text" id="edit-type" class="w-full p-2 border rounded-lg" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Color</label>
+            <input type="text" id="edit-color" class="w-full p-2 border rounded-lg" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Gate Pass</label>
+            <input type="text" id="edit-gate" class="w-full p-2 border rounded-lg" required>
+          </div>
+
+          <div class="flex justify-end gap-3 mt-4">
+            <button type="button" id="cancel-vehicle-edit-btn" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">Cancel</button>
+            <button type="button" id="save-vehicle-btn" 
+                    class="px-4 py-2 bg-[#7cd1f9] text-white rounded-lg hover:bg-[#78cbf2]">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const editPhoneBtn = document.getElementById('edit-phone-btn');
-      const phoneModal = document.getElementById('phone-edit-modal');
-      const cancelPhoneBtn = document.getElementById('cancel-edit-btn');
-      const savePhoneBtn = document.getElementById('save-phone-btn');
-      const currentPhone = document.getElementById('current-phone');
-      const newPhoneInput = document.getElementById('new-phone');
+  document.addEventListener('DOMContentLoaded', function() {
+    // ===================== PHONE =====================
+    const editPhoneBtn = document.getElementById('edit-phone-btn');
+    const phoneModal = document.getElementById('phone-edit-modal');
+    const cancelPhoneBtn = document.getElementById('cancel-edit-btn');
+    const savePhoneBtn = document.getElementById('save-phone-btn');
+    const currentPhone = document.getElementById('current-phone');
+    const newPhoneInput = document.getElementById('new-phone');
 
-      if (editPhoneBtn) {
-        editPhoneBtn.addEventListener('click', function() {
-          newPhoneInput.value = currentPhone.innerText.trim();
-          phoneModal.classList.remove('hidden');
-        });
-      }
+    if (editPhoneBtn) {
+      editPhoneBtn.addEventListener('click', function() {
+        newPhoneInput.value = currentPhone.innerText.trim();
+        phoneModal.classList.remove('hidden');
+      });
+    }
 
-      if (cancelPhoneBtn) {
-        cancelPhoneBtn.addEventListener('click', function() {
+    if (cancelPhoneBtn) {
+      cancelPhoneBtn.addEventListener('click', function() {
+        phoneModal.classList.add('hidden');
+      });
+    }
+
+    if (savePhoneBtn) {
+      savePhoneBtn.addEventListener('click', function() {
+        const newNumber = newPhoneInput.value.trim();
+        if (newNumber) {
+          currentPhone.innerText = newNumber;
           phoneModal.classList.add('hidden');
-        });
-      }
+        }
+      });
+    }
 
-      if (savePhoneBtn) {
-        savePhoneBtn.addEventListener('click', function() {
-          const newNumber = newPhoneInput.value.trim();
-          if (newNumber) {
-            currentPhone.innerText = newNumber;
-            phoneModal.classList.add('hidden');
-          }
-        });
-      }
+    // ===================== EMAIL =====================
+    const editEmailBtn = document.getElementById('edit-email-btn');
+    const emailModal = document.getElementById('email-edit-modal');
+    const cancelEmailBtn = document.getElementById('cancel-email-edit-btn');
+    const saveEmailBtn = document.getElementById('save-email-btn');
+    const currentEmail = document.getElementById('current-email');
+    const newEmailInput = document.getElementById('new-email');
 
-      const editEmailBtn = document.getElementById('edit-email-btn');
-      const emailModal = document.getElementById('email-edit-modal');
-      const cancelEmailBtn = document.getElementById('cancel-email-edit-btn');
-      const saveEmailBtn = document.getElementById('save-email-btn');
-      const currentEmail = document.getElementById('current-email');
-      const newEmailInput = document.getElementById('new-email');
+    if (editEmailBtn) {
+      editEmailBtn.addEventListener('click', function() {
+        newEmailInput.value = currentEmail.innerText.trim();
+        emailModal.classList.remove('hidden');
+      });
+    }
 
-      if (editEmailBtn) {
-        editEmailBtn.addEventListener('click', function() {
-          newEmailInput.value = currentEmail.innerText.trim();
-          emailModal.classList.remove('hidden');
-        });
-      }
+    if (cancelEmailBtn) {
+      cancelEmailBtn.addEventListener('click', function() {
+        emailModal.classList.add('hidden');
+      });
+    }
 
-      if (cancelEmailBtn) {
-        cancelEmailBtn.addEventListener('click', function() {
+    if (saveEmailBtn) {
+      saveEmailBtn.addEventListener('click', function() {
+        const newEmail = newEmailInput.value.trim();
+        if (newEmail) {
+          currentEmail.innerText = newEmail;
           emailModal.classList.add('hidden');
+        }
+      });
+    }
+
+      // ===================== VEHICLE =====================
+      const editVehicleBtns = document.querySelectorAll('.edit-vehicle-btn'); 
+      const vehicleModal = document.getElementById('vehicle-edit-modal');
+      const cancelVehicleBtn = document.getElementById('cancel-vehicle-edit-btn');
+      const saveVehicleBtn = document.getElementById('save-vehicle-btn');
+
+      const vehicleForm = {
+        plate: document.getElementById('edit-plate'),
+        brand: document.getElementById('edit-brand'),
+        model: document.getElementById('edit-model'),
+        type: document.getElementById('edit-type'),
+        color: document.getElementById('edit-color'),
+        gate: document.getElementById('edit-gate'),
+      };
+
+      let activeVehicleRow = null;
+
+      editVehicleBtns.forEach((btn) => {
+        btn.addEventListener('click', function() {
+          activeVehicleRow = this.closest('div').previousElementSibling.querySelector('tbody');
+          vehicleForm.plate.value = activeVehicleRow.querySelector('.plate').innerText.trim();
+          vehicleForm.brand.value = activeVehicleRow.querySelector('.brand').innerText.trim();
+          vehicleForm.model.value = activeVehicleRow.querySelector('.model').innerText.trim();
+          vehicleForm.type.value = activeVehicleRow.querySelector('.type').innerText.trim();
+          vehicleForm.color.value = activeVehicleRow.querySelector('.color').innerText.trim();
+          vehicleForm.gate.value = activeVehicleRow.querySelector('.gate').innerText.trim();
+          vehicleModal.classList.remove('hidden');
+        });
+      });
+
+      if (cancelVehicleBtn) {
+        cancelVehicleBtn.addEventListener('click', function() {
+          vehicleModal.classList.add('hidden');
         });
       }
 
-      if (saveEmailBtn) {
-        saveEmailBtn.addEventListener('click', function() {
-          const newEmail = newEmailInput.value.trim();
-          if (newEmail) {
-            currentEmail.innerText = newEmail;
-            emailModal.classList.add('hidden');
+      if (saveVehicleBtn) {
+        saveVehicleBtn.addEventListener('click', function() {
+          if (activeVehicleRow) {
+            activeVehicleRow.querySelector('.plate').innerText = vehicleForm.plate.value;
+            activeVehicleRow.querySelector('.brand').innerText = vehicleForm.brand.value;
+            activeVehicleRow.querySelector('.model').innerText = vehicleForm.model.value;
+            activeVehicleRow.querySelector('.type').innerText = vehicleForm.type.value;
+            activeVehicleRow.querySelector('.color').innerText = vehicleForm.color.value;
+            activeVehicleRow.querySelector('.gate').innerText = vehicleForm.gate.value;
+            vehicleModal.classList.add('hidden');
           }
         });
       }
-    });
-  </script>
+  });
+</script>
+
 {% endblock %}
