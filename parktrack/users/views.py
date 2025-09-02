@@ -36,13 +36,7 @@ def register_user(request):
 
             messages.success(request, 'You have been registered successfully.')
             return redirect('users:login')
-        
-        else:
-            print('Form is invalid!')
-            print(user_form.errors.as_text())
-            print(driver_profile_form.errors.as_text())
-            print(vehicle_form.errors.as_text())
-                
+                        
     else:
         user_form = UserForm(request.POST, prefix='user')
         driver_profile_form = DriverProfileForm(request.POST, prefix='driver_profile')

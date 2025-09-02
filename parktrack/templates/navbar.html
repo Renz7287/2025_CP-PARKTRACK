@@ -36,6 +36,9 @@
           Admin
         {% else %}
           Driver
+          {% if not user.driver_profile.vehicles.is_registerd  %}
+            (Guest)
+          {% endif %}
         {% endif %}
       </small>
     </div>

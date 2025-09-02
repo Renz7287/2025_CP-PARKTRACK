@@ -48,53 +48,53 @@
       </div>
     </div>
 
-    {% for vehicle in vehicles %}
     <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
       <h2 class="text-2xl font-bold text-black">Vehicle Details</h2>
       <hr class="mb-6 border-gray-300">
+      
+      {% for vehicle in vehicles %}
+        <h2 class="ml-10 font-bold text-black">Vehicle 1</h2>
+        <hr class="ml-10 mr-10 mb-6 border-gray-300">
 
-      <h2 class="ml-10 font-bold text-black">Vehicle 1</h2>
-      <hr class="ml-10 mr-10 mb-6 border-gray-300">
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse">
+            <tbody class="text-black">
+              <tr>
+                <td class="py-2 pl-10 font-semibold w-1/3">Plate Number</td>
+                <td class="py-2 pl-10">{{ vehicle.plate_number }}</td>
+              </tr>
+              <tr>
+                <td class="py-2 pl-10 font-semibold">Brand</td>
+                <td class="py-2 pl-10">{{ vehicle.brand }}</td>
+              </tr>
+              <tr>
+                <td class="py-2 pl-10 font-semibold">Model</td>
+                <td class="py-2 pl-10">{{ vehicle.model }}</td>
+              </tr>
+              <tr>
+                <td class="py-2 pl-10 font-semibold">Vehicle Type</td>
+                <td class="py-2 pl-10">{{ vehicle.vehicle_type }}</td>
+              </tr>
+              <tr>
+                <td class="py-2 pl-10 font-semibold">Color</td>
+                <td class="py-2 pl-10">{{ vehicle.color }}</td>
+              </tr>
+              <tr>
+                <td class="py-2 pl-10 font-semibold">Gate Pass</td>
+                <td class="py-2 pl-10">{{ vehicle.gate_pass }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse">
-          <tbody class="text-black">
-            <tr>
-              <td class="py-2 pl-10 font-semibold w-1/3">Plate Number</td>
-              <td class="py-2 pl-10">{{ vehicle.plate_number }}</td>
-            </tr>
-            <tr>
-              <td class="py-2 pl-10 font-semibold">Brand</td>
-              <td class="py-2 pl-10">{{ vehicle.brand }}</td>
-            </tr>
-            <tr>
-              <td class="py-2 pl-10 font-semibold">Model</td>
-              <td class="py-2 pl-10">{{ vehicle.model }}</td>
-            </tr>
-            <tr>
-              <td class="py-2 pl-10 font-semibold">Vehicle Type</td>
-              <td class="py-2 pl-10">{{ vehicle.vehicle_type }}</td>
-            </tr>
-            <tr>
-              <td class="py-2 pl-10 font-semibold">Color</td>
-              <td class="py-2 pl-10">{{ vehicle.color }}</td>
-            </tr>
-            <tr>
-              <td class="py-2 pl-10 font-semibold">Gate Pass</td>
-              <td class="py-2 pl-10">{{ vehicle.gate_pass }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Edit Button -->
-      <div class="flex justify-end mt-6">
-        <button class="bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md">
-          Edit
-        </button>
-      </div>
+        <!-- Edit Button -->
+        <div class="flex justify-end mt-6">
+          <button class="bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md">
+            Edit
+          </button>
+        </div>
+      {% endfor %}
     </div>
-    {% endfor %}
 
 
     <div id="email-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
