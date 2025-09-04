@@ -1,22 +1,17 @@
 export function initializeSettings() {
     const modal = document.getElementById('edit-modal');
-    const editBtn = document.getElementById('edit-profile-btn');
-    const closeBtn = document.getElementById('close-modal');
-    const cancelBtn = document.getElementById('cancel-edit');
+    const editButton = document.getElementById('edit-profile-button');
+    const cancelButton = document.getElementById('cancel-edit');
 
-    if (!modal || !editBtn) return;
+    if (!editButton) return;
 
-    editBtn.addEventListener('click', () => {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    });
+    document.getElementById('content').addEventListener('click', (event) => {
+        if (event.target.closest('#edit-profile-button')) {
+            modal.classList.remove('hidden');
+        }
 
-    const closeModal = () => {
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
-    };
-
-    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (event.target.closest('#cancel-edit')) {
+            modal.classList.add('hidden');
+        }
+    })
 }
-
-initializeSettings();

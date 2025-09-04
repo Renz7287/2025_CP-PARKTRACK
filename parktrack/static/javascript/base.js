@@ -6,11 +6,11 @@ import { initializeParkingUsage } from "./parkingUsage.js";
 openSubmenu();
 
 function initializePageScripts() {
-    if (document.querySelector("#edit-email-btn") || document.querySelector("#edit-phone-btn")) {
+    if (document.querySelector("#edit-profile-button")) {
         initializeSettings();
     }
 
-    if (document.querySelector("#car-toggle") || document.querySelector("#motor-toggle") || document.querySelector("#live-toggle")) {
+    if (document.querySelector("#car-toggle") || document.querySelector("#live-toggle")) {
         initializeParkingAllotment();
     }
 

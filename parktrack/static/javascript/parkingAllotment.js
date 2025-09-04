@@ -39,7 +39,7 @@ export function initializeParkingAllotment() {
         }
     }
 
-    document.getElementById('content').addEventListener('click', function(event) {
+    document.getElementById('content').addEventListener('click', (event) => {
         if (event.target.closest('#car-toggle')) {
             showSection('car');
         } 
