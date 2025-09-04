@@ -26,3 +26,12 @@ def account_settings(request, pk):
         'driver_profile_form': driver_profile_form
     }
     return render(request, 'settings/index.html', context)
+
+@login_required
+def vehicle_management(request):
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    context = {
+        'is_partial': is_ajax
+    }
+    return render(request, 'settings/vehicle-management.html', context)

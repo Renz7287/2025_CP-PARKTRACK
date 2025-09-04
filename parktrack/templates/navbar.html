@@ -86,9 +86,12 @@
         <div class="text-left text-sm text-white font-thin mt-2 w-4/5 mx-auto" id="submenu">
           <a href="{% url 'settings:account-settings' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
             <i class="fa-solid fa-circle-user"></i>
-            Account Settings
+            Personal Information
           </a>
-          <a href="" class="js-link"></a>
+          <a href="{% url 'settings:vehicle-management' %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
+            <i class="fa-solid fa-car"></i>
+            Vehicle Management
+          </a>
         </div>
       </li>
     </ul>  
