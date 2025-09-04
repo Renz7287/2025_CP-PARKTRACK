@@ -1,6 +1,6 @@
 {% load static %}
 
-<span class="absolute text-4xl top-3 left-3 cursor-pointer z-10" onclick="openCloseSidebar();">
+<span id="open-sidebar" class="absolute text-4xl top-3 left-3 cursor-pointer z-10">
   <i class="fa-solid fa-bars px-2"></i>
 </span>
 
@@ -14,7 +14,7 @@
       "
     >
     <h1 class="font-bold text-white text-3xl">ParkTrack</h1>
-    <span class="md:hidden text-4xl text-white mt-1 ml-14 cursor-pointer" onclick="openCloseSidebar();">
+    <span id="close-sidebar" class="md:hidden text-4xl text-white mt-1 ml-14 cursor-pointer">
       <i class="fa-solid fa-xmark"></i>
     </span>
   </header>
@@ -36,9 +36,6 @@
           Admin
         {% else %}
           Driver
-          {% if not user.driver_profile.vehicles.is_registerd  %}
-            (Guest)
-          {% endif %}
         {% endif %}
       </small>
     </div>
@@ -75,7 +72,7 @@
           text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
           transition-colors cursor-pointer
           "
-          onclick="openSubmenu();"
+          id="open-submenu"
         >
           <i class="fa-solid fa-gear"></i>
           <div class="flex justify-between w-full items-center">

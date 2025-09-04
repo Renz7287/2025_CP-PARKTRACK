@@ -3,71 +3,48 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from .models import City, Barangay, VehicleType, VehicleBrand, VehicleModel, User, DriverProfile, Vehicle
 
-class UserForm(UserCreationForm):
-    email = forms.EmailField(
-        widget=forms.EmailInput(
-            attrs={
-                'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
-            }
-        ),
-        required=True
-    )
-    password1 = forms.CharField(
-        widget=forms.PasswordInput(
-            attrs={
-                'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
-            }
-        )
-    )
-    password2 = forms.CharField(
-        widget=forms.PasswordInput(
-            attrs={
-                'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
-            }
-        )
-    )
+class RegistrationStyleMixin:
+    default_classes = 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
+    
+    def apply_styles(self):
+
+        for field in self.fields.values():
+            existing_classes = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = f'{existing_classes} {self.default_classes}'.strip()
+
+class ModalStyleMixin:
+    default_classes = 'w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-[#7cd1f9] outline-none'
+    
+    def apply_styles(self):
+
+        for field in self.fields.values():
+            existing_classes = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = f'{existing_classes} {self.default_classes}'.strip()
+
+class BaseUserForm(UserCreationForm):
+    email = forms.EmailField(required=True)
     
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ('first_name', 'middle_name', 'last_name', 'email', 'password1', 'password2')
-        widgets = {
-            'first_name': forms.TextInput(
-                attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',  
-                }
-            ),
-            'middle_name': forms.TextInput(
-                attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
-                    'placeholder': 'optional'    
-                }
-            ),
-            'last_name': forms.TextInput(
-                attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
-                }
-            )
-        }
-
+        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields['email'].widget.attrs.pop('autofocus', None)
     
-class DriverProfileForm(forms.ModelForm):
+class BaseDriverProfileForm(forms.ModelForm):
     city = forms.CharField(
         widget=forms.TextInput(
             attrs={
-                'id': 'city-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]', 
-                'list': 'city-list'
+                'id': 'city-dropdown', 'list': 'city-list', 'autocomplete': 'off'
             }
         )
     )
     barangay = forms.CharField(
         widget=forms.TextInput(
             attrs={
-                'id': 'barangay-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
-                'list': 'barangay-list'
+                'id': 'barangay-dropdown','list': 'barangay-list', 'autocomplete': 'off'
             }
         )
     )
@@ -75,18 +52,6 @@ class DriverProfileForm(forms.ModelForm):
     class Meta:
         model = DriverProfile
         fields = ('contact_number', 'gender', 'city', 'barangay')
-        widgets = {
-            'contact_number': forms.NumberInput(
-                attrs={
-                    'type': 'tel', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
-                }
-            ),
-            'gender': forms.Select(
-                attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
-                }
-            ),
-        }
 
     def clean_city(self):
         city_name = self.cleaned_data['city']
@@ -109,29 +74,27 @@ class DriverProfileForm(forms.ModelForm):
 
         return barangay
 
-class VehicleForm(forms.ModelForm):
+class BaseVehicleForm(forms.ModelForm):
     vehicle_type = forms.ModelChoiceField(
         queryset = VehicleType.objects.all(),
         empty_label = 'Select Vehicle Type',
         widget = forms.Select(
             attrs={
-                'id': 'vehicle-type-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
+                'id': 'vehicle-type-dropdown'
             }
         )
     )
     brand = forms.CharField(
         widget = forms.TextInput(  
             attrs={
-                'id': 'brand-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
-                'list': 'brand-list'
+                'id': 'brand-dropdown', 'list': 'brand-list', 'autocomplete': 'off'
             }
         )
     )
     model = forms.CharField(
         widget = forms.TextInput(  
             attrs={
-                'id': 'model-dropdown', 'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]',
-                'list': 'model-list'
+                'id': 'model-dropdown', 'list': 'model-list', 'autocomplete': 'off'
             }
         )
     )
@@ -140,23 +103,6 @@ class VehicleForm(forms.ModelForm):
         model = Vehicle
         exclude = ['brand', 'model']
         fields = ('vehicle_type', 'brand', 'model', 'color', 'plate_number', 'gate_pass')
-        widgets = {
-            'color': forms.TextInput(
-                attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
-                }
-            ),
-            'plate_number': forms.TextInput(
-                attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
-                }
-            ),
-            'gate_pass': forms.TextInput(
-                attrs={
-                    'class': 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
-                }
-            )
-        }
 
     def clean_vehicle_type(self):
         vehicle_type_name = self.cleaned_data['vehicle_type']
@@ -199,3 +145,33 @@ class VehicleForm(forms.ModelForm):
             instance.save()
 
         return instance
+    
+class UserRegistrationForm(RegistrationStyleMixin, BaseUserForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_styles()
+
+class DriverProfileRegistrationForm(RegistrationStyleMixin, BaseDriverProfileForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_styles()
+
+class VehicleRegistrationForm(RegistrationStyleMixin, BaseVehicleForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_styles()
+
+class UserModalForm(ModalStyleMixin, BaseUserForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_styles()
+
+class DriverProfileModalForm(ModalStyleMixin, BaseDriverProfileForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_styles()
+
+class VehicleModalForm(ModalStyleMixin, BaseVehicleForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_styles()

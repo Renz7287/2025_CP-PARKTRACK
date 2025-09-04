@@ -13,31 +13,31 @@
 {% block content %}
 
   <!-- Toggle Buttons and Status Box -->
-  <div id="toggleContainer" class="flex flex-col md:flex-row items-center justify-center md:justify-between px-6 md:px-12 py-6 gap-6 md:gap-12">
+  <div id="toggle-container" class="flex flex-col md:flex-row items-center justify-center md:justify-between px-6 md:px-12 py-6 gap-6 md:gap-12">
     <div class="flex gap-4">
-      <button id="carToggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-red-600 text-white font-semibold shadow-md">
-        <img id="carIcon" src="{% static 'images/car_icon.png' %}" alt="Car" class="w-7 h-7 object-contain" />
+      <button id="car-toggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-red-600 text-white font-semibold shadow-md">
+        <i class="fa-solid fa-car"></i>
         <span>4 - Wheels</span>
       </button>
-      <button id="motorToggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-gray-200 text-black font-semibold shadow-md">
-        <img id="motorIcon" src="{% static 'images/motor_icon.png' %}" alt="motor" class="w-7 h-7 object-contain" />
+      <button id="motor-toggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-gray-200 text-black font-semibold shadow-md">
+        <i class="fa-solid fa-motorcycle"></i>
         <span>Motorcycles</span>
       </button>
       {% if user.is_admin %}
-        <button id="liveToggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-gray-200 text-black font-semibold shadow-md">
+        <button id="live-toggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-gray-200 text-black font-semibold shadow-md">
           <span>Live Feed</span>
         </button>
       {% endif %}
     </div>
 
     <!-- Status Container -->
-    <div id="statusContainer">
-      <div id="carStatus" class="w-full md:w-[280px] h-[130px] bg-white border border-gray-300 rounded-lg shadow px-4 py-2 text-center flex flex-col justify-center">
+    <div id="status-container">
+      <div id="car-status" class="w-full md:w-[280px] h-[130px] bg-white border border-gray-300 rounded-lg shadow px-4 py-2 text-center flex flex-col justify-center">
         <p class="text-lg md:text-xl text-black-500">Available Parking</p>
         <p class="text-4xl font-bold text-black">10</p>
       </div>
 
-      <div id="motorStatus" class="hidden w-full md:w-[280px] h-[130px] bg-white border border-gray-300 rounded-lg shadow px-4 py-2 text-center flex flex-col justify-center">
+      <div id="motor-status" class="hidden w-full md:w-[280px] h-[130px] bg-white border border-gray-300 rounded-lg shadow px-4 py-2 text-center flex flex-col justify-center">
         <p class="text-[20px] text-black-500">Available Parking</p>
         <p class="text-5xl font-bold text-black">8</p>
       </div>
@@ -45,7 +45,7 @@
   </div>
 
   <!-- ================= CAR SECTION ================= -->
-  <div id="carSection" class="section-content">
+  <div id="car-section" class="section-content">
     <div class="pb-6 px-2 md:px-0">
       <div class="max-w-screen-lg mx-auto flex flex-col lg:flex-row justify-center items-start gap-10">
         <!-- Left Section -->
@@ -116,7 +116,7 @@
   </div>
 
   <!-- ================= MOTOR SECTION ================= -->
-  <div id="motorSection" class="section-content hidden">
+  <div id="motor-section" class="section-content">
     <div class="pb-6 px-2 md:px-0">
       <div class="mx-auto w-[1100px] h-12 bg-gray-400 mb-6 rounded flex items-center justify-center">
         <p class="text-white font-bold text-lg">College of Asian and Islamic Studies</p>
@@ -181,7 +181,7 @@
   </div>
 
   <!-- ================= LIVE SECTION ================= -->
-  <div id="liveSection" class="section-content hidden">
+  <div id="live-section" class="section-content">
     <div class="container mx-auto px-4 py-6">
       <div class="flex justify-end mb-6">
         <div class="w-full md:w-[320px] bg-gray-100 rounded-xl shadow-lg px-8 py-6 text-center">
@@ -197,7 +197,7 @@
         <p class="text-gray-500 text-xl">Live Feed Display</p>
       </div>
       <div class="flex justify-start">
-        <button onclick="showSection('car')" class="flex items-center gap-3 px-6 py-4 rounded-xl bg-red-600 text-white font-semibold shadow-md">
+        <button id="back-to-car" class="flex items-center gap-3 px-6 py-4 rounded-xl bg-red-600 text-white font-semibold shadow-md">
           Back to Visual Feed
         </button>
       </div>
@@ -206,78 +206,5 @@
 {% endblock %}
 
 {% block script %}
-<script>
-  const carToggle = document.getElementById('carToggle');
-  const motorToggle = document.getElementById('motorToggle');
-  const liveToggle = document.getElementById('liveToggle');
-  
-  const carSection = document.getElementById('carSection');
-  const motorSection = document.getElementById('motorSection');
-  const liveSection = document.getElementById('liveSection');
-  
-  const carStatus = document.getElementById('carStatus');
-  const motorStatus = document.getElementById('motorStatus');
-  const statusContainer = document.getElementById('statusContainer');
-  const toggleContainer = document.getElementById('toggleContainer');
-  
-  const carIcon = document.getElementById('carIcon');
-  const motorIcon = document.getElementById('motorIcon');
-
-  
-  function resetToggles() {
-    carToggle.classList.remove('bg-red-600', 'text-white');
-    carToggle.classList.add('bg-gray-200', 'text-black');
-    motorToggle.classList.remove('bg-red-600', 'text-white');
-    motorToggle.classList.add('bg-gray-200', 'text-black');
-    liveToggle.classList.remove('bg-red-600', 'text-white');
-    liveToggle.classList.add('bg-gray-200', 'text-black');
-    
-    carIcon.src = "{% static 'images/car_icon2.png' %}";
-    motorIcon.src = "{% static 'images/motor_icon.png' %}";
-  }
-
-
-  function showSection(section) {
-
-    document.querySelectorAll('.section-content').forEach(sec => {
-      sec.classList.add('hidden');
-    });
- 
-    resetToggles();
-    
-    if (section === 'car') {
-      carSection.classList.remove('hidden');
-      statusContainer.classList.remove('hidden');
-      toggleContainer.classList.remove('hidden');
-      carStatus.classList.remove('hidden');
-      motorStatus.classList.add('hidden');
-      carToggle.classList.remove('bg-gray-200', 'text-black');
-      carToggle.classList.add('bg-red-600', 'text-white');
-      carIcon.src = "{% static 'images/car_icon.png' %}";
-    } 
-    else if (section === 'motor') {
-      motorSection.classList.remove('hidden');
-      statusContainer.classList.remove('hidden');
-      toggleContainer.classList.remove('hidden');
-      motorStatus.classList.remove('hidden');
-      carStatus.classList.add('hidden');
-      motorToggle.classList.remove('bg-gray-200', 'text-black');
-      motorToggle.classList.add('bg-red-600', 'text-white');
-      motorIcon.src = "{% static 'images/motor_icon2.png' %}";
-    }
-    else if (section === 'live') {
-      liveSection.classList.remove('hidden');
-      statusContainer.classList.add('hidden');
-      toggleContainer.classList.add('hidden');
-      liveToggle.classList.remove('bg-gray-200', 'text-black');
-      liveToggle.classList.add('bg-red-600', 'text-white');
-    }
-  }
-
-  carToggle.addEventListener('click', () => showSection('car'));
-  motorToggle.addEventListener('click', () => showSection('motor'));
-  liveToggle.addEventListener('click', () => showSection('live'));
-
-  showSection('car');
-</script>
+  <script type="module" src="{% static 'javascript/parkingAllotment.js' %}"></script>
 {% endblock script %}

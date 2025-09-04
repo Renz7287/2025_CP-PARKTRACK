@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.http import JsonResponse
-from .forms import UserForm, DriverProfileForm, VehicleForm
+from .forms import UserRegistrationForm, DriverProfileRegistrationForm, VehicleRegistrationForm
 from .models import City, Barangay, VehicleBrand, VehicleModel
 
 # Create your views here.
@@ -19,9 +19,9 @@ class CustomLoginView(LoginView):
 
 def register_user(request):
     if request.method == 'POST':
-        user_form = UserForm(request.POST, prefix='user')
-        driver_profile_form = DriverProfileForm(request.POST, prefix='driver_profile')
-        vehicle_form = VehicleForm(request.POST, prefix='vehicle')
+        user_form = UserRegistrationForm(request.POST, prefix='user')
+        driver_profile_form = DriverProfileRegistrationForm(request.POST, prefix='driver_profile')
+        vehicle_form = VehicleRegistrationForm(request.POST, prefix='vehicle')
 
         if user_form.is_valid() and driver_profile_form.is_valid() and vehicle_form.is_valid():
 
@@ -38,9 +38,9 @@ def register_user(request):
             return redirect('users:login')
                         
     else:
-        user_form = UserForm(request.POST, prefix='user')
-        driver_profile_form = DriverProfileForm(request.POST, prefix='driver_profile')
-        vehicle_form = VehicleForm(request.POST, prefix='vehicle')
+        user_form = UserRegistrationForm(request.POST, prefix='user')
+        driver_profile_form = DriverProfileRegistrationForm(request.POST, prefix='driver_profile')
+        vehicle_form = VehicleRegistrationForm(request.POST, prefix='vehicle')
 
     cities = list(City.objects.all().values('citymunDesc', 'citymunCode'))
 

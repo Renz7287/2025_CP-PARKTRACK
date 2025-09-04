@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block title %}
   Parking Usage
 {% endblock title %}
@@ -9,7 +11,7 @@
 {% endblock header %}
 
 {% block content %}
-  <main class="h-screen w-full">
+  <section class="h-screen w-full">
     <!-- Main Content -->
     <div class="p-6 space-y-6">
 
@@ -18,7 +20,7 @@
         <h2 class="text-2xl font-bold">Peak Occupancy Days</h2>
         <hr class="mb-6 border-gray-300">
         <div class="h-[500px]">
-          <canvas id="peakOccupancyChart"></canvas>
+          <canvas id="peak-occupancy-chart"></canvas>
         </div>
       </section>
 
@@ -78,36 +80,8 @@
       </section>
 
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-      const ctx = document.getElementById('peakOccupancyChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'],
-          datasets: [{
-            data: [50, 38, 27, 35, 18, 10, 4],
-            backgroundColor: [
-              '#991b1b', '#991b1b', '#6b7280', '#991b1b', '#6b7280', '#6b7280', '#6b7280'
-            ],
-            borderRadius: 8
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { stepSize: 5 }
-            }
-          }
-        }
-      });
-    </script>
-  </main>
+  </section>
 {% endblock %}
+{% block script %}
+  <script type="module" src="{% static 'javascript/parkingUsage.js' %}"></script>
+{% endblock script %}
