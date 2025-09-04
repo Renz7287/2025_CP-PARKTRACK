@@ -7,168 +7,123 @@
 {% endblock title %}
 
 {% block header %}
-  <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Settings</h1>
+  <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Profile Information</h1>
 {% endblock header %}
 
 {% block content %}
-  <div class="p-5 bg-[#dcdbdb] min-h-screen">
-    <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
-      <div class="flex items-center gap-6 w-full mx-auto">
-        <div class="flex-shrink-0">
-          <img class="w-[60px] h-[60px] xl:w-[96px] xl:h-[96px]" src="{{ user.profile_picture.url }}" alt="User profile picture">
-        </div>
-        
-        <div class="flex-1 min-w-0">
-          <h2 class="text-2xl xl:text-3xl font-bold text-black mb-2 xl:mb-3 break-words">
-            {% if user.is_admin %}
-              Administrator
-            {% else %}
-              {{ user.first_name }} {% if user.middle_name %} {{ user.middle_name }} {% endif %} {{ user.last_name }}
-            {% endif %}
-          </h2>
-          
-          <div class="text-black xl:text-lg break-words flex items-center mb-2 group">
-            <span class="font-medium">EMAIL:</span>
-            <span id="current-email" class="ml-1">{{ user.email }}</span>
-            <button id="edit-email-btn" class="ml-2">
-              <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
-            </button>
-          </div>
-          
-          {% if not user.is_admin %}
-            <div class="text-black xl:text-lg break-words flex items-center group">
-              <span class="font-medium">PHONE:</span>
-              <span id="current-phone" class="ml-1">{{ driver_profile.contact_number }}</span>
-              <button id="edit-phone-btn" class="ml-2">
-                <i class="fa-solid fa-pencil-alt text-sm text-gray-500 hover:text-[#F95858] transition-colors"></i>
-              </button>
+    <div class="p-5 bg-[#dcdbdb] min-h-screen">
+        <div class="flex items-center gap-6 w-full mx-auto">
+            <!-- User Profile Header - Centered -->
+            <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
+                <div class="flex flex-col items-center text-center">
+                    <div class="flex-shrink-0 mb-4">
+                        <div class="flex-shrink-0">
+                            <img id="profile-picture" class="size-[10rem] xl:size-[10rem] rounded-full object-cover border-4 border-blue-100" src="{{ user.profile_picture.url }}" alt="User profile picture">
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">{{ user.first_name }} {% if user.middle_name %} {{ user.middle_name }} {% endif %} {{ user.last_name }}</h2>
+                        <p class="text-gray-600">User</p>
+                    </div>
+                </div>
+                
+                <!-- Other Personal Details -->
+                <h3 class="text-lg font-semibold mt-8 mb-4">Other Personal Details</h3>
+                <hr class="mb-6 border-gray-300">
+                
+                <!-- Aligned Information -->
+                <div class="space-y-4">
+                    <div class="text-black xl:text-lg break-words flex items-center">
+                        <span class="font-medium w-24">EMAIL:</span>
+                        <span id="current-email" class="ml-3">{{ user.email }}</span>
+                    </div>
+                    
+                    <div class="text-black xl:text-lg break-words flex items-center">
+                        <span class="font-medium w-24">PHONE:</span>
+                        <span id="current-phone" class="ml-3">{{ driver_profile.contact_number }}</span>
+                    </div>
+
+                    <div class="text-black xl:text-lg break-words flex items-start">
+                        <span class="font-medium w-24">ADDRESS:</span>
+                        <span id="current-address" class="ml-3">Tongo Climaco Dr., Natividad St., Tetuan, Zamboanga City.</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mt-8">
+                    <button id="edit-profile-btn" class="bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md">
+                        Edit
+                    </button>
+                </div>
             </div>
-          {% endif %}
         </div>
-      </div>
     </div>
 
-    <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
-      <h2 class="text-2xl font-bold text-black">Vehicle Details</h2>
-      <hr class="mb-6 border-gray-300">
-      
-      {% for vehicle in vehicles %}
-        <h2 class="ml-10 font-bold text-black">Vehicle 1</h2>
-        <hr class="ml-10 mr-10 mb-6 border-gray-300">
+    <!-- Edit Profile Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <!-- HEADER -->
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">Edit Profile</h3>
+                </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <tbody class="text-black">
-              <tr>
-                <td class="py-2 pl-10 font-semibold w-1/3">Plate Number</td>
-                <td class="py-2 pl-10 plate">{{ vehicle.plate_number }}</td>
-              </tr>
-              <tr>
-                <td class="py-2 pl-10 font-semibold">Brand</td>
-                <td class="py-2 pl-10 brand">{{ vehicle.brand }}</td>
-              </tr>
-              <tr>
-                <td class="py-2 pl-10 font-semibold">Model</td>
-                <td class="py-2 pl-10 model">{{ vehicle.model }}</td>
-              </tr>
-              <tr>
-                <td class="py-2 pl-10 font-semibold">Vehicle Type</td>
-                <td class="py-2 pl-10 type">{{ vehicle.vehicle_type }}</td>
-              </tr>
-              <tr>
-                <td class="py-2 pl-10 font-semibold">Color</td>
-                <td class="py-2 pl-10 color">{{ vehicle.color }}</td>
-              </tr>
-              <tr>
-                <td class="py-2 pl-10 font-semibold">Gate Pass</td>
-                <td class="py-2 pl-10 gate">{{ vehicle.gate_pass }}</td>
-              </tr>
-            </tbody>
-          </table>
+                <form id="edit-profile-form" class="space-y-8">
+                    <!-- PROFILE PICTURE (top centered) -->
+                    <div class="flex flex-col items-center">
+                        <img id="modal-profile-picture" class="size-32 rounded-full object-cover border-4 border-blue-100 mb-4" src="{{ user.profile_picture.url }}" alt="Profile picture">
+                        <label for="profile-picture-input" class="cursor-pointer bg-[#7cd1f9] text-white px-4 py-2 rounded-md hover:bg-[#78cbf2]">Upload<input type="file" id="profile-picture-input" accept="image/*" class="hidden"></label>
+                    </div>
+
+                    <!-- Personal Info (left) + Change Password (right) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Personal Info -->
+                    <div class="space-y-6">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="email" name="email" value="{{ user.email }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="tel" id="phone" name="phone" value="{{ driver_profile.contact_number }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <textarea id="address" name="address" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 resize-none">Tongo Climaco Dr., Natividad St., Tetuan, Zamboanga City.</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Change Password -->
+                    <div class="space-y-6">
+                        <h4 class="text-lg font-medium mb-3 block lg:hidden">Change Password</h4>
+
+                        <div>
+                            <label for="current-password" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                            <input type="password" id="current-password" name="current_password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                        <label for="new-password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                            <input type="password" id="new-password" name="new_password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                            <input type="password" id="confirm-password" name="confirm_password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" id="cancel-edit" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]">Save Changes</button>
+                    </div>
+                </form>
+            </div>
         </div>
-
-        <!-- Edit Button -->
-        <div class="flex justify-end mt-6">
-          <button class="edit-vehicle-btn bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md">
-            Edit
-          </button>
-        </div>
-      {% endfor %}
-    </div>
-
-
-    <div id="email-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
-      <div class="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
-      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 relative z-10 shadow-lg">
-        <h3 class="text-lg font-semibold mb-4">Update Email Address</h3>
-        {{ user_form.email }}
-        <div class="flex justify-end gap-3">
-          <button id="cancel-email-edit-btn" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">Cancel</button>
-          <button type="submit" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-lg hover:bg-[#78cbf2] transition-colors">Save</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="phone-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
-      <div class="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
-      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 relative z-10 shadow-lg">
-        <h3 class="text-lg font-semibold mb-4">Update Phone Number</h3>
-        {{ driver_profile_form.contact_number }}
-        <div class="flex justify-end gap-3">
-          <button id="cancel-edit-btn" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
-            Cancel
-          </button>
-          <button type="submit" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-lg hover:bg-[#78cbf2] transition-colors">
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div id="vehicle-edit-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
-      <div class="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
-      <div class="bg-white rounded-xl p-6 w-full max-w-lg mx-4 relative z-10 shadow-lg">
-        <h3 class="text-lg font-semibold mb-4">Edit Vehicle Details</h3>
-
-        <form id="vehicle-edit-form" class="space-y-4">
-          <input type="hidden" id="vehicle-id">
-
-          <div>
-            <label class="block text-sm font-medium">Plate Number</label>
-            <input type="text" id="edit-plate" class="w-full p-2 border rounded-lg" required>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Brand</label>
-            <input type="text" id="edit-brand" class="w-full p-2 border rounded-lg" required>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Model</label>
-            <input type="text" id="edit-model" class="w-full p-2 border rounded-lg" required>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Vehicle Type</label>
-            <input type="text" id="edit-type" class="w-full p-2 border rounded-lg" required>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Color</label>
-            <input type="text" id="edit-color" class="w-full p-2 border rounded-lg" required>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Gate Pass</label>
-            <input type="text" id="edit-gate" class="w-full p-2 border rounded-lg" required>
-          </div>
-
-          <div class="flex justify-end gap-3 mt-4">
-            <button type="button" id="cancel-vehicle-edit-btn" 
-                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">Cancel</button>
-            <button type="button" id="save-vehicle-btn" 
-                    class="px-4 py-2 bg-[#7cd1f9] text-white rounded-lg hover:bg-[#78cbf2]">Save</button>
-          </div>
-        </form>
-      </div>
     </div>
 {% endblock %}
 
 {% block script %}
-  <script type="module" src="{% static 'javascript/settings.js' %}"></script>
+    <script type="module" src="{% static 'javascript/settings.js' %}"></script>
 {% endblock script %}
