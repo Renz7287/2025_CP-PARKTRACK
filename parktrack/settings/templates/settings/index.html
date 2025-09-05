@@ -45,7 +45,7 @@
 
                     <div class="text-black xl:text-lg break-words flex items-start">
                         <span class="font-medium w-24">ADDRESS:</span>
-                        <span id="current-address" class="ml-3">Tongo Climaco Dr., Natividad St., Tetuan, Zamboanga City.</span>
+                        <span id="current-address" class="ml-3"></span>
                     </div>
                 </div>
 
@@ -58,67 +58,68 @@
         </div>
     </div>
 
-    <!-- Edit Profile Modal -->
     <div id="edit-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div class="p-6">
-                <!-- HEADER -->
+        <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
+            <div class="p-6 flex-1">
+
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-2xl font-bold">Edit Profile</h3>
                 </div>
 
                 <form id="edit-profile-form" class="space-y-8">
-                    <!-- PROFILE PICTURE (top centered) -->
                     <div class="flex flex-col items-center">
                         <img id="modal-profile-picture" class="size-32 rounded-full object-cover border-4 border-blue-100 mb-4" src="{{ user.profile_picture.url }}" alt="Profile picture">
                         <label for="profile-picture-input" class="cursor-pointer bg-[#7cd1f9] text-white px-4 py-2 rounded-md hover:bg-[#78cbf2]">Upload<input type="file" id="profile-picture-input" accept="image/*" class="hidden"></label>
                     </div>
 
-                    <!-- Personal Info (left) + Change Password (right) -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Personal Info -->
-                    <div class="space-y-6">
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                            <input type="email" id="email" name="email" value="{{ user.email }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <div class="space-y-6">
+                            <div>
+                                <label for="first-name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" id="first-name" name="first_name" value="{{ user.first_name }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label for="middle-name" class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                                <input type="text" id="middle-name" name="middle_name" value="{{ user.middle_name }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label for="last-name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" id="last-name" name="last_name" value="{{ user.last_name }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" id="email" name="email" value="{{ user.email }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            </div>
                         </div>
 
-                        <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                            <input type="tel" id="phone" name="phone" value="{{ driver_profile.contact_number }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <div class="space-y-6">
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" value="{{ driver_profile.contact_number }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label for="barangay" class="block text-sm font-medium text-gray-700 mb-1">Barangay</label>
+                                <input type="text" id="barangay" name="barangay" value="" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                <input type="text" id="city" name="city" value="" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            </div>
                         </div>
-
-                        <div>
-                            <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                            <textarea id="address" name="address" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 resize-none">Tongo Climaco Dr., Natividad St., Tetuan, Zamboanga City.</textarea>
-                        </div>
-                    </div>
-
-                    <!-- Change Password -->
-                    <div class="space-y-6">
-                        <h4 class="text-lg font-medium mb-3 block lg:hidden">Change Password</h4>
-
-                        <div>
-                            <label for="current-password" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                            <input type="password" id="current-password" name="current_password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <div>
-                        <label for="new-password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                            <input type="password" id="new-password" name="new_password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <div>
-                            <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                            <input type="password" id="confirm-password" name="confirm_password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end space-x-4">
-                        <button type="button" id="cancel-edit" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]">Save Changes</button>
                     </div>
                 </form>
+            </div>
+            
+            <div class="p-4">
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancel-edit" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
+                    <button type="submit" form="edit-profile-form" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]">Save Changes</button>
+                </div>
             </div>
         </div>
     </div>
