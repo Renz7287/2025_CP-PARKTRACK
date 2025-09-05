@@ -22,7 +22,7 @@
   <hr class="text-[#F95858] mt-8">
 
   <section class="flex items-center ml-2 py-4 gap-2">
-    <img class="w-9 h-9" src="{{ user.profile_picture.url }}">
+    <img class="w-9 h-9 rounded-full" src="{{ user.profile_picture.url }}">
     <div class="flex flex-col items-start">
       <p class="font-semibold text-white">
         {% if user.is_admin %}
@@ -84,7 +84,7 @@
         </div>
 
         <div class="text-left text-sm text-white font-thin mt-2 w-4/5 mx-auto" id="submenu">
-          <a href="{% url 'settings:account-settings' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
+          <a href="{% url 'settings:personal-information' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
             <i class="fa-solid fa-circle-user"></i>
             Personal Information
           </a>

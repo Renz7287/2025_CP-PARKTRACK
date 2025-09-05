@@ -1,5 +1,5 @@
 import { openSubmenu, openCloseSidebar, loadContent } from "./navbar.js";
-import { initializeSettings } from "./settings.js";
+import { initializePersonalInformation } from "./personalInformation.js";
 import { initializeParkingAllotment } from "./parkingAllotment.js"
 import { initializeParkingUsage } from "./parkingUsage.js";
 
@@ -7,7 +7,7 @@ openSubmenu();
 
 function initializePageScripts() {
     if (document.querySelector("#edit-profile-button")) {
-        initializeSettings();
+        initializePersonalInformation();
     }
 
     if (document.querySelector("#car-toggle") || document.querySelector("#live-toggle")) {
@@ -27,11 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('open-sidebar')?.addEventListener('click', () => openCloseSidebar());
     document.getElementById('close-sidebar')?.addEventListener('click', () => openCloseSidebar());
 
-    document.body.addEventListener('click', (e) => {
-        const link = e.target.closest('a.js-link');
+    document.body.addEventListener('click', (event) => {
+        const link = event.target.closest('a.js-link');
 
         if (link) {
-            e.preventDefault();
+            event.preventDefault();
             const url = link.getAttribute('href');
             loadContent(url).then(() => {
                 initializePageScripts();

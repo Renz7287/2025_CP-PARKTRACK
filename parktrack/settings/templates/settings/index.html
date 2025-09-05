@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block title %}
-  Account Settings
+  Personal Information
 {% endblock title %}
 
 {% block header %}
@@ -45,7 +45,7 @@
 
                     <div class="text-black xl:text-lg break-words flex items-start">
                         <span class="font-medium w-24">ADDRESS:</span>
-                        <span id="current-address" class="ml-3"></span>
+                        <span id="current-address" class="ml-3">{{ driver_profile.barangay }}, {{ driver_profile.city }}</span>
                     </div>
                 </div>
 
@@ -66,49 +66,58 @@
                     <h3 class="text-2xl font-bold">Edit Profile</h3>
                 </div>
 
-                <form id="edit-profile-form" class="space-y-8">
+                <form id="edit-profile-form" class="space-y-8" method="POST" action="{% url 'settings:edit-user' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+
                     <div class="flex flex-col items-center">
-                        <img id="modal-profile-picture" class="size-32 rounded-full object-cover border-4 border-blue-100 mb-4" src="{{ user.profile_picture.url }}" alt="Profile picture">
-                        <label for="profile-picture-input" class="cursor-pointer bg-[#7cd1f9] text-white px-4 py-2 rounded-md hover:bg-[#78cbf2]">Upload<input type="file" id="profile-picture-input" accept="image/*" class="hidden"></label>
+                        <img id="modal-profile-picture" class="size-32 rounded-full object-cover border-4 border-blue-100 mb-4" src="{{ user.profile_picture.url }}" alt="Profile picture" data-original-src="{{ user.profile_picture.url }}">
+                        <label for="{{ user_form.profile_picture.id_for_label }}" class="cursor-pointer bg-[#7cd1f9] text-white px-4 py-2 rounded-md hover:bg-[#78cbf2]">Upload{{ user_form.profile_picture }}</label>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div class="space-y-6">
                             <div>
-                                <label for="first-name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                                <input type="text" id="first-name" name="first_name" value="{{ user.first_name }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <label for="{{ user_form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                {{ user_form.first_name }}
                             </div>
 
                             <div>
-                                <label for="middle-name" class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
-                                <input type="text" id="middle-name" name="middle_name" value="{{ user.middle_name }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <label for="{{ user_form.middle_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                                {{ user_form.middle_name }}
                             </div>
 
                             <div>
-                                <label for="last-name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                                <input type="text" id="last-name" name="last_name" value="{{ user.last_name }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <label for="{{ user_form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                {{ user_form.last_name }}
                             </div>
 
                             <div>
-                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input type="email" id="email" name="email" value="{{ user.email }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <label for="{{ user_form.email.id_for_label }}l" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                {{ user_form.email }}
                             </div>
                         </div>
 
                         <div class="space-y-6">
                             <div>
-                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" value="{{ driver_profile.contact_number }}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <label for="{{ user_form.contact_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                {{ driver_profile_form.contact_number }}
                             </div>
 
                             <div>
-                                <label for="barangay" class="block text-sm font-medium text-gray-700 mb-1">Barangay</label>
-                                <input type="text" id="barangay" name="barangay" value="" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <label for="{{ user_form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                {{ driver_profile_form.city }}
+                                <datalist id="city-list">
+                                    {% for city in cities %}
+                                        <option value="{{ city.citymunDesc }}" data-code="{{ city.citymunCode }}"></option>
+                                    {% endfor %}
+                                </datalist>
                             </div>
 
                             <div>
-                                <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                <input type="text" id="city" name="city" value="" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <label for="{{ user_form.barangay.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Barangay</label>
+                                {{ driver_profile_form.barangay }}
+                                <datalist id="barangay-list">                                    
+                                </datalist>
                             </div>
                         </div>
                     </div>

@@ -16,6 +16,9 @@ class City(models.Model):
         db_table = 'refcitymun'
         managed = False
 
+    def __str__(self):
+        return self.citymunDesc
+
 class Barangay(models.Model):
     id = models.AutoField(primary_key=True)
     brgyDesc = models.CharField(max_length=255)
@@ -27,6 +30,9 @@ class Barangay(models.Model):
     class Meta:
         db_table = 'refbrgy'
         managed = False
+
+    def __str__(self):
+        return self.brgyDesc
 
 class VehicleType(models.Model):
     id = models.AutoField(primary_key=True)

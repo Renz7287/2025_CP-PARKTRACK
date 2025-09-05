@@ -38,7 +38,7 @@ export async function loadContent(url, addToHistory = true) {
 
         return true;
     } catch (error) {
-        contentArea.innerHTML = '<p class="text-center text-[#DC143C]">Error loading page.</p>'
+        contentArea.innerHTML = '<p class="text-center text-red-500">Error loading page.</p>'
 
         return false;
     }

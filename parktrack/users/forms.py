@@ -13,7 +13,7 @@ class RegistrationStyleMixin:
             field.widget.attrs['class'] = f'{existing_classes} {self.default_classes}'.strip()
 
 class ModalStyleMixin:
-    default_classes = 'w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-[#7cd1f9] outline-none'
+    default_classes = 'w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
     
     def apply_styles(self):
 
@@ -161,15 +161,45 @@ class VehicleRegistrationForm(RegistrationStyleMixin, BaseVehicleForm):
         super().__init__(*args, **kwargs)
         self.apply_styles()
 
-class UserModalForm(ModalStyleMixin, BaseUserForm):
+class UserModalForm(ModalStyleMixin, forms.ModelForm):
+    profile_picture = forms.FileField(
+        widget=forms.FileInput(
+            attrs={
+                'id': 'profile-picture-input', 'class': 'hidden', 'accept': 'image/*'
+            },
+        ),
+        required=False
+    )
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'middle_name', 'last_name', 'email', 'profile_picture')
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.apply_styles()
 
 class DriverProfileModalForm(ModalStyleMixin, BaseDriverProfileForm):
+    class Meta:
+        model = DriverProfile
+        exclude = ['user', 'gender']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.apply_styles()
+
+        instance = kwargs.get('instance')
+
+        if instance:
+            self._city_obj = instance.city
+            self._barangay_obj = instance.barangay
+
+            if instance.city:
+                self.initial['city'] = instance.city.citymunDesc
+
+            if instance.barangay:
+                self.initial['barangay'] = instance.barangay.brgyDesc
 
 class VehicleModalForm(ModalStyleMixin, BaseVehicleForm):
     def __init__(self, *args, **kwargs):
