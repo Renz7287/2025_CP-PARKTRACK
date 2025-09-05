@@ -100,9 +100,9 @@
   </nav>
   
   <footer class="fixed bottom-0 mb-2">
-    <form action="{% url 'users:logout' %}" method="POST">
+    <form action="{% url 'users:logout' %}" method="POST" id="logout-form">
       {% csrf_token %}
-      <button class="font-semibold
+      <button id="logout-button" class="font-semibold
        text-white p-2 hover:text-red-100 cursor-pointer
       ">
         <i class="fa-solid fa-right-from-bracket"></i>

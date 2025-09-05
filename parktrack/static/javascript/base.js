@@ -1,4 +1,4 @@
-import { openSubmenu, openCloseSidebar, loadContent } from "./navbar.js";
+import { openSubmenu, openCloseSidebar, loadContent, highlightActiveLink, showLogoutConfirmation } from "./navbar.js";
 import { initializePersonalInformation } from "./personalInformation.js";
 import { initializeParkingAllotment } from "./parkingAllotment.js"
 import { initializeParkingUsage } from "./parkingUsage.js";
@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const url = link.getAttribute('href');
             loadContent(url).then(() => {
                 initializePageScripts();
+                highlightActiveLink();
+                showLogoutConfirmation();
             });
         }
     });
@@ -44,4 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
         initializePageScripts();
     });
 
+    highlightActiveLink();
+    showLogoutConfirmation();
 });

@@ -18,15 +18,15 @@
 </head>
 <body class="flex bg-[#dcdbdb]">
 
-  {% include 'navbar.html' %}
+  	{% include 'navbar.html' %}
 
-  <main id="content" class="h-screen w-full overflow-auto">
+  	<main id="content" class="h-screen w-full overflow-auto">
 {% endif %}
     
     <header class="top-0 sticky bg-white shadow-xl z-[5] pb-3 pt-[0.5px]">
-      {% block header %}
+		{% block header %}
 
-      {% endblock header %}
+		{% endblock header %}
     </header>
     
     {% block content %}
@@ -34,29 +34,33 @@
     {% endblock %}
     
 {% if not is_partial %}
-  </main>
+  	</main>
   
   {% if messages %}
     <script>
-      {% for message in messages%}  
-        let icon = 'info';
+		{% for message in messages%}  
+			let icon = 'info';
 
-        if ('{{ message.tags }}' === 'success') icon = 'success';
-        if ('{{ message.tags }}' === 'error') icon = 'error';
-        if ('{{ message.tags }}' === 'warning') icon = 'warning';
-      
-        Swal.fire({
-          icon: icon,
-          title: '{{ message|escapejs }}',
-          showConfirmationButton: true,
-        });
-      {% endfor %}
+			if ('{{ message.tags }}' === 'success') icon = 'success';
+			if ('{{ message.tags }}' === 'error') icon = 'error';
+			if ('{{ message.tags }}' === 'warning') icon = 'warning';
+		
+			Swal.fire({
+			icon: icon,
+			title: '{{ message|escapejs }}',
+			showConfirmationButton: true,
+			customClass: {
+				confirmButton: 'px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] focus:outline-none'
+			},
+			buttonsStyling: false
+			});
+		{% endfor %}
     </script>
-  {% endif %}
-  <script type="module" src="{% static 'javascript/base.js' %}"></script>
-  {% block script %}
+	{% endif %}
+	<script type="module" src="{% static 'javascript/base.js' %}"></script>
+	{% block script %}
 
-  {% endblock script %}
+	{% endblock script %}
 </body>
 </html>
 {{ redirect_to_login_immediately }}

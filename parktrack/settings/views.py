@@ -41,6 +41,7 @@ def vehicle_management(request):
     }
     return render(request, 'settings/vehicle-management.html', context)
 
+@login_required
 def edit_user(request):
     user = request.user
 

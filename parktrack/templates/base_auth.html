@@ -30,8 +30,12 @@
 
                 Swal.fire({
                     icon: icon,
-                    text: '{{ message|escapejs }}',
+                    title: '{{ message|escapejs }}',
                     showConfirmationButton: true,
+                    customClass: {
+                        confirmButton: 'px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] focus:outline-none'
+                    },
+                    buttonsStyling: false
                 });
             {% endfor %}
         </script>
