@@ -3,366 +3,121 @@
 {% load static %}
 
 {% block title %}
-  Account Settings
+    Vehicle Management
 {% endblock title %}
 
 {% block header %}
-  <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Vehicle Management</h1>
+    <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Vehicle Management</h1>
 {% endblock header %}
 
 {% block content %}
-  <div class="p-5 bg-[#dcdbdb] min-h-screen">
-    <div class="flex items-center gap-6 w-full mx-auto">
-      <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
+    <section class="vehicle-management">
+        <div class="p-5 bg-[#dcdbdb] min-h-screen">
+            <div class="flex items-center gap-6 w-full mx-auto">
+                <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
+                    <table id="vehicles-table" class="display stripe hover w-full text-sm text-left">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                            <tr>
+                            <th class="px-4 py-2">Plate Number</th>
+                            <th class="px-4 py-2">Gate Pass</th>
+                            <th class="px-4 py-2 hidden md:table-cell">Brand</th>
+                            <th class="px-4 py-2">Model</th>
+                            <th class="px-4 py-2 hidden md:table-cell">Color</th>
+                            <th class="px-4 py-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehicle in vehicles %}
+                                <tr id="vehicle-row-{{ vehicle.id }}">
+                                    <td>{{ vehicle.plate_number }}</td>
+                                    <td>{{ vehicle.gate_pass }}</td>
+                                    <td class="hidden md:table-cell">{{ vehicle.brand }}</td>
+                                    <td>{{ vehicle.model }}</td>
+                                    <td class="hidden md:table-cell">{{ vehicle.color }}</td>
+                                    <td>
+                                        <button class="js-edit-button text-blue-500 hover:text-blue-700 mr-2"
+                                            data-id="{{ vehicle.id }}"
+                                            data-plate-number="{{ vehicle.plate_number }}"
+                                            data-gate-pass="{{ vehicle.gate_pass }}"
+                                            data-brand="{{ vehicle.brand }}"
+                                            data-model="{{ vehicle.model }}"
+                                            data-color="{{ vehicle.color }}"
+                                        >
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <button class="js-delete-button text-red-500 hover:text-red-700" data-id="{{ vehicle.id }}">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
 
-        <table id="vehicles-table" class="display stripe hover w-full text-sm text-left">
-          <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-            <tr>
-              <th class="px-4 py-2">Plate Number</th>
-              <th class="px-4 py-2">Gate Pass</th>
-              <th class="px-4 py-2 hidden md:table-cell">Brand</th>
-              <th class="px-4 py-2">Model</th>
-              <th class="px-4 py-2 hidden md:table-cell">Vehicle Type</th>
-              <th class="px-4 py-2 hidden md:table-cell">Color</th>
-              <th class="px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>ABC123</td>
-              <td>GP001</td>
-              <td class="hidden md:table-cell">Toyota</td>
-              <td>Camry</td>
-              <td class="hidden md:table-cell">Sedan</td>
-              <td class="hidden md:table-cell">Red</td>
-              <td>
-                <button class="text-blue-500 hover:text-blue-700 mr-2 edit-btn">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button class="text-red-500 hover:text-red-700 remove-btn">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td>XYZ789</td>
-              <td>GP002</td>
-              <td class="hidden md:table-cell">Honda</td>
-              <td>Civic</td>
-              <td class="hidden md:table-cell">Sedan</td>
-              <td class="hidden md:table-cell">Blue</td>
-              <td>
-                <button class="text-blue-500 hover:text-blue-700 mr-2 edit-btn">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button class="text-red-500 hover:text-red-700 remove-btn">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="mt-6 flex justify-end">
-          <button id="add-vehicle-button"
-            class="bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md flex items-center">
-            <i class="fa-solid fa-plus mr-2"></i> Add New Vehicle
-          </button>
+                    <div class="mt-6 flex justify-end">
+                        <button id="add-vehicle-button"
+                            class="bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md flex items-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Add New Vehicle
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
-  
-  <div id="add-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden modal">
-      <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
-          <div class="p-6 flex-1">
-              <div class="flex justify-between items-center mb-6">
-                  <h3 class="text-2xl font-bold">Add New Vehicle</h3>
-              </div>
+    
+        <div id="vehicle-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
+                <div class="p-6 flex-1">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 id="form-title" class="text-2xl font-bold">Add New Vehicle</h3>
+                    </div>
 
-              <form id="add-vehicle-form" class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                      <label for="add-plate-number" class="block text-sm font-medium text-gray-700 mb-1">Plate Number</label>
-                      <input type="text" id="add-plate-number" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter plate number">
-                  </div>
-                  
-                  <div>
-                      <label for="add-gate-pass" class="block text-sm font-medium text-gray-700 mb-1">Gate Pass</label>
-                      <input type="text" id="add-gate-pass" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter gate pass number">
-                  </div>
-                  
-                  <div>
-                      <label for="add-brand" class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
-                      <input type="text" id="add-brand" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter brand">
-                  </div>
-                  
-                  <div>
-                      <label for="add-model" class="block text-sm font-medium text-gray-700 mb-1">Model</label>
-                      <input type="text" id="add-model" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter model">
-                  </div>
-                  
-                  <div>
-                      <label for="add-vehicle-type" class="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-                      <input type="text" id="add-vehicle-type" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter vehicle type">
-                  </div>
-                  
-                  <div>
-                      <label for="add-color" class="block text-sm font-medium text-gray-700 mb-1">Color</label>
-                      <input type="text" id="add-color" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter color">
-                  </div>
-              </form>
-          </div>
+                    <form id="vehicle-form" method="POST" action="{% url 'settings:add-vehicle' %}" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {% csrf_token %}
+                        
+                        <div>
+                            <label for="{{ form.plate_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Plate Number</label>
+                            {{ form.plate_number }}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.gate_pass.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Gate Pass</label>
+                            {{ form.gate_pass }}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.brand.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                            {{ form.brand }}
+                            <datalist id="brand-list">
+                                {% for brand in brands %}
+                                    <option value="{{ brand.brand_name }}" data-code="{{ brand.id }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.model.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                            {{ form.model }}
+                            <datalist id="model-list">
+                            </datalist>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                            {{ form.color }}
+                        </div>
 
-          <div class="p-4">
-              <div class="flex justify-end space-x-4">
-                  <button id="cancel-add" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
-                  <button id="submit-add-vehicle" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]">Add Vehicle</button>
-              </div>
-          </div>
-      </div>
-  </div>
-
-  <div id="edit-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden">
-      <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
-          <div class="p-6 flex-1">
-              <div class="flex justify-between items-center mb-6">
-                  <h3 class="text-2xl font-bold">Edit Vehicle</h3>
-              </div>
-
-              <form id="edit-vehicle-form" class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                      <label for="plate-number" class="block text-sm font-medium text-gray-700 mb-1">Plate Number</label>
-                      <input type="text" id="plate-number" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter plate number">
-                  </div>
-                  
-                  <div>
-                      <label for="gate-pass" class="block text-sm font-medium text-gray-700 mb-1">Gate Pass</label>
-                      <input type="text" id="gate-pass" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter gate pass number">
-                  </div>
-                  
-                  <div>
-                      <label for="brand" class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
-                      <input type="text" id="brand" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter brand">
-                  </div>
-                  
-                  <div>
-                      <label for="model" class="block text-sm font-medium text-gray-700 mb-1">Model</label>
-                      <input type="text" id="model" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter model">
-                  </div>
-                  
-                  <div>
-                      <label for="vehicle-type" class="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-                      <input type="text" id="vehicle-type" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter vehicle type">
-                  </div>
-                  
-                  <div>
-                      <label for="color" class="block text-sm font-medium text-gray-700 mb-1">Color</label>
-                      <input type="text" id="color" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none" placeholder="Enter color">
-                  </div>
-              </form>
-          </div>
-
-          <div class="p-4">
-              <div class="flex justify-end space-x-4">
-                  <button id="cancel-edit" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
-                  <button id="save-vehicle" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]">Save Changes</button>
-              </div>
-          </div>
-      </div>
-  </div>
-
-  <div id="delete-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden">
-      <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-md flex flex-col">
-          <div class="p-6 flex-1">
-              <div class="flex justify-between items-center mb-4">
-                  <h3 class="text-xl font-bold">Confirm Deletion</h3>
-              </div>
-              <p class="text-gray-600">Are you sure you want to delete the vehicle with plate number: <span id="delete-plate-number" class="font-semibold text-gray-800"></span>? This action cannot be undone.</p>
-          </div>
-
-          <div class="p-4">
-              <div class="flex justify-end space-x-4">
-                  <button id="cancel-delete" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
-                  <button id="confirm-delete" class="px-4 py-2 bg-[#9D0E15] text-white rounded-md hover:bg-[#7a0b10]">Delete Vehicle</button>
-              </div>
-          </div>
-      </div>
-  </div>
-
-  <script>
-  $(document).ready(function() {
-      // Initialize DataTable
-      const table = $('#vehicles-table').DataTable({
-          responsive: true,
-          paging: true,
-          searching: true,
-          ordering: true,
-          autoWidth: false,
-          language: {
-              search: "Search vehicles:",
-              lengthMenu: "Show _MENU_ entries",
-              info: "Showing _START_ to _END_ of _TOTAL_ vehicles",
-              infoEmpty: "No vehicles available",
-              zeroRecords: "No matching vehicles found",
-          },
-          columnDefs: [
-              { orderable: false, targets: -1 } // disable sorting on "Actions" column
-          ]
-      });
-
-      // Variables to track current row being edited/deleted
-      let currentRow = null;
-
-      // Add new vehicle button
-      $('#add-vehicle-button').click(function() {
-          // Reset the form
-          $('#add-vehicle-form')[0].reset();
-          
-          // Show the modal
-          $('#add-modal').removeClass('hidden');
-      });
-
-      // Submit new vehicle
-      $('#submit-add-vehicle').click(function() {
-          // Basic validation
-          let isValid = true;
-          $('#add-vehicle-form input:required, #add-vehicle-form select:required').each(function() {
-              if ($(this).val() === '') {
-                  isValid = false;
-                  $(this).addClass('border-red-500');
-              } else {
-                  $(this).removeClass('border-red-500');
-              }
-          });
-          
-          if (!isValid) {
-              alert('Please fill in all required fields');
-              return;
-          }
-          
-          // Get values from form
-          const plateNumber = $('#add-plate-number').val();
-          const gatePass = $('#add-gate-pass').val();
-          const brand = $('#add-brand').val();
-          const model = $('#add-model').val();
-          const vehicleType = $('#add-vehicle-type').val();
-          const color = $('#add-color').val();
-          
-          // Add new row
-          table.row.add([
-              plateNumber,
-              gatePass,
-              brand,
-              model,
-              vehicleType,
-              color,
-              `<button class="text-blue-500 hover:text-blue-700 mr-2 edit-btn">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button class="text-red-500 hover:text-red-700 remove-btn">
-                  <i class="fa-solid fa-trash"></i>
-                </button>`
-          ]).draw();
-          
-          // Close the modal
-          $('#add-modal').addClass('hidden');
-          
-          // Show success message
-          alert('Vehicle added successfully!');
-      });
-
-      // Edit button click handler
-      $('#vehicles-table').on('click', '.edit-btn', function() {
-          const row = $(this).closest('tr');
-          currentRow = row;
-          
-          // Get data from the row
-          const cells = row.find('td');
-          const plateNumber = cells.eq(0).text();
-          const gatePass = cells.eq(1).text();
-          const brand = cells.eq(2).text();
-          const model = cells.eq(3).text();
-          const vehicleType = cells.eq(4).text();
-          const color = cells.eq(5).text();
-          
-          // Fill the form with current data
-          $('#edit-plate-number').val(plateNumber);
-          $('#edit-gate-pass').val(gatePass);
-          $('#edit-brand').val(brand);
-          $('#edit-model').val(model);
-          $('#edit-vehicle-type').val(vehicleType);
-          $('#edit-color').val(color);
-          
-          // Show the modal
-          $('#edit-modal').removeClass('hidden');
-      });
-
-      // Remove button click handler
-      $('#vehicles-table').on('click', '.remove-btn', function() {
-          const row = $(this).closest('tr');
-          currentRow = row;
-          
-          // Get plate number for confirmation message
-          const plateNumber = row.find('td').eq(0).text();
-          
-          // Set the plate number in the confirmation message
-          $('#delete-plate-number').text(plateNumber);
-          
-          // Show the modal
-          $('#delete-modal').removeClass('hidden');
-      });
-
-      // Close modals
-      $('#cancel-add').click(function() {
-          $('#add-modal').addClass('hidden');
-      });
-      
-      $('#cancel-edit').click(function() {
-          $('#edit-modal').addClass('hidden');
-      });
-      
-      $('#cancel-delete').click(function() {
-          $('#delete-modal').addClass('hidden');
-      });
-
-      // Save vehicle changes
-      $('#save-vehicle').click(function() {
-          // Get values from form
-          const plateNumber = $('#edit-plate-number').val();
-          const gatePass = $('#edit-gate-pass').val();
-          const brand = $('#edit-brand').val();
-          const model = $('#edit-model').val();
-          const vehicleType = $('#edit-vehicle-type').val();
-          const color = $('#edit-color').val();
-          
-          if (currentRow) {
-              // Update existing row
-              const cells = currentRow.find('td');
-              cells.eq(0).text(plateNumber);
-              cells.eq(1).text(gatePass);
-              cells.eq(2).text(brand);
-              cells.eq(3).text(model);
-              cells.eq(4).text(vehicleType);
-              cells.eq(5).text(color);
-              
-              // Close the modal
-              $('#edit-modal').addClass('hidden');
-              
-              // Show success message
-              alert('Vehicle updated successfully!');
-          }
-      });
-
-      // Confirm deletion
-      $('#confirm-delete').click(function() {
-          if (currentRow) {
-              table.row(currentRow).remove().draw();
-              $('#delete-modal').addClass('hidden');
-              
-              // Show success message
-              alert('Vehicle deleted successfully!');
-          }
-      });
-  });
-  </script>
+                        <div class="p-4">
+                            <div class="flex justify-end space-x-4">
+                                <button id="cancel-button" type="button" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
+                                <button id="submit-button" type="submit" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]">Add Vehicle</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
 {% endblock content %}
+{% block script %}
+    <script type="module" src="{% static 'javascript/settings/vehicleManagement.js' %}"></script>
+{% endblock script %}

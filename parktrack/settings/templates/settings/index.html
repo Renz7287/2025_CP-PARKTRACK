@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block title %}
-  Personal Information
+  Profile Information
 {% endblock title %}
 
 {% block header %}
@@ -11,129 +11,131 @@
 {% endblock header %}
 
 {% block content %}
-    <div class="p-5 bg-[#dcdbdb] min-h-screen">
-        <div class="flex items-center gap-6 w-full mx-auto">
-            <!-- User Profile Header - Centered -->
-            <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
-                <div class="flex flex-col items-center text-center">
-                    <div class="flex-shrink-0 mb-4">
-                        <div class="flex-shrink-0">
-                            <img id="profile-picture" class="size-[10rem] xl:size-[10rem] rounded-full object-cover border-4 border-blue-100" src="{{ user.profile_picture.url }}" alt="User profile picture">
+    <section class="profile-information">
+        <div class="p-5 bg-[#dcdbdb] min-h-screen">
+            <div class="flex items-center gap-6 w-full mx-auto">
+                <!-- User Profile Header - Centered -->
+                <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="flex-shrink-0 mb-4">
+                            <div class="flex-shrink-0">
+                                <img id="profile-picture" class="size-[10rem] xl:size-[10rem] rounded-full object-cover border-4 border-blue-100" src="{{ user.profile_picture.url }}" alt="User profile picture">
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold">{{ user.first_name }} {% if user.middle_name %} {{ user.middle_name }} {% endif %} {{ user.last_name }}</h2>
-                        <p class="text-gray-600">User</p>
-                    </div>
-                </div>
-                
-                <!-- Other Personal Details -->
-                <h3 class="text-lg font-semibold mt-8 mb-4">Other Personal Details</h3>
-                <hr class="mb-6 border-gray-300">
-                
-                <!-- Aligned Information -->
-                <div class="space-y-4">
-                    <div class="text-black xl:text-lg break-words flex items-center">
-                        <span class="font-medium w-24">EMAIL:</span>
-                        <span id="current-email" class="ml-3">{{ user.email }}</span>
+                        <div>
+                            <h2 class="text-xl font-bold">{{ user.first_name }} {% if user.middle_name %} {{ user.middle_name }} {% endif %} {{ user.last_name }}</h2>
+                            <p class="text-gray-600">User</p>
+                        </div>
                     </div>
                     
-                    <div class="text-black xl:text-lg break-words flex items-center">
-                        <span class="font-medium w-24">PHONE:</span>
-                        <span id="current-phone" class="ml-3">{{ driver_profile.contact_number }}</span>
+                    <!-- Other Personal Details -->
+                    <h3 class="text-lg font-semibold mt-8">Other Personal Details</h3>
+                    <hr class="mb-6 border-gray-300">
+                    
+                    <!-- Aligned Information -->
+                    <div class="space-y-4">
+                        <div class="text-black xl:text-lg break-words flex items-center">
+                            <span class="font-medium w-24">EMAIL:</span>
+                            <span id="current-email" class="ml-3">{{ user.email }}</span>
+                        </div>
+                        
+                        <div class="text-black xl:text-lg break-words flex items-center">
+                            <span class="font-medium w-24">PHONE:</span>
+                            <span id="current-phone" class="ml-3">{{ driver_profile.contact_number }}</span>
+                        </div>
+
+                        <div class="text-black xl:text-lg break-words flex items-start">
+                            <span class="font-medium w-24">ADDRESS:</span>
+                            <span id="current-address" class="ml-3">{{ driver_profile.barangay }}, {{ driver_profile.city }}</span>
+                        </div>
                     </div>
 
-                    <div class="text-black xl:text-lg break-words flex items-start">
-                        <span class="font-medium w-24">ADDRESS:</span>
-                        <span id="current-address" class="ml-3">{{ driver_profile.barangay }}, {{ driver_profile.city }}</span>
+                    <div class="flex justify-end mt-8">
+                        <button id="edit-profile-button" class="bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md">
+                            Edit
+                        </button>
                     </div>
-                </div>
-
-                <div class="flex justify-end mt-8">
-                    <button id="edit-profile-button" class="bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md">
-                        Edit
-                    </button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="edit-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
-            <div class="p-6 flex-1">
+        <div id="edit-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
+                <div class="p-6 flex-1">
 
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-2xl font-bold">Edit Profile</h3>
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold">Edit Profile</h3>
+                    </div>
+
+                    <form id="edit-profile-form" class="space-y-8" method="POST" action="{% url 'settings:edit-user' user.id %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="flex flex-col items-center">
+                            <img id="modal-profile-picture" class="size-32 rounded-full object-cover border-4 border-blue-100 mb-4" src="{{ user.profile_picture.url }}" alt="Profile picture" data-original-src="{{ user.profile_picture.url }}">
+                            <label for="{{ user_form.profile_picture.id_for_label }}" class="cursor-pointer bg-[#7cd1f9] text-white px-4 py-2 rounded-md hover:bg-[#78cbf2]">Upload{{ user_form.profile_picture }}</label>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="{{ user_form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                    {{ user_form.first_name }}
+                                </div>
+
+                                <div>
+                                    <label for="{{ user_form.middle_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                                    {{ user_form.middle_name }}
+                                </div>
+
+                                <div>
+                                    <label for="{{ user_form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                    {{ user_form.last_name }}
+                                </div>
+
+                                <div>
+                                    <label for="{{ user_form.email.id_for_label }}l" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    {{ user_form.email }}
+                                </div>
+                            </div>
+
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="{{ user_form.contact_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                    {{ driver_profile_form.contact_number }}
+                                </div>
+
+                                <div>
+                                    <label for="{{ user_form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                    {{ driver_profile_form.city }}
+                                    <datalist id="city-list">
+                                        {% for city in cities %}
+                                            <option value="{{ city.citymunDesc }}" data-code="{{ city.citymunCode }}"></option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+
+                                <div>
+                                    <label for="{{ user_form.barangay.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Barangay</label>
+                                    {{ driver_profile_form.barangay }}
+                                    <datalist id="barangay-list">                                    
+                                    </datalist>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-
-                <form id="edit-profile-form" class="space-y-8" method="POST" action="{% url 'settings:edit-user' %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-
-                    <div class="flex flex-col items-center">
-                        <img id="modal-profile-picture" class="size-32 rounded-full object-cover border-4 border-blue-100 mb-4" src="{{ user.profile_picture.url }}" alt="Profile picture" data-original-src="{{ user.profile_picture.url }}">
-                        <label for="{{ user_form.profile_picture.id_for_label }}" class="cursor-pointer bg-[#7cd1f9] text-white px-4 py-2 rounded-md hover:bg-[#78cbf2]">Upload{{ user_form.profile_picture }}</label>
+                
+                <div class="p-4">
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" id="cancel-edit" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
+                        <button type="submit" form="edit-profile-form" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]">Save Changes</button>
                     </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="space-y-6">
-                            <div>
-                                <label for="{{ user_form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                                {{ user_form.first_name }}
-                            </div>
-
-                            <div>
-                                <label for="{{ user_form.middle_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
-                                {{ user_form.middle_name }}
-                            </div>
-
-                            <div>
-                                <label for="{{ user_form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                                {{ user_form.last_name }}
-                            </div>
-
-                            <div>
-                                <label for="{{ user_form.email.id_for_label }}l" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                {{ user_form.email }}
-                            </div>
-                        </div>
-
-                        <div class="space-y-6">
-                            <div>
-                                <label for="{{ user_form.contact_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                {{ driver_profile_form.contact_number }}
-                            </div>
-
-                            <div>
-                                <label for="{{ user_form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                {{ driver_profile_form.city }}
-                                <datalist id="city-list">
-                                    {% for city in cities %}
-                                        <option value="{{ city.citymunDesc }}" data-code="{{ city.citymunCode }}"></option>
-                                    {% endfor %}
-                                </datalist>
-                            </div>
-
-                            <div>
-                                <label for="{{ user_form.barangay.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Barangay</label>
-                                {{ driver_profile_form.barangay }}
-                                <datalist id="barangay-list">                                    
-                                </datalist>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            
-            <div class="p-4">
-                <div class="flex justify-end space-x-4">
-                    <button type="button" id="cancel-edit" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
-                    <button type="submit" form="edit-profile-form" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]">Save Changes</button>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 {% endblock %}
 
 {% block script %}
-    <script type="module" src="{% static 'javascript/personalInformation.js' %}"></script>
+    <script type="module" src="{% static 'javascript/settings/personalInformation.js' %}"></script>
 {% endblock script %}

@@ -81,7 +81,11 @@ export function showLogoutConfirmation() {
                     Swal.fire({
                         icon: 'success',
                         title: 'You have been logged out.',
-                        showConfirmButton: true
+                        showConfirmButton: true,
+                        customClass: {
+                            confirmButton: 'px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]'
+                        },
+                        buttonsStyling: false,
                     }).then(() => {
                         logoutForm.submit();
                     })

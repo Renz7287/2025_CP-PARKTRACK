@@ -1,5 +1,5 @@
-import { initializeBarangayField } from "./barangay.js";
-import { initializeVehicleField } from "./vehicle.js";
+import { initializeBarangayField } from "./utils/barangay.js";
+import { initializeVehicleField } from "./utils/vehicle.js";
 
 // Activates stepper form for small devices
 (function () {
@@ -76,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeVehicleField(
         {
-            vehicleTypeInputId: 'vehicle-type-dropdown',
             brandInputId: 'brand-dropdown',
             modelInputId: 'model-dropdown',
             brandListId: 'brand-list',

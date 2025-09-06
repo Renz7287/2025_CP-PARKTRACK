@@ -1,4 +1,4 @@
-import { initializeBarangayField } from './barangay.js';
+import { initializeBarangayField } from '../utils/barangay.js';
 
 export function initializePersonalInformation() {
     const modal = document.getElementById('edit-modal');
@@ -6,7 +6,7 @@ export function initializePersonalInformation() {
     
     if (!editButton) return;
 
-    document.getElementById('content').addEventListener('click', (event) => {
+    document.getElementById('content').addEventListener('click', event => {
         if (event.target.closest('#edit-profile-button')) {
             modal.classList.remove('hidden');
         }
@@ -57,7 +57,7 @@ export function initializePersonalInformation() {
 
     if (!form) return;
 
-    form.addEventListener('submit', async (event) => {
+    form.addEventListener('submit', async event => {
         event.preventDefault();
 
         const formData = new FormData(form);
@@ -67,7 +67,7 @@ export function initializePersonalInformation() {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
             });
 

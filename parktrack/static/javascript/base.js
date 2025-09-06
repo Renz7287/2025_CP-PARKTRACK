@@ -1,21 +1,26 @@
 import { openSubmenu, openCloseSidebar, loadContent, highlightActiveLink, showLogoutConfirmation } from "./navbar.js";
-import { initializePersonalInformation } from "./personalInformation.js";
-import { initializeParkingAllotment } from "./parkingAllotment.js"
+import { initializeParkingAllotment } from "./parkingAllotment.js";
 import { initializeParkingUsage } from "./parkingUsage.js";
+import { initializePersonalInformation } from "./settings/personalInformation.js";
+import { initializeVehicleManagement } from "./settings/vehicleManagement.js";
 
 openSubmenu();
 
 function initializePageScripts() {
-    if (document.querySelector("#edit-profile-button")) {
+    if (document.querySelector('.parking-allotment')) {
+        initializeParkingAllotment();
+    }    
+    
+    if (document.querySelector('.parking-usage')) {
+        initializeParkingUsage();
+    }
+    
+    if (document.querySelector('.profile-information')) {
         initializePersonalInformation();
     }
 
-    if (document.querySelector("#car-toggle") || document.querySelector("#live-toggle")) {
-        initializeParkingAllotment();
-    }
-
-    if (document.querySelector("#peak-occupancy-chart")) {
-        initializeParkingUsage();
+    if (document.querySelector('.vehicle-management')) {
+        initializeVehicleManagement();
     }
 }
 

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from .models import City, Barangay, VehicleType, VehicleBrand, VehicleModel, User, DriverProfile, Vehicle
+from .models import City, Barangay, VehicleBrand, VehicleModel, User, DriverProfile, Vehicle
 
 class RegistrationStyleMixin:
     default_classes = 'text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]'
@@ -75,15 +75,6 @@ class BaseDriverProfileForm(forms.ModelForm):
         return barangay
 
 class BaseVehicleForm(forms.ModelForm):
-    vehicle_type = forms.ModelChoiceField(
-        queryset = VehicleType.objects.all(),
-        empty_label = 'Select Vehicle Type',
-        widget = forms.Select(
-            attrs={
-                'id': 'vehicle-type-dropdown'
-            }
-        )
-    )
     brand = forms.CharField(
         widget = forms.TextInput(  
             attrs={
@@ -102,15 +93,8 @@ class BaseVehicleForm(forms.ModelForm):
     class Meta:
         model = Vehicle
         exclude = ['brand', 'model']
-        fields = ('vehicle_type', 'brand', 'model', 'color', 'plate_number', 'gate_pass')
+        fields = ('brand', 'model', 'color', 'plate_number', 'gate_pass')
 
-    def clean_vehicle_type(self):
-        vehicle_type_name = self.cleaned_data['vehicle_type']
-
-        vehicle_type = VehicleType.objects.filter(type_name=vehicle_type_name).first()
-
-        return vehicle_type
-    
     def clean_brand(self):
         brand_name = self.cleaned_data['brand']
         
@@ -124,13 +108,11 @@ class BaseVehicleForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        vehicle_type = self.cleaned_data.get('vehicle_type')
         brand_name = self.cleaned_data['brand']
         model_name = self.cleaned_data['model']
 
         brand, _ = VehicleBrand.objects.get_or_create(
             brand_name = brand_name,
-            type_code = vehicle_type.id
         )
 
         model, _ = VehicleModel.objects.get_or_create(

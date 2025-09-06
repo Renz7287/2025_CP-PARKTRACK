@@ -1,5 +1,4 @@
 export function initializeVehicleField(config) {
-    const vehicleTypeInput = document.getElementById(config.vehicleTypeInputId);
     const brandInput = document.getElementById(config.brandInputId);
     const modelInput = document.getElementById(config.modelInputId);
 
@@ -11,21 +10,6 @@ export function initializeVehicleField(config) {
     let currentVehicleTypeCode = '';
     let currentBrandCode = '';
 
-    if (vehicleTypeInput) {
-        vehicleTypeInput.addEventListener("input", () => {
-            const selectedOption = Array.from(vehicleTypeInput.querySelectorAll('option'))
-                .find(option => option.value === vehicleTypeInput.value);
-                
-            if (selectedOption) {
-                currentVehicleTypeCode = selectedOption.value;
-                
-                if (brandInput) brandInput.value = "";
-                
-                fetchBrands(currentVehicleTypeCode);
-            }
-        });
-    }
-    
     if (brandInput) {
         brandInput.addEventListener("input", () => {
             const selectedOption = Array.from(brandList.querySelectorAll('option'))
@@ -42,28 +26,6 @@ export function initializeVehicleField(config) {
         });
     }
 
-    function fetchBrands(vehicleTypeCode) {
-        if (!vehicleTypeCode) return;
-
-        fetch(`${baseUrl}/get-brands/?vehicle_type=${vehicleTypeCode}`)
-            .then(response => response.json())
-            .then(data => {
-                if (brandList) {
-                    brandList.innerHTML = '';
-                    data.brands.forEach(brand => {
-                        const option = document.createElement('option');
-                        option.value = brand.brand_name;
-                        option.setAttribute('data-code', brand.id);
-                        brandList.appendChild(option);
-                    });
-
-                    if (brandInput && brandInput.value ) {
-                        const event = new Event('input', {bubbles: true});
-                        brandInput.dispatchEvent(event);
-                    }
-                }
-            });
-    }
     
     function fetchModels(brandCode) {
         if (!brandCode) return;

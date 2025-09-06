@@ -3,84 +3,84 @@
 {% load static %}
 
 {% block title %}
-  Parking Usage
+  	Parking Usage
 {% endblock title %}
 
 {% block header %}
-  <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Parking Usage Dashboard</h1>
+  	<h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center font-bold text-3xl">Parking Usage Dashboard</h1>
 {% endblock header %}
 
 {% block content %}
-  <section class="h-screen w-full">
-    <!-- Main Content -->
-    <div class="p-6 space-y-6">
+	<section class="parking-usage h-screen w-full">
+		<!-- Main Content -->
+		<div class="p-6 space-y-6">
 
-      <!-- Peak Occupancy Days Graph -->
-      <section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
-        <h2 class="text-2xl font-bold">Peak Occupancy Days</h2>
-        <hr class="mb-6 border-gray-300">
-        <div class="h-[500px]">
-          <canvas id="peak-occupancy-chart"></canvas>
-        </div>
-      </section>
+		<!-- Peak Occupancy Days Graph -->
+		<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
+			<h2 class="text-2xl font-bold">Peak Occupancy Days</h2>
+			<hr class="mb-6 border-gray-300">
+			<div class="h-[500px]">
+			<canvas id="peak-occupancy-chart"></canvas>
+			</div>
+		</section>
 
-      <!-- Daily Vehicle Entries Table -->
-      <section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
-        <h2 class="text-2xl font-bold">Daily Vehicle Entries</h2>
-        <hr class="mb-6 border-gray-300">
+		<!-- Daily Vehicle Entries Table -->
+		<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
+			<h2 class="text-2xl font-bold">Daily Vehicle Entries</h2>
+			<hr class="mb-6 border-gray-300">
 
-        <div class="overflow-x-auto">
-          <table class="min-w-full border-separate border-spacing-y-2">
-            <thead>
-              <tr class="bg-gray-100 text-gray-700 uppercase text-sm">
-                <th class="px-4 py-2 text-left font-bold">Days</th>
-                <th class="px-4 py-2 text-left font-bold">In</th>
-                <th class="px-4 py-2 text-left font-bold">Out</th>
-              </tr>
-            </thead>
-            <tbody class="text-gray-800">
-              <tr class="border-t border-gray-300">
-                <td class="px-4 py-2 font-semibold">Monday</td>
-                <td class="px-4 py-2">50</td>
-                <td class="px-4 py-2">20</td>
-              </tr>
-              <tr class="border-t border-gray-300">
-                <td class="px-4 py-2 font-semibold">Tuesday</td>
-                <td class="px-4 py-2">33</td>
-                <td class="px-4 py-2">13</td>
-              </tr>
-              <tr class="border-t border-gray-300">
-                <td class="px-4 py-2 font-semibold">Wednesday</td>
-                <td class="px-4 py-2">23</td>
-                <td class="px-4 py-2">11</td>
-              </tr>
-              <tr class="border-t border-gray-300">
-                <td class="px-4 py-2 font-semibold">Thursday</td>
-                <td class="px-4 py-2">28</td>
-                <td class="px-4 py-2">18</td>
-              </tr>
-              <tr class="border-t border-gray-300">
-                <td class="px-4 py-2 font-semibold">Friday</td>
-                <td class="px-4 py-2">26</td>
-                <td class="px-4 py-2">19</td>
-              </tr>
-              <tr class="border-t border-gray-300">
-                <td class="px-4 py-2 font-semibold">Saturday</td>
-                <td class="px-4 py-2">15</td>
-                <td class="px-4 py-2">8</td>
-              </tr>
-              <tr class="border-t border-gray-300">
-                <td class="px-4 py-2 font-semibold">Sunday</td>
-                <td class="px-4 py-2">9</td>
-                <td class="px-4 py-2">5</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+			<div class="overflow-x-auto">
+			<table class="min-w-full border-separate border-spacing-y-2">
+				<thead>
+				<tr class="bg-gray-100 text-gray-700 uppercase text-sm">
+					<th class="px-4 py-2 text-left font-bold">Days</th>
+					<th class="px-4 py-2 text-left font-bold">In</th>
+					<th class="px-4 py-2 text-left font-bold">Out</th>
+				</tr>
+				</thead>
+				<tbody class="text-gray-800">
+				<tr class="border-t border-gray-300">
+					<td class="px-4 py-2 font-semibold">Monday</td>
+					<td class="px-4 py-2">50</td>
+					<td class="px-4 py-2">20</td>
+				</tr>
+				<tr class="border-t border-gray-300">
+					<td class="px-4 py-2 font-semibold">Tuesday</td>
+					<td class="px-4 py-2">33</td>
+					<td class="px-4 py-2">13</td>
+				</tr>
+				<tr class="border-t border-gray-300">
+					<td class="px-4 py-2 font-semibold">Wednesday</td>
+					<td class="px-4 py-2">23</td>
+					<td class="px-4 py-2">11</td>
+				</tr>
+				<tr class="border-t border-gray-300">
+					<td class="px-4 py-2 font-semibold">Thursday</td>
+					<td class="px-4 py-2">28</td>
+					<td class="px-4 py-2">18</td>
+				</tr>
+				<tr class="border-t border-gray-300">
+					<td class="px-4 py-2 font-semibold">Friday</td>
+					<td class="px-4 py-2">26</td>
+					<td class="px-4 py-2">19</td>
+				</tr>
+				<tr class="border-t border-gray-300">
+					<td class="px-4 py-2 font-semibold">Saturday</td>
+					<td class="px-4 py-2">15</td>
+					<td class="px-4 py-2">8</td>
+				</tr>
+				<tr class="border-t border-gray-300">
+					<td class="px-4 py-2 font-semibold">Sunday</td>
+					<td class="px-4 py-2">9</td>
+					<td class="px-4 py-2">5</td>
+				</tr>
+				</tbody>
+			</table>
+			</div>
+		</section>
 
-    </div>
-  </section>
+		</div>
+	</section>
 {% endblock %}
 {% block script %}
   <script type="module" src="{% static 'javascript/parkingUsage.js' %}"></script>

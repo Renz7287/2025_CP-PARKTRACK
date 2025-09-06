@@ -34,22 +34,10 @@ class Barangay(models.Model):
     def __str__(self):
         return self.brgyDesc
 
-class VehicleType(models.Model):
-    id = models.AutoField(primary_key=True)
-    type_name = models.CharField(max_length=100)
-
-    class Meta:
-        db_table = 'vehicle_type'
-        managed = False
-
-    def __str__(self):
-        return self.type_name
-
 class VehicleBrand(models.Model):
     id = models.AutoField(primary_key=True)
     brand_name = models.CharField(max_length=100)
-    type_code = models.CharField(max_length=10)
-
+    
     class Meta:
         db_table = 'vehicle_brand'
         managed = False
@@ -124,7 +112,6 @@ class DriverProfile(models.Model):
 
 class Vehicle(models.Model):
     owner = models.ForeignKey(DriverProfile, on_delete=models.CASCADE, related_name='vehicles')
-    vehicle_type = models.ForeignKey(VehicleType, on_delete=models.SET_NULL, null=True)
     brand = models.ForeignKey(VehicleBrand, on_delete=models.SET_NULL, null=True)
     model = models.ForeignKey(VehicleModel, on_delete=models.SET_NULL, null=True)
     color = models.CharField(max_length=100)
