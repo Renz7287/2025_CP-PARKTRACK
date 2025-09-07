@@ -52,4 +52,12 @@ export function initializeParkingAllotment() {
     });
 
     showSection('car');
+
+    if (Hls.isSupported()) {
+        var hls = new Hls();
+        hls.loadSource('http://localhost:8080/stream.m3u8');
+        hls.attachMedia(document.getElementById('video'));
+    } else if (document.getElementById('video').canPlayType('application/vnd.apple.mpegurl')) {
+        document.getElementById('video').src = 'http://localhost:8080/stream.m3u8';
+    }
 }
