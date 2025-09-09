@@ -47,8 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('popstate', () => {
-        loadContent(location.pathname, false);
-        initializePageScripts();
+        loadContent(location.pathname, false).then(() => {
+            initializePageScripts();
+            highlightActiveLink();
+        });
     });
 
     highlightActiveLink();

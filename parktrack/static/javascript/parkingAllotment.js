@@ -1,3 +1,5 @@
+let hls;
+
 export function initializeParkingAllotment() {
     const carToggle = document.getElementById('car-toggle');
     const liveToggle = document.getElementById('live-toggle');
@@ -53,11 +55,56 @@ export function initializeParkingAllotment() {
 
     showSection('car');
 
+    const video = document.getElementById('video');
+    const videoSrc = 'http://localhost:8080/stream.m3u8';
+
+    if (!video) return;
+
     if (Hls.isSupported()) {
-        var hls = new Hls();
-        hls.loadSource('http://localhost:8080/stream.m3u8');
-        hls.attachMedia(document.getElementById('video'));
-    } else if (document.getElementById('video').canPlayType('application/vnd.apple.mpegurl')) {
-        document.getElementById('video').src = 'http://localhost:8080/stream.m3u8';
+
+        if(!hls) {
+            hls = new Hls({
+                liveSyncDuration: 2,
+                liveMaxLatencyDuration: 8, // buffer
+            });
+    
+            hls.loadSource(videoSrc);
+        }
+        
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.muted = true,
+            video.play();
+        });
+
+        hls.on(Hls.Events.FRAG_LOADED, () => {
+            if (video.paused) {
+                video.play();
+            }
+        });
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        hls.startLoad();
+                        break;
+
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        hls.recoverMediaError();
+                        break;
+
+                    default:
+                        hls.destroy();
+                        break;
+                }
+            }
+        });
+        
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = videoSrc;
+        video.muted = true,
+        video.play();
     }
 }
