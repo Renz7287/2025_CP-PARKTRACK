@@ -17,10 +17,24 @@
 
 		<!-- Peak Occupancy Days Graph -->
 		<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
-			<h2 class="text-2xl font-bold">Peak Occupancy Days</h2>
+			<h2 class="text-2xl font-bold">Daily Average Occupancy</h2>
 			<hr class="mb-6 border-gray-300">
 			<div class="h-[500px]">
-			<canvas id="peak-occupancy-chart"></canvas>
+				<canvas id="peak-occupancy-chart"></canvas>
+			</div>
+		</section>
+
+		<!-- Hourly Occupancy Chart (Initially Hidden) -->
+		<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto hourly-occupancy-section" style="display: none;" id="hourly-section">
+			<h2 class="text-2xl font-bold">Click a day above to view hourly occupancy</h2>
+			<hr class="mb-6 border-gray-300">
+			<div class="h-[400px]">
+				<canvas id="hourly-occupancy-chart"></canvas>
+			</div>
+			<div class="mt-4 p-4 bg-gray-50 rounded-lg">
+				<p class="text-sm text-gray-600">
+					<strong>Campus Hours:</strong> Entry from 6:00 AM, Exit by 5:00 PM
+				</p>
 			</div>
 		</section>
 
@@ -82,6 +96,7 @@
 		</div>
 	</section>
 {% endblock %}
+
 {% block script %}
   <script type="module" src="{% static 'javascript/parkingUsage.js' %}"></script>
 {% endblock script %}
