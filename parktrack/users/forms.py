@@ -22,18 +22,16 @@ class ModalStyleMixin:
             existing_classes = field.widget.attrs.get('class', '')
             field.widget.attrs['class'] = f'{existing_classes} {self.default_classes}'.strip()
 
-class BaseUserForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    
-    class Meta(UserCreationForm.Meta):
-        model = User
-        fields = ('first_name', 'middle_name', 'last_name', 'email', 'password1', 'password2')
-        
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class ProfileEditStyleMixin:
+    default_classes = 'w-full bg-transparent border border-gray-300 rounded-md focus:ring-0 p-2 editable-field'
 
-        self.fields['email'].widget.attrs.pop('autofocus', None)
+    def apply_styles(self):
 
+        for field in self.fields.values():
+            existing_classes = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = f'{existing_classes} {self.default_classes}'.strip()
+
+class UserValidationMixin:
     def clean_first_name(self):
         first_name = (self.cleaned_data.get('first_name') or '').strip()
 
@@ -71,6 +69,18 @@ class BaseUserForm(UserCreationForm):
             raise forms.ValidationError('This email address is already in use.')
         
         return email
+
+class BaseUserForm(UserCreationForm, UserValidationMixin):
+    email = forms.EmailField(required=True)
+    
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ('first_name', 'middle_name', 'last_name', 'email', 'password1', 'password2')
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['email'].widget.attrs.pop('autofocus', None)
     
 class BaseDriverProfileForm(forms.ModelForm):
     city = forms.CharField(
@@ -221,7 +231,7 @@ class VehicleRegistrationForm(RegistrationStyleMixin, BaseVehicleForm):
         super().__init__(*args, **kwargs)
         self.apply_styles()
 
-class UserModalForm(ModalStyleMixin, forms.ModelForm):
+class UserEditForm(ProfileEditStyleMixin, forms.ModelForm, UserValidationMixin):
     profile_picture = forms.FileField(
         widget=forms.FileInput(
             attrs={
@@ -239,7 +249,7 @@ class UserModalForm(ModalStyleMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.apply_styles()
 
-class DriverProfileModalForm(ModalStyleMixin, BaseDriverProfileForm):
+class DriverProfileEditForm(ProfileEditStyleMixin, BaseDriverProfileForm):
     class Meta:
         model = DriverProfile
         exclude = ['user', 'gender']

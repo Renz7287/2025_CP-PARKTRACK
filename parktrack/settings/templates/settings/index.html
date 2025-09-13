@@ -42,50 +42,36 @@
                             <!-- Left Column -->
                             <div class="space-y-6">
                                 <div class="text-black xl:text-lg break-words">
-                                    <label class="block font-medium mb-1">First Name</label>
-                                    <input type="text" name="{{ user_form.first_name.name }}" value="{{ user.first_name }}" 
-                                           class="w-full bg-transparent border border-gray-300 rounded-md focus:ring-0 p-2 editable-field" 
-                                           disabled required>
+                                    <label for="{{ user_form.first_name.id_for_label }}" class="block font-medium mb-1">First Name</label>
+                                    {{ user_form.first_name }}
                                 </div>
                                 
                                 <div class="text-black xl:text-lg break-words">
-                                    <label class="block font-medium mb-1">Middle Name</label>
-                                    <input type="text" name="{{ user_form.middle_name.name }}" value="{% if user.middle_name %}{{ user.middle_name }}{% endif %}" 
-                                           class="w-full bg-transparent border border-gray-300 rounded-md focus:ring-0 p-2 editable-field" 
-                                           disabled>
+                                    <label for="{{ user_form.middle_name.id_for_label }}" class="block font-medium mb-1">Middle Name</label>
+                                    {{ user_form.middle_name}}
                                 </div>
                                 
                                 <div class="text-black xl:text-lg break-words">
-                                    <label class="block font-medium mb-1">Last Name</label>
-                                    <input type="text" name="{{ user_form.last_name.name }}" value="{{ user.last_name }}" 
-                                           class="w-full bg-transparent border border-gray-300 rounded-md focus:ring-0 p-2 editable-field" 
-                                           disabled required>
+                                    <label for="{{ user_form.last_name.id_for_label }}" class="block font-medium mb-1">Last Name</label>
+                                    {{ user_form.last_name }}
                                 </div>
                                 
                                 <div class="text-black xl:text-lg break-words">
-                                    <label class="block font-medium mb-1">Email</label>
-                                    <input type="email" name="{{ user_form.email.name }}" value="{{ user.email }}" 
-                                           class="w-full bg-transparent border border-gray-300 rounded-md focus:ring-0 p-2 editable-field" 
-                                           disabled required>
+                                    <label for="{{ user_form.email.id_for_label }}" class="block font-medium mb-1">Email</label>
+                                    {{ user_form.email }}
                                 </div>
                             </div>
                             
                             <!-- Right Column -->
                             <div class="space-y-6">
                                 <div class="text-black xl:text-lg break-words">
-                                    <label class="block font-medium mb-1">Phone Number</label>
-                                    <input type="text" name="{{ driver_profile_form.contact_number.name }}" value="{{ driver_profile.contact_number }}" 
-                                           class="w-full bg-transparent border border-gray-300 rounded-md focus:ring-0 p-2 editable-field" 
-                                           disabled>
+                                    <label for="{{ driver_profile_form.contact_number.id_for_label }}" class="block font-medium mb-1">Phone Number</label>
+                                    {{ driver_profile_form.contact_number }}
                                 </div>
 
                                 <div class="text-black xl:text-lg break-words">
-                                    <label class="block font-medium mb-1">City</label>
-                                    <input type="text" name="{{ driver_profile_form.city.name }}" value="{{ driver_profile.city }}" 
-                                           id="city-dropdown"
-                                           list="city-list"
-                                           class="w-full bg-transparent border border-gray-300 rounded-md focus:ring-0 p-2 editable-field" 
-                                           disabled>
+                                    <label for="{{ driver_profile_form.city.id_for_label }}" class="block font-medium mb-1">City</label>
+                                    {{ driver_profile_form.city }}
                                     <datalist id="city-list">
                                         {% for city in cities %}
                                             <option value="{{ city.citymunDesc }}" data-code="{{ city.citymunCode }}"></option>
@@ -94,12 +80,8 @@
                                 </div>
 
                                 <div class="text-black xl:text-lg break-words">
-                                    <label class="block font-medium mb-1">Barangay</label>
-                                    <input type="text" name="{{ driver_profile_form.barangay.name }}" value="{{ driver_profile.barangay }}" 
-                                           id="barangay-dropdown"
-                                           list="barangay-list"
-                                           class="w-full bg-transparent border border-gray-300 rounded-md focus:ring-0 p-2 editable-field" 
-                                           disabled>
+                                    <label for="{{ driver_profile_form.barangay.id_for_label }}" class="block font-medium mb-1">Barangay</label>
+                                    {{ driver_profile_form.barangay }}
                                     <datalist id="barangay-list">                                    
                                     </datalist>
                                 </div>
@@ -140,9 +122,11 @@
                             <button type="button" id="edit-profile-button" class="bg-[#9D0E15] hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md">
                                 Edit
                             </button>
-                            <button type="button" id="cancel-edit-button" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hidden">Cancel
+                            <button type="button" id="cancel-edit-button" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hidden">
+                                Cancel
                             </button>
-                            <button type="submit" id="save-changes-button" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] hidden">Save Changes
+                            <button type="submit" id="save-changes-button" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] hidden">
+                                Save Changes
                             </button>
                         </div>
                     </form>

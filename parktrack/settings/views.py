@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from users.models import City, VehicleBrand, User, DriverProfile, Vehicle
-from users.forms import UserModalForm, DriverProfileModalForm, VehicleModalForm
+from users.forms import UserEditForm, DriverProfileEditForm, VehicleModalForm
 
 # Create your views here.
 
@@ -15,8 +15,8 @@ def personal_information(request, pk):
     user = User.objects.get(id=pk)
     driver_profile = DriverProfile.objects.filter(user=user).first()
 
-    user_form = UserModalForm(instance=user)
-    driver_profile_form = DriverProfileModalForm(instance=user.driver_profile) if driver_profile else None
+    user_form = UserEditForm(instance=user)
+    driver_profile_form = DriverProfileEditForm(instance=user.driver_profile) if driver_profile else None
 
     cities = City.objects.all()
 
@@ -53,8 +53,8 @@ def edit_user(request, pk):
     user = User.objects.get(id=pk)
 
     if request.method == 'POST':
-        user_form = UserModalForm(request.POST, request.FILES, instance=user)
-        driver_profile_form = DriverProfileModalForm(request.POST,  instance=user.driver_profile)
+        user_form = UserEditForm(request.POST, request.FILES, instance=user)
+        driver_profile_form = DriverProfileEditForm(request.POST,  instance=user.driver_profile)
 
         if user_form.is_valid() and driver_profile_form.is_valid():
             
