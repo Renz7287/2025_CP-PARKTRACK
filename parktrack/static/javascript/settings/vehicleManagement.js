@@ -34,13 +34,7 @@ export function initializeVehicleManagement() {
 
         if (event.target.closest('.js-edit-button')) {
             const button = event.target.closest('.js-edit-button');
-            console.log(button.dataset.id);
-            console.log(button.dataset.plateNumber);
-            console.log(button.dataset.gatePass);
-            console.log(button.dataset.brand);
-            console.log(button.dataset.model);
-            console.log(button.dataset.color);
-
+            
             openModal(
                 'edit',
                 button.dataset.id,

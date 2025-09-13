@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import City, Barangay, VehicleBrand, VehicleModel, User, DriverProfile, Vehicle
 
@@ -32,6 +33,44 @@ class BaseUserForm(UserCreationForm):
         super().__init__(*args, **kwargs)
 
         self.fields['email'].widget.attrs.pop('autofocus', None)
+
+    def clean_first_name(self):
+        first_name = (self.cleaned_data.get('first_name') or '').strip()
+
+        if len(first_name) < 2:
+            raise forms.ValidationError('First name must be atleast 2 characters')
+        
+        if not all(char.isalpha() or char.isspace() or char == '-' for char in first_name):
+            raise forms.ValidationError('First name should only contain letters, spaces, or hypens.')
+        
+        return first_name
+    
+    def clean_middle_name(self):
+        middle_name = (self.cleaned_data.get('middle_name') or '').strip()
+
+        if not all(char.isalpha() or char.isspace() or char == '-' for char in middle_name):
+            raise forms.ValidationError('Middle name should only contain letters, spaces, or hypens.')
+        
+        return middle_name
+    
+    def clean_last_name(self):
+        last_name = (self.cleaned_data.get('last_name') or '').strip()
+
+        if len(last_name) < 2:
+            raise forms.ValidationError('Last name must be atleast 2 characters.')
+        
+        if not all(char.isalpha() or char.isspace() or char == '-' for char in last_name):
+            raise forms.ValidationError('Last name should only contain letters, spaces, or hypens.')
+        
+        return last_name
+        
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip().lower()
+
+        if User.objects.filter(email = email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('This email address is already in use.')
+        
+        return email
     
 class BaseDriverProfileForm(forms.ModelForm):
     city = forms.CharField(
@@ -53,24 +92,36 @@ class BaseDriverProfileForm(forms.ModelForm):
         model = DriverProfile
         fields = ('contact_number', 'gender', 'city', 'barangay')
 
+    def clean_contact_number(self):
+        contact_number = (self.cleaned_data.get('contact_number') or '').strip()
+
+        if not contact_number.isdigit() or len(contact_number) != 11:
+            raise forms.ValidationError('Contact number must be exactly 11 digits.')
+        
+        return contact_number
+
     def clean_city(self):
         city_name = self.cleaned_data['city']
 
         city = City.objects.filter(citymunDesc=city_name).first()
 
         if not city:
-            raise ValidationError("Invalid city selected.")
+            raise ValidationError("Invalid city selected. Please choose from the given options.")
         
         return city
     
     def clean_barangay(self):
         barangay_name = self.cleaned_data['barangay']
-        city = self.cleaned_data.get('city')
+        city_name = self.cleaned_data.get('city')
 
-        barangay = Barangay.objects.filter(brgyDesc=barangay_name, citymunCode=city.citymunCode).first()
+        if city_name:
+            city = City.objects.filter(citymunDesc=city_name).first()
+            
+            if city:
+                barangay = Barangay.objects.filter(brgyDesc=barangay_name, citymunCode=city.citymunCode).first()
 
-        if not barangay:
-            raise ValidationError("Invalid barangay selected.")
+                if not barangay:
+                    raise ValidationError("Invalid barangay selected. Barangay must belong to the selected city.")
 
         return barangay
 
@@ -97,13 +148,40 @@ class BaseVehicleForm(forms.ModelForm):
 
     def clean_brand(self):
         brand_name = self.cleaned_data['brand']
-        
+
         return brand_name
     
     def clean_model(self):
         model_name = self.cleaned_data['model']
         
         return model_name
+    
+    def clean_color(self):
+        color = (self.cleaned_data.get('color') or '').strip()
+
+        if not all(char.isalpha() or char.isspace() for char in color):
+            raise forms.ValidationError('Color should only contain letters or spaces.')
+        
+        return color
+
+    def clean_plate_number(self):
+        plate_number = (self.cleaned_data.get('plate_number') or '').strip()
+
+        if not all(char.isalpha() or char.isdigit() or char in ['-', ' '] for char in plate_number):
+            raise forms.ValidationError('Plate number should only contain letters, numbers, spaces, or hypens.')
+        
+        return plate_number
+
+    def clean_gate_pass(self):
+        gate_pass = (self.cleaned_data.get('gate_pass') or '').strip()
+
+        if gate_pass:
+
+            if not gate_pass.isdigit() or len(gate_pass) != 4:
+                raise forms.ValidationError('Plate number must be atleast 4 digits.')
+            
+            if Vehicle.objects.filter(gate_pass = gate_pass).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError('This gate pass is already in use.')
     
     def save(self, commit=True):
         instance = super().save(commit=False)
