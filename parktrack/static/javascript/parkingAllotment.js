@@ -56,7 +56,7 @@ export function initializeParkingAllotment() {
     showSection('car');
 
     const video = document.getElementById('video');
-    const videoSrc = 'http://192.168.56.1:8080/stream.m3u8';   // change to the server laptop's IP address
+    const videoSrc = 'http://192.168.1.33:8080/live/stream.m3u8';   // change to the server laptop's IP address
 
     if (!video) return;
 
