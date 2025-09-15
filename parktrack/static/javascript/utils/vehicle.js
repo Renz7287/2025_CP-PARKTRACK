@@ -7,10 +7,19 @@ export function initializeVehicleField(config) {
 
     const baseUrl = config.baseUrl;
 
-    let currentVehicleTypeCode = '';
     let currentBrandCode = '';
 
     if (brandInput) {
+        brandInput.addEventListener('change', function () {
+            if (brandInput.value) {
+                document.querySelector('.model-error')?.remove();
+            }
+
+            if (!brandInput.value) {
+                if (modelInput) modelInput.value = '';
+            }
+        });
+
         brandInput.addEventListener("input", () => {
             const selectedOption = Array.from(brandList.querySelectorAll('option'))
                 .find(option => option.value === brandInput.value);
@@ -21,10 +30,20 @@ export function initializeVehicleField(config) {
                 if (modelInput) modelInput.value = "";
                 
                 fetchModels(currentBrandCode);
-            } 
-            
+            }        
         });
     }
+
+    modelInput.addEventListener('focus', () => {
+        document.querySelector('.model-error')?.remove();
+
+        if (!brandInput.value) {
+            let errorElement = document.createElement('p');
+            errorElement.classList.add('model-error', 'text-red-500', 'text-sm', 'mt-1');
+            errorElement.innerText = 'Please select a brand first.';
+            modelInput.insertAdjacentElement('afterend', errorElement);
+        }
+    });
 
     
     function fetchModels(brandCode) {

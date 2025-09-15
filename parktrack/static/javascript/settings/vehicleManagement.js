@@ -127,6 +127,10 @@ export function initializeVehicleManagement() {
         const form = document.getElementById('vehicle-form');
         const title = document.getElementById('form-title');
         const submitButton = document.getElementById('submit-button');
+        const brandList = document.getElementById('brand-list');
+        const brandInput = document.getElementById('brand-dropdown');
+        const modelInput = document.getElementById('model-dropdown');
+        const modelList = document.getElementById('model-list');
 
         if (mode === 'add') {
             form.action = '/settings/add-vehicle/';
@@ -140,9 +144,35 @@ export function initializeVehicleManagement() {
 
             document.getElementById('id_plate_number').value = plateNumber;
             document.getElementById('id_gate_pass').value = gatePass;
-            document.getElementById('brand-dropdown').value = brand;
-            document.getElementById('model-dropdown').value = model;
+            brandInput.value = brand;
+            modelInput.value = model;
             document.getElementById('id_color').value = color;
+
+            const preselectedOption = Array.from(brandList.querySelectorAll('option'))
+                .find(option => option.value === brandInput.value);
+                
+            if (preselectedOption) {
+                const brandCode = preselectedOption.dataset.code;
+                
+                fetch(`/vehicles/get-models/?brand=${brandCode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (modelList) {
+                            modelList.innerHTML = '';
+                            data.models.forEach(model => {
+                                const option = document.createElement('option');
+                                option.value = model.model_name;
+                                option.setAttribute('data-code', model.id);
+                                modelList.appendChild(option);
+                            });
+
+                            if (modelInput && modelInput.value ) {
+                                const event = new Event('input', {bubbles: true});
+                                modelInput.dispatchEvent(event);
+                            }
+                        }
+                    });
+            }
         }
 
         vehicleModal.classList.remove('hidden');
