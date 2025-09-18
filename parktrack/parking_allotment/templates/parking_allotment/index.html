@@ -11,82 +11,139 @@
 {% endblock header %}
 
 {% block content %}
-	<section class="parking-allotment">
-		<!-- Toggle Buttons and Status Box -->
-		<div id="toggle-container" class="flex flex-col md:flex-row items-center justify-center md:justify-between px-6 md:px-12 py-6 gap-6 md:gap-12">
-			<div class="flex gap-4">
+<section class="parking-allotment">
+	<!-- Toggle Buttons and Status Box -->
+	<div id="toggle-container" class="flex flex-col md:flex-row items-center justify-center md:justify-between px-6 md:px-12 py-6 gap-6 md:gap-12">
+		<div class="flex gap-4">
 			<button id="car-toggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-red-600 text-white font-semibold shadow-md">
 				<i class="fa-solid fa-car-side"></i>
 				<span>4 - Wheels</span>
 			</button>
 			{% if user.is_admin %}
 				<button id="live-toggle" class="flex items-center justify-center gap-3 w-[180px] h-[60px] rounded-xl bg-gray-200 text-black font-semibold shadow-md">
-				<span>Live Feed</span>
+					<span>Live Feed</span>
 				</button>
 			{% endif %}
-			</div>
+		</div>
 
-			<!-- Status Container -->
-			<div id="status-container">
+		<!-- Status Container -->
+		<div id="status-container">
 			<div id="car-status" class="w-full md:w-[280px] h-[130px] bg-white border border-gray-300 rounded-lg shadow px-4 py-2 text-center flex flex-col justify-center">
 				<p class="text-lg md:text-xl text-black-500">Available Parking</p>
-				<p class="text-4xl font-bold text-black">10</p>
-			</div>
-			</div>
-		</div>
-
-		<!-- ================= CAR SECTION (Picture Display) ================= -->
-		<div id="car-section" class="section-content">
-			<div class="container mx-auto px-4">
-				<div class="flex justify-end mb-6">
-				</div>
-				<img id="parking-image" class="w-full h-[95vh] border border-gray-300 rounded-lg shadow-md object-cover mb-6" src="{% static 'images/parkingallotment.jpg' %}" alt="Parking Layout">
-			</div>
-
-			<!-- Description -->
-				<div class="px-6 md:px-12 pb-10">
-					<div class="flex flex-col gap-3">
-						<div class="flex items-center gap-3">
-							<div class="w-6 h-6 bg-red-500 rounded-full"></div>
-							<span class="text-base font-semibold text-black">Occupied</span>
-						</div>
-						<div class="flex items-center gap-3">
-							<div class="w-6 h-6 bg-green-500 rounded-full"></div>
-							<span class="text-base font-semibold text-black">Vacant</span>
-						</div>
-					</div>
-				</div>
+				<p class="text-4xl font-bold text-black">18</p>
 			</div>
 		</div>
-		</div>
+	</div>
 
+	<!-- ================= CAR SECTION (Picture Display) ================= -->
+	<div id="car-section" class="section-content">
+		<div class="container mx-auto px-4">
+			<div class="relative w-full h-[95vh] border border-gray-300 rounded-lg shadow-md mb-6">
+				<!-- Background Image -->
+				<img id="parking-image" class="w-full h-full object-cover rounded-lg" src="{% static 'images/parkingallotment.jpg' %}" alt="Parking Layout">
 				
+				<!-- Overlay Indicators -->
 
-		<!-- ================= LIVE SECTION ================= -->
-		<div id="live-section" class="section-content hidden">
-			<div class="container mx-auto px-4 py-6">
-				<div class="flex justify-end mb-6">
-					<div class="w-full md:w-[320px] bg-gray-100 rounded-xl shadow-lg px-8 py-6 text-center">
+				<!-- Top row indicators -->
+				<div class="absolute top-[10%] left-[38.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[10%] left-[41.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[10%] left-[44.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[10%] left-[47.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[10%] left-[50.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[10%] left-[53.4%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[10%] left-[56.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[10%] left-[60%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[10%] left-[63.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[10%] left-[66.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+
+				<!-- Right side -->
+				<div class="absolute top-[14%] left-[78%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[18.5%] left-[78%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[23%] left-[78%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[27.5%] left-[78%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+
+
+
+				 <!-- middle top -->
+				<div class="absolute top-[40%] left-[56.4%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[40%] left-[53.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[40%] left-[50.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[40%] left-[47.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[40%] left-[44.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[40%] left-[41.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[40%] left-[38.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+
+				<div class="absolute top-[40%] left-[60%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[40%] left-[63.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+
+				<!-- middle below -->
+				<div class="absolute top-[52%] left-[56.4%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[52%] left-[53.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[52%] left-[50.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[52%] left-[47.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[52%] left-[44.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[52%] left-[41.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+	
+				<div class="absolute top-[52%] left-[60%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[52%] left-[63.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+
+
+				<!-- Bottom row (left side) -->
+				<div class="absolute top-[90%] left-[30.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[90%] left-[33.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[90%] left-[36.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[90%] left-[40%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+
+
+				<!-- Bottom row (right side) -->
+				<div class="absolute top-[85%] left-[46%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[85%] left-[49%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[85%] left-[52%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+				<div class="absolute top-[85%] left-[55%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+
+			</div>
+		</div>
+
+		<!-- Description -->
+		<div class="px-6 md:px-12 pb-10">
+			<div class="flex flex-col gap-3">
+				<div class="flex items-center gap-3">
+					<div class="w-6 h-6 bg-red-500 rounded-full"></div>
+					<span class="text-base font-semibold text-black">Occupied</span>
+				</div>
+				<div class="flex items-center gap-3">
+					<div class="w-6 h-6 bg-green-500 rounded-full"></div>
+					<span class="text-base font-semibold text-black">Vacant</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ================= LIVE SECTION ================= -->
+	<div id="live-section" class="section-content hidden">
+		<div class="container mx-auto px-4 py-6">
+			<div class="flex justify-end mb-6">
+				<div class="w-full md:w-[320px] bg-gray-100 rounded-xl shadow-lg px-8 py-6 text-center">
 					<p class="text-xl font-semibold mb-4">Parking Spots</p>
 					<div class="flex items-center justify-center space-x-8">
 						<span class="text-3xl font-bold">10</span>
 						<div class="w-px h-10 bg-gray-400"></div>
 						<span class="text-3xl font-bold">19</span>
 					</div>
-					</div>
-				</div>
-
-				<video id="video" class="w-full h-[80vh] border border-gray-300 rounded-lg shadow-md flex items-center justify-center mb-6" controls autoplay>
-				</video>
-				
-				<div class="flex justify-start">
-					<button id="back-to-car" class="flex items-center gap-3 px-6 py-4 rounded-xl bg-red-600 text-white font-semibold shadow-md">
-					Back to Visual Feed
-					</button>
 				</div>
 			</div>
+
+			<video id="video" class="w-full h-[80vh] border border-gray-300 rounded-lg shadow-md flex items-center justify-center mb-6" controls autoplay>
+			</video>
+			
+			<div class="flex justify-start">
+				<button id="back-to-car" class="flex items-center gap-3 px-6 py-4 rounded-xl bg-red-600 text-white font-semibold shadow-md">
+					Back to Visual Feed
+				</button>
+			</div>
 		</div>
-	</section>
+	</div>
+</section>
 {% endblock %}
 
 {% block script %}
