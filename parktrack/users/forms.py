@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import City, Barangay, VehicleBrand, VehicleModel, User, DriverProfile, Vehicle
@@ -216,6 +216,17 @@ class BaseVehicleForm(forms.ModelForm):
 
         return instance
     
+class ChangePasswordForm(PasswordChangeForm, ProfileEditStyleMixin):
+    class Meta:
+        model = User
+        fields = ('old_password', 'new_password1', 'new_password2')
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user')
+
+        super().__init__(user=user, *args, **kwargs)
+        self.apply_styles()
+    
 class UserRegistrationForm(RegistrationStyleMixin, BaseUserForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -235,7 +246,7 @@ class UserEditForm(ProfileEditStyleMixin, forms.ModelForm, UserValidationMixin):
     profile_picture = forms.FileField(
         widget=forms.FileInput(
             attrs={
-                'id': 'profile-picture-input', 'class': 'hidden', 'accept': 'image/*'
+                'id': 'profile-picture-input', 'class': 'hidden editable-field', 'accept': 'image/*'
             },
         ),
         required=False

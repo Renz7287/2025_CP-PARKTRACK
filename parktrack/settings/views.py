@@ -1,10 +1,11 @@
 from django.db import transaction
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from users.models import City, VehicleBrand, User, DriverProfile, Vehicle
-from users.forms import UserEditForm, DriverProfileEditForm, VehicleModalForm
+from users.forms import UserEditForm, DriverProfileEditForm, VehicleModalForm, ChangePasswordForm
 
 # Create your views here.
 
@@ -17,6 +18,7 @@ def personal_information(request, pk):
 
     user_form = UserEditForm(instance=user)
     driver_profile_form = DriverProfileEditForm(instance=user.driver_profile) if driver_profile else None
+    change_password_form = ChangePasswordForm(user=user)
 
     cities = City.objects.all()
 
@@ -25,6 +27,7 @@ def personal_information(request, pk):
         'driver_profile': driver_profile,
         'user_form': user_form,
         'driver_profile_form': driver_profile_form,
+        'change_password_form': change_password_form,
         'cities': cities
     }
     return render(request, 'settings/index.html', context)
@@ -75,6 +78,30 @@ def edit_user(request, pk):
         return JsonResponse({'success': False, 'errors': errors})
 
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid Request']}})
+
+@login_required
+def change_password(request, pk):
+    user = User.objects.get(id=pk)
+
+    if request.method == 'POST':
+        form = ChangePasswordForm(data=request.POST, user=user)
+
+        if form.is_valid():
+            form.save()
+
+            update_session_auth_hash(request, user)
+
+            messages.success(request, 'Password updated successfully!')
+            return JsonResponse({'success': True})
+
+        errors = {}
+
+        for field, field_errors in form.errors.items():
+            errors[field] = field_errors
+
+        return JsonResponse({'success': False, 'errors': errors})
+
+    return JsonResponse({'success': False, 'erros': {'__all__': ['Invalid request']}})
 
 @login_required
 def add_vehicle(request):
