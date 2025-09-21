@@ -92,11 +92,24 @@ export function initializePersonalInformation() {
     disableForm('edit-profile-form');
     disableForm('edit-password-form');
 
-    profileEditButton.addEventListener('click', () => enableForm('edit-profile-form'));
-    profileCancelButton.addEventListener('click', () => cancelEdit('edit-profile-form'));
-    passwordEditButton.addEventListener('click', () => enableForm('edit-password-form'));
-    passwordCancelButton.addEventListener('click', () => cancelEdit('edit-password-form'));
-    
+    document.getElementById('content').addEventListener('click', async event => {
+        if (event.target.closest('#profile-edit-button')) {
+            enableForm('edit-profile-form')
+        }
+
+        if (event.target.closest('#profile-cancel-button')) {
+            cancelEdit('edit-profile-form')
+        }
+
+        if (event.target.closest('#password-edit-button')) {
+            enableForm('edit-password-form')
+        }
+
+        if (event.target.closest('#password-cancel-button')) {
+            cancelEdit('edit-password-form')
+        }
+    });
+
     if (profilePictureInput) {
         profilePictureInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
@@ -123,60 +136,74 @@ export function initializePersonalInformation() {
         }
     );
 
-    function attachAJAXSubmit(formId) {
-        const form = document.getElementById(formId);
+    async function handleAJAXSubmit(form, targetId) {
+        const target = document.getElementById(targetId);
 
         if (!form) return;
-    
-        form.addEventListener('submit', async event => {
-            event.preventDefault();
-    
-            const formData = new FormData(form);
-            
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                });
-    
-                const data = await response.json();
-    
-                if (data.success) {
-                    // Reload the page on success
-                    console.log(data.success);
-                    location.reload();
-                    return;
+        
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                clearErrors(form);
+
+                if (data.html && target) {
+                    target.innerHTML = data.html;
                 }
-    
-                if (data.errors) {
-                    clearErrors(form);
-    
-                    Object.entries(data.errors).forEach(([fieldName, fieldErrors]) => {
-                        const field = form.querySelector(`[name="${fieldName}"]`);
-    
-                        if (field) {
-                            let errorElement = document.createElement('p');
-                            errorElement.classList.add('text-red-500', 'text-sm', 'mt-1');
-                            errorElement.innerText = fieldErrors.join(', ');
-                            field.insertAdjacentElement('afterend', errorElement);
-                        }
+
+                if (data.message) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: `${data.message}`,
+                        showConfirmButton: true,
+                        customClass: {
+                            confirmButton: 'px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] focus:outline-none'
+                        },
+                        buttonsStyling: false
                     });
                 }
-    
-                if (data.errors && data.errors.__all__){
-                    let formError = document.createElement('p');
-                    formError.classList.add('text-red-500', 'text-sm', 'mt-1');
-                    formError.innerText = data.errors.__all__.join(', ');
-                    form.prepend(formError);
-                }
-    
-            } catch (error) {
-                console.log('Error submitting form:', error);
+                
+                disableForm(form.id)
+
+                return;
             }
-        });
+
+            if (data.errors) {
+                clearErrors(form);
+
+                Object.entries(data.errors).forEach(([fieldName, fieldErrors]) => {
+                    const field = form.querySelector(`[name="${fieldName}"]`);
+
+                    if (field) {
+                        let errorElement = document.createElement('p');
+                        errorElement.classList.add('text-red-500', 'text-sm', 'mt-1');
+                        errorElement.innerText = fieldErrors.join(', ');
+                        field.insertAdjacentElement('afterend', errorElement);
+                    }
+                });
+            }
+
+            if (data.errors && data.errors.__all__){
+                let formError = document.createElement('p');
+                formError.classList.add('text-red-500', 'text-sm', 'mt-1');
+                formError.innerText = data.errors.__all__.join(', ');
+                form.prepend(formError);
+            }
+
+        } catch (error) {
+            console.log('Error submitting form:', error);
+        }
+        
     }
 
     function clearErrors(form) {
@@ -186,10 +213,15 @@ export function initializePersonalInformation() {
         }
     }
 
-    attachAJAXSubmit('edit-profile-form');
-    attachAJAXSubmit('edit-password-form');
-}
+    document.addEventListener('submit', async event => {
+        if (event.target && event.target.id === 'edit-profile-form') {
+            event.preventDefault();
+            handleAJAXSubmit(event.target, 'personal-information-display');
+        }
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializePersonalInformation();
-});
+        if (event.target && event.target.id === 'edit-password-form') {
+            event.preventDefault();
+            handleAJAXSubmit(event.target, 'change-password-display');
+        }
+    });
+}

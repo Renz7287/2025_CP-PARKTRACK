@@ -2,7 +2,7 @@ import { initializeVehicleField } from "../utils/vehicle.js";
 
 export function initializeVehicleManagement() {
     // JQuery DataTable
-    const table = $('#vehicles-table').DataTable({
+    let table = $('#vehicles-table').DataTable({
         responsive: true,
         paging: true,
         searching: true,
@@ -39,7 +39,6 @@ export function initializeVehicleManagement() {
                 'edit',
                 button.dataset.id,
                 button.dataset.plateNumber,
-                button.dataset.gatePass,
                 button.dataset.brand,
                 button.dataset.model,
                 button.dataset.color
@@ -89,9 +88,46 @@ export function initializeVehicleManagement() {
             const data = await response.json();
 
             if (data.success) {
+                clearErrors();
 
                 vehicleModal.classList.add('hidden');
-                location.reload();
+                
+                if (data.html) {
+                    table.destroy();
+
+                    document.querySelector('#vehicles-table tbody').innerHTML = data.html;
+
+                    table = $('#vehicles-table').DataTable({
+                        responsive: true,
+                        paging: true,
+                        searching: true,
+                        ordering: true,
+                        autoWidth: false,
+                        language: {
+                            search: "Search vehicles:",
+                            lengthMenu: "Show _MENU_ entries",
+                            info: "Showing _START_ to _END_ of _TOTAL_ vehicles",
+                            infoEmpty: "No vehicles available",
+                            zeroRecords: "No matching vehicles found",
+                        },
+                        columnDefs: [
+                            { orderable: false, targets: -1 } // disable sorting on "Actions" column
+                        ]
+                    });
+                }
+                
+                if (data.message) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: `${data.message}`,
+                        showConfirmButton: true,
+                        customClass: {
+                            confirmButton: 'px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] focus:outline-none'
+                        },
+                        buttonsStyling: false
+                    });
+                }
+
                 return;
 
             }
@@ -123,7 +159,7 @@ export function initializeVehicleManagement() {
         }
     });
     
-    function openModal(mode, id=null, plateNumber='', gatePass='', brand='', model='', color='') {
+    function openModal(mode, id=null, plateNumber='', brand='', model='', color='') {
         const form = document.getElementById('vehicle-form');
         const title = document.getElementById('form-title');
         const submitButton = document.getElementById('submit-button');
@@ -143,7 +179,6 @@ export function initializeVehicleManagement() {
             submitButton.textContent = 'Save Changes';
 
             document.getElementById('id_plate_number').value = plateNumber;
-            document.getElementById('id_gate_pass').value = gatePass;
             brandInput.value = brand;
             modelInput.value = model;
             document.getElementById('id_color').value = color;

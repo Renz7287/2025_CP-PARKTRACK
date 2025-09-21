@@ -47,7 +47,7 @@ export function initializeBarangayField(config) {
 
         if (!cityInput.value) {
             let errorElement = document.createElement('p');
-            errorElement.classList.add('barangay-error', 'text-red-500', 'text-sm', 'mt-1');
+            errorElement.classList.add('barangay-error', 'text-red-500', 'text-xs', 'mt-1');
             errorElement.innerText = 'Please select a city first.';
             barangayInput.insertAdjacentElement('afterend', errorElement);
         }

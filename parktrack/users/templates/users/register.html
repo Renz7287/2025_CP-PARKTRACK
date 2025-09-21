@@ -1,4 +1,4 @@
-{% extends 'base_auth.html' %}
+{% extends 'base-auth.html' %}
 
 {% load static %}
 
@@ -20,7 +20,7 @@
 <section class="min-h-screen min-w-screen flex justify-center items-center">
   
   	<div class="
-  		flex justify-center bg-white rounded-3xl shadow-2xl h-[450px] md:max-w-2xl
+  		flex justify-center bg-white rounded-3xl shadow-2xl h-[480px] md:max-w-3xl
 		min-w-xs md:mt-0 mt-16
 	">
 
@@ -44,7 +44,7 @@
 				<h1 class="font-bold text-2xl">Registration</h1>
 			</div>
 
-			<form method="POST" class="gap-2 mt-5" novalidate>
+			<form id="register-form" method="POST" class="gap-2 mt-5" novalidate>
 				{% csrf_token %}
 
 				<div class="space-y-5">
@@ -77,7 +77,7 @@
 	
 							<div class="md:hidden">
 								<button type="button" id="next-to-contact" class="
-									bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-[71px] w-full
+									bg-[#940B26] rounded-lg font-semibold text-white p-1 w-full mt-2
 									hover:scale-105 cursor-pointer
 								">
 									Next
@@ -127,7 +127,7 @@
 							</div>
 	
 							<button type="button" id="next-to-vehicle" class="
-								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-[132px]
+								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-2
 								hover:scale-105 cursor-pointer w-full md:hidden
 							">
 								Next
@@ -142,7 +142,7 @@
 	
 						</section>
 
-						<div class="hidden md:block mt-[82px] space-y-2">
+						<div class="hidden md:block mt-5 space-y-2">
 							<button 
 							type="button" id="next-to-step-2"
 							class="
@@ -202,11 +202,6 @@
 								{{ vehicle_form.plate_number }}
 							</div>
 	
-							<div class="flex flex-col">
-								<label for="{{ vehicle_form.gate_pass.id_for_label }}" class="font-bold text-sm">Gate Pass</label>
-								{{ vehicle_form.gate_pass }}
-							</div>
-	
 							<button type="button" id="next-to-credentials" class="
 								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-2
 								hover:scale-105 cursor-pointer w-full md:hidden
@@ -250,7 +245,7 @@
 							</div>
 	
 							<button type="submit" class="
-								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-[132px]
+								bg-[#940B26] rounded-lg font-semibold text-white p-1 mt-2
 								hover:scale-105 cursor-pointer w-full md:hidden
 							">
 								Register
@@ -265,7 +260,7 @@
 	
 						</section>
 
-						<div class="hidden md:block mt-[22px] space-y-2">
+						<div class="hidden md:block mt-5 space-y-2">
 							<button 
 							type="submit" 
 							class="

@@ -19,39 +19,13 @@
                         <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
                             <tr>
                             <th class="px-4 py-2">Plate Number</th>
-                            <th class="px-4 py-2">Gate Pass</th>
                             <th class="px-4 py-2 hidden md:table-cell">Brand</th>
                             <th class="px-4 py-2">Model</th>
                             <th class="px-4 py-2 hidden md:table-cell">Color</th>
                             <th class="px-4 py-2">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for vehicle in vehicles %}
-                                <tr id="vehicle-row-{{ vehicle.id }}">
-                                    <td>{{ vehicle.plate_number }}</td>
-                                    <td>{{ vehicle.gate_pass }}</td>
-                                    <td class="hidden md:table-cell">{{ vehicle.brand }}</td>
-                                    <td>{{ vehicle.model }}</td>
-                                    <td class="hidden md:table-cell">{{ vehicle.color }}</td>
-                                    <td>
-                                        <button class="js-edit-button text-blue-500 hover:text-blue-700 mr-2"
-                                            data-id="{{ vehicle.id }}"
-                                            data-plate-number="{{ vehicle.plate_number }}"
-                                            data-gate-pass="{{ vehicle.gate_pass }}"
-                                            data-brand="{{ vehicle.brand }}"
-                                            data-model="{{ vehicle.model }}"
-                                            data-color="{{ vehicle.color }}"
-                                        >
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
-                                        <button class="js-delete-button text-red-500 hover:text-red-700" data-id="{{ vehicle.id }}">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
+                        {% include 'components/vehicles-table.html' %}
                     </table>
 
                     <div class="mt-6 flex justify-end">
@@ -80,11 +54,6 @@
                         </div>
                         
                         <div>
-                            <label for="{{ form.gate_pass.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Gate Pass</label>
-                            {{ form.gate_pass }}
-                        </div>
-                        
-                        <div>
                             <label for="{{ form.brand.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
                             {{ form.brand }}
                             <datalist id="brand-list">
@@ -106,7 +75,7 @@
                             {{ form.color }}
                         </div>
 
-                        <div class="p-4">
+                        <div class="p-4 col-span-2">
                             <div class="flex justify-end space-x-4">
                                 <button id="cancel-button" type="button" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Cancel</button>
                                 <button id="submit-button" type="submit" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2]">Add Vehicle</button>

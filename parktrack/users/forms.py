@@ -1,6 +1,5 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
-from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import City, Barangay, VehicleBrand, VehicleModel, User, DriverProfile, Vehicle
 
@@ -154,7 +153,7 @@ class BaseVehicleForm(forms.ModelForm):
     class Meta:
         model = Vehicle
         exclude = ['brand', 'model']
-        fields = ('brand', 'model', 'color', 'plate_number', 'gate_pass')
+        fields = ('brand', 'model', 'color', 'plate_number')
 
     def clean_brand(self):
         brand_name = self.cleaned_data['brand']
@@ -180,18 +179,10 @@ class BaseVehicleForm(forms.ModelForm):
         if not all(char.isalpha() or char.isdigit() or char in ['-', ' '] for char in plate_number):
             raise forms.ValidationError('Plate number should only contain letters, numbers, spaces, or hypens.')
         
+        if Vehicle.objects.filter(plate_number=plate_number).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('This plate number is already registered.')
+        
         return plate_number
-
-    def clean_gate_pass(self):
-        gate_pass = (self.cleaned_data.get('gate_pass') or '').strip()
-
-        if gate_pass:
-
-            if not gate_pass.isdigit() or len(gate_pass) != 4:
-                raise forms.ValidationError('Plate number must be atleast 4 digits.')
-            
-            if Vehicle.objects.filter(gate_pass = gate_pass).exclude(pk=self.instance.pk).exists():
-                raise forms.ValidationError('This gate pass is already in use.')
     
     def save(self, commit=True):
         instance = super().save(commit=False)

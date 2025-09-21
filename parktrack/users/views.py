@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.http import JsonResponse
@@ -16,6 +17,20 @@ class CustomLoginView(LoginView):
         if request.user.is_authenticated:
             return redirect('parking_allotment:parking-allotment')
         return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        self.user = form.get_user()
+        login(self.request, self.user)
+
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'redirect_url': self.get_success_url()})
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': form.errors, '__all__': form.non_field_errors()})
+        return super().form_invalid(form)
 
 def register_user(request):
     if request.method == 'POST':
@@ -34,19 +49,21 @@ def register_user(request):
                 vehicle.owner = driver_profile
                 vehicle.save()
 
-            messages.success(request, 'You have been registered successfully.')
-            return redirect('users:login')
+            return JsonResponse({'success': True, 'message': 'You have been registered successfully.'})
         
-        else:
-            print('Form is not valid.')
-            print(user_form.errors.as_text())
-            print(driver_profile_form.errors.as_text())
-            print(vehicle_form.errors.as_text())
+        errors = {}
+
+        for form in [user_form, driver_profile_form, vehicle_form]:
+            for field, field_errors in form.errors.items():
+                prefix_name = f'{form.prefix}-{field}' if form.prefix else field
+                errors[prefix_name] = field_errors
+
+        return JsonResponse({'success': False, 'errors': errors})
                         
     else:
-        user_form = UserRegistrationForm(request.POST, prefix='user')
-        driver_profile_form = DriverProfileRegistrationForm(request.POST, prefix='driver_profile')
-        vehicle_form = VehicleRegistrationForm(request.POST, prefix='vehicle')
+        user_form = UserRegistrationForm(prefix='user')
+        driver_profile_form = DriverProfileRegistrationForm(prefix='driver_profile')
+        vehicle_form = VehicleRegistrationForm(prefix='vehicle')
 
     cities = list(City.objects.all().values('citymunDesc', 'citymunCode'))
     brands = list(VehicleBrand.objects.all().values('id', 'brand_name'))

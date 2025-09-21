@@ -1,4 +1,4 @@
-{% extends 'base_auth.html' %}
+{% extends 'base-auth.html' %}
 
 {% load static %}
 
@@ -33,22 +33,24 @@
 			<h1 class="font-bold text-2xl mt-5">Login</h1>
 		</div>
 
-		<form method="POST" class="flex flex-col gap-2 mt-8">
+		<form id="login-form" method="POST" class="flex flex-col gap-2 mt-8">
 			{% csrf_token %}
 			<label for="email" class="font-semibold text-sm">Email</label>
-			<input type="email" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2] mb-2" name="username" id="email">
+			<input type="email" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="username" id="email">			
+
 			<label for="password" class="font-semibold text-sm">Password</label>
-			<input type="password" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2] mb-2" name="password" id="password">
+			<input type="password" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="password" id="password">			
+
 			<button 
 				type="submit" 
 				class="
-					bg-[#940B26] rounded-lg font-bold text-white p-1 mt-4
+					bg-[#940B26] rounded-lg font-bold text-white p-1 mt-2
 					hover:scale-105 cursor-pointer
 				"
 				>
 				Login
 			</button>
-			<p class="font-semibold text-center text-xs mt-2">
+			<p class="font-semibold text-center text-xs">
 				Don't have an account?
 				<a class="text-[#940B26] decoration-solid underline" href="{% url 'users:register' %}">
 					Register
@@ -61,5 +63,7 @@
   </div>
 
 </section>
-
 {% endblock content %}
+{% block script %}
+<script src="{% static 'javascript/login.js' %}"></script>
+{% endblock script %}

@@ -65,8 +65,17 @@ def edit_user(request, pk):
                 user_form.save()
                 driver_profile_form.save()
 
-            messages.success(request, 'Personal information updated successfully!')
-            return JsonResponse({'success': True})
+            html = render(
+                request, 'components/personal-information.html',
+                {
+                    'driver_profile': request.user.driver_profile,
+                    'user_form': user_form,
+                    'driver_profile_form': driver_profile_form,
+                    'cities': City.objects.all()
+                },
+            ).content.decode('utf-8')
+
+            return JsonResponse({'success': True, 'html': html, 'message': 'Personal information updated successfully!'})
         
         errors = {}
 
@@ -91,8 +100,13 @@ def change_password(request, pk):
 
             update_session_auth_hash(request, user)
 
-            messages.success(request, 'Password updated successfully!')
-            return JsonResponse({'success': True})
+            html = render(request, 'components/change-password.html',
+                {
+                    'change_password_form': form
+                }
+            ).content.decode('utf-8')
+
+            return JsonResponse({'success': True, 'html': html, 'message': 'Password updated successfully!'})
 
         errors = {}
 
@@ -115,9 +129,16 @@ def add_vehicle(request):
             vehicle.owner = DriverProfile.objects.get(user=user)
             vehicle.save()
 
-            messages.success(request, 'Vehicle added successfully!')
-
-            return JsonResponse({'success': True})
+            html = render(request, 'components/vehicles-table.html',
+                {
+                    'owner': DriverProfile.objects.get(user=user),
+                    'vehicles': Vehicle.objects.filter(owner__user=user),
+                    'form': form,
+                    'brands': list(VehicleBrand.objects.all().values('id', 'brand_name'))
+                }
+            ).content.decode('utf-8')
+            
+            return JsonResponse({'success': True, 'html': html, 'message': 'Vehicle added successfully!'})
         
         errors = {}
 
@@ -137,9 +158,17 @@ def edit_vehicle(request, pk):
 
         if form.is_valid():
             form.save()
-            messages.success(request, 'Vehicle information updated successfully!')
-
-            return JsonResponse({'success': True})
+            
+            html = render(request, 'components/vehicles-table.html',
+                {
+                    'owner': DriverProfile.objects.get(user=request.user),
+                    'vehicles': Vehicle.objects.filter(owner__user=request.user),
+                    'form': form,
+                    'brands': list(VehicleBrand.objects.all().values('id', 'brand_name'))
+                }
+            ).content.decode('utf-8')
+            
+            return JsonResponse({'success': True, 'html': html, 'message': 'Vehicle information updated successfully!'})
         
         errors = {}
 

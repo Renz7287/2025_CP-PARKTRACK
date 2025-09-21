@@ -1,0 +1,24 @@
+<tbody>
+    {% for vehicle in vehicles %}
+        <tr id="vehicle-row-{{ vehicle.id }}">
+            <td>{{ vehicle.plate_number }}</td>
+            <td class="hidden md:table-cell">{{ vehicle.brand }}</td>
+            <td>{{ vehicle.model }}</td>
+            <td class="hidden md:table-cell">{{ vehicle.color }}</td>
+            <td>
+                <button class="js-edit-button text-blue-500 hover:text-blue-700 mr-2"
+                    data-id="{{ vehicle.id }}"
+                    data-plate-number="{{ vehicle.plate_number }}"
+                    data-brand="{{ vehicle.brand }}"
+                    data-model="{{ vehicle.model }}"
+                    data-color="{{ vehicle.color }}"
+                >
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button class="js-delete-button text-red-500 hover:text-red-700" data-id="{{ vehicle.id }}">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>

@@ -116,9 +116,4 @@ class Vehicle(models.Model):
     model = models.ForeignKey(VehicleModel, on_delete=models.SET_NULL, null=True)
     color = models.CharField(max_length=100)
     plate_number = models.CharField(max_length=100)
-    gate_pass = models.CharField(max_length=100, null=True, blank=True) 
     is_registered = models.BooleanField(default=False)
-
-    def save(self, *args, **kwargs):
-        self.is_registered = bool(self.gate_pass)
-        super().save(*args, **kwargs)

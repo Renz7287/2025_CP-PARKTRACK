@@ -15,129 +15,13 @@
         <div class="p-5 bg-[#dcdbdb] min-h-screen">
             <div class="flex items-center gap-6 w-full mx-auto">
                 <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
-                    <form id="edit-profile-form" class="space-y-8" method="POST" action="{% url 'settings:edit-user' user.id %}" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        <div class="flex flex-col items-center text-center mb-8">
-                            <div class="flex-shrink-0 mb-4 relative">
-                                <div class="flex-shrink-0">
-                                    <img id="profile-picture" class="size-[10rem] xl:size-[10rem] rounded-full object-cover border-4 border-blue-100" src="{{ user.profile_picture.url }}" alt="User profile picture">
-                                    <label for="profile-picture-input" class="absolute bottom-2 right-2 bg-[#7cd1f9] text-white p-2 rounded-full cursor-pointer hover:bg-[#78cbf2]">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-                                        </svg>
-                                        {{ user_form.profile_picture }}
-                                    </label>
-                                </div>
-                            </div>
-                            <h2 class="text-xl font-bold mt-2">Profile Picture</h2>
-                        </div>
-                        
-                        <h3 class="text-lg font-semibold mt-8 mb-2">Personal Details</h3>
-                        <hr class="mb-6 border-gray-300">
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Left Column -->
-                            <div class="space-y-6">
-                                <div class="text-black xl:text-lg break-words">
-                                    <label for="{{ user_form.first_name.id_for_label }}" class="block font-medium mb-1">First Name</label>
-                                    {{ user_form.first_name }}
-                                </div>
-                                
-                                <div class="text-black xl:text-lg break-words">
-                                    <label for="{{ user_form.middle_name.id_for_label }}" class="block font-medium mb-1">Middle Name</label>
-                                    {{ user_form.middle_name}}
-                                </div>
-                                
-                                <div class="text-black xl:text-lg break-words">
-                                    <label for="{{ user_form.last_name.id_for_label }}" class="block font-medium mb-1">Last Name</label>
-                                    {{ user_form.last_name }}
-                                </div>
-                                
-                                <div class="text-black xl:text-lg break-words">
-                                    <label for="{{ user_form.email.id_for_label }}" class="block font-medium mb-1">Email</label>
-                                    {{ user_form.email }}
-                                </div>
-                            </div>
-                            
-                            <!-- Right Column -->
-                            {% if driver_profile %}
-                                <div class="space-y-6">
-                                    <div class="text-black xl:text-lg break-words">
-                                        <label for="{{ driver_profile_form.contact_number.id_for_label }}" class="block font-medium mb-1">Phone Number</label>
-                                        {{ driver_profile_form.contact_number }}
-                                    </div>
+                    <div id="personal-information-display">
+                        {% include 'components/personal-information.html' %}
+                    </div>                   
 
-                                    <div class="text-black xl:text-lg break-words">
-                                        <label for="{{ driver_profile_form.city.id_for_label }}" class="block font-medium mb-1">City</label>
-                                        {{ driver_profile_form.city }}
-                                        <datalist id="city-list">
-                                            {% for city in cities %}
-                                                <option value="{{ city.citymunDesc }}" data-code="{{ city.citymunCode }}"></option>
-                                            {% endfor %}
-                                        </datalist>
-                                    </div>
-
-                                    <div class="text-black xl:text-lg break-words">
-                                        <label for="{{ driver_profile_form.barangay.id_for_label }}" class="block font-medium mb-1">Barangay</label>
-                                        {{ driver_profile_form.barangay }}
-                                        <datalist id="barangay-list">                                    
-                                        </datalist>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="flex justify-end mt-8 space-x-4">
-                            <button type="button" id="profile-edit-button" class="bg-[#7cd1f9] text-white hover:bg-[#78cbf2] px-6 py-2 rounded-md shadow-md">
-                                Edit
-                            </button>
-                            <button type="button" id="profile-cancel-button" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hidden">
-                                Cancel
-                            </button>
-                            <button type="submit" id="profile-save-button" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] hidden">
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-
-                    <form action="{% url 'settings:change-password' user.id %}" id="edit-password-form" method="POST" >
-                        {% csrf_token %}
-
-                        <h3 class="text-lg font-semibold mt-8 mb-2">Update Security Credentials</h3>
-                        <hr class="mb-6 border-gray-300">
-                        
-                        <div class="max-w-md">
-                            <div class="space-y-6">
-                                <div class="text-black xl:text-lg break-words">
-                                    <label for="{{ change_password_form.old_password.id_for_label }}" class="block font-medium mb-1">Current Password</label>
-                                    {{ change_password_form.old_password }}
-                                </div>
-                                
-                                <div class="text-black xl:text-lg break-words">
-                                    <label for="{{ change_password_form.new_password1.id_for_label }}" class="block font-medium mb-1">New Password</label>
-                                    {{ change_password_form.new_password1 }}
-                                </div>
-                                
-                                <div for="{{ change_password_form.new_password2.id_for_label }}" class="text-black xl:text-lg break-words">
-                                    <label class="block font-medium mb-1">Re-enter New Password</label>
-                                    {{ change_password_form.new_password2 }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end mt-8 space-x-4">
-                            <button type="button" id="password-edit-button" class="bg-[#7cd1f9] text-white hover:bg-[#78cbf2] px-6 py-2 rounded-md shadow-md">
-                                Change Password
-                            </button>
-                            <button type="button" id="password-cancel-button" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hidden">
-                                Cancel
-                            </button>
-                            <button type="submit" id="password-save-button" class="px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] hidden">
-                                Save Password
-                            </button>
-                        </div>
-                    </form>
+                    <div id="change-password-display">
+                        {% include 'components/change-password.html' %}
+                    </div>
                 </div>
             </div>
         </div>
