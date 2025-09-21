@@ -11,33 +11,21 @@ export function initializeParkingAllotment() {
     const statusContainer = document.getElementById('status-container');
     const toggleContainer = document.getElementById('toggle-container');
     
-    function resetToggles() {
-        carToggle.classList.remove('bg-red-600', 'text-white');
-        carToggle.classList.add('bg-gray-200', 'text-black');
-        liveToggle?.classList.remove('bg-red-600', 'text-white');
-        liveToggle?.classList.add('bg-gray-200', 'text-black');    
-    }
-
     function showSection(section) {
         document.querySelectorAll('.section-content').forEach(sec => {
             sec.classList.add('hidden');
         });
     
-        resetToggles();
         
         if (section === 'car') {
             carSection.classList.remove('hidden');
             statusContainer.classList.remove('hidden');
             toggleContainer.classList.remove('hidden');
             carStatus.classList.remove('hidden');
-            carToggle.classList.remove('bg-gray-200', 'text-black');
-            carToggle.classList.add('bg-red-600', 'text-white');
         } else if (section === 'live') {
             liveSection.classList.remove('hidden');
             statusContainer.classList.add('hidden');
             toggleContainer.classList.add('hidden');
-            liveToggle?.classList.remove('bg-gray-200', 'text-black');
-            liveToggle?.classList.add('bg-red-600', 'text-white');
         }
     }
 
@@ -56,7 +44,7 @@ export function initializeParkingAllotment() {
     showSection('car');
 
     const video = document.getElementById('video');
-    const videoSrc = 'http://192.168.1.33:8080/live/stream.m3u8';   // change to the server laptop's IP address
+    const videoSrc = 'http://192.168.1.33:8080/live/stream.m3u8';
 
     if (!video) return;
 

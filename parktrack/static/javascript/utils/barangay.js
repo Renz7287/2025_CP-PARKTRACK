@@ -42,7 +42,7 @@ export function initializeBarangayField(config) {
         }
     }
 
-    barangayInput.addEventListener('focus', () => {
+    barangayInput?.addEventListener('focus', () => {
         document.querySelector('.barangay-error')?.remove();
 
         if (!cityInput.value) {

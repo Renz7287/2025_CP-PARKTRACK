@@ -1,113 +1,89 @@
 {% load static %}
 
-<span id="open-sidebar" class="absolute text-4xl top-3 left-3 cursor-pointer z-10">
-  <i class="fa-solid fa-bars px-2"></i>
+<span id="open-sidebar" class="absolute text-white text-4xl top-4 left-3 cursor-pointer z-10">
+  	<i class="fa-solid fa-bars px-2"></i>
 </span>
 
 <aside class="
-  js-sidebar md:relative fixed top-0 bottom-0 md:left-0 left-[-300] p-2 md:min-w-[300px]
-  w-[300px] overflow-y-auto text-center bg-[#940B26] z-10"
+	js-sidebar md:relative fixed top-0 bottom-0 md:left-0 left-[-300] p-2 md:min-w-[300px]
+	w-[300px] overflow-y-auto text-center bg-[#940B26] z-10"
 >
-  <header class="flex items-center">
-    <img src="{% static 'images/parktrack-logo-white.png' %}" class="
-      w-[50px] h-[50px]
-      "
-    >
-    <h1 class="font-bold text-white text-3xl">ParkTrack</h1>
-    <span id="close-sidebar" class="md:hidden text-4xl text-white mt-1 ml-14 cursor-pointer">
-      <i class="fa-solid fa-xmark"></i>
-    </span>
-  </header>
-  
-  <hr class="text-[#F95858] mt-8">
+	<header class="flex items-center mt-1.5">
+		<img src="{% static 'images/parktrack-logo-white.png' %}" class="
+			w-[50px] h-[50px]
+			"
+		>
+		<h1 class="font-bold text-white text-3xl">ParkTrack</h1>
+		<span id="close-sidebar" class="md:hidden text-4xl text-white mt-1 ml-14 cursor-pointer">
+			<i class="fa-solid fa-xmark"></i>
+		</span>
+	</header>
 
-  <section class="flex items-center ml-2 py-4 gap-2">
-    <img class="w-9 h-9 rounded-full" src="{{ user.profile_picture.url }}">
-    <div class="flex flex-col items-start">
-      <p class="font-semibold text-white">
-        {% if user.is_admin %}
-          Administrator
-        {% else %}
-          {{ user.last_name }}, {{ user.first_name }}
-        {% endif %}
-      </p>
-      <small class="text-white">
-        {% if user.is_admin %}
-          Admin
-        {% else %}
-          Driver
-        {% endif %}
-      </small>
-    </div>
-  </section>
-  
-  <hr class="text-[#F95858] mb-8">
+	<nav class="mt-10">
+		<ul class="space-y-2">
+			<li>        
+				<a href="{% url 'parking_allotment:parking-allotment' %}" class="js-link flex items-center font-semibold text-white
+					text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
+					transition-colors
+					"
+				>
+				<i class="fa-solid fa-square-parking"></i>
+					Parking Allotment
+				</a>
+			</li>
+			{% if user.is_admin %}
+				<li>        
+					<a href="{% url 'parking_usage:parking-usage' %}" class="js-link flex items-center font-semibold text-white
+						text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
+						transition-colors
+						"
+					>
+					<i class="fa-solid fa-chart-line"></i>
+						Parking Usage
+					</a>
+				</li>
+			{% endif %}
+		<li>        
+			<div class="flex items-center font-semibold text-white
+				text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
+				transition-colors cursor-pointer
+				"
+				id="open-submenu"
+			>
+			<i class="fa-solid fa-gear"></i>
+			<div class="flex justify-between w-full items-center">
+				<span>Settings</span>
+				<span class="text-sm rotate-180" id="arrow">
+					<i class="fa-solid fa-chevron-down"></i>
+				</span>
+			</div>          
+			</div>
 
-  <nav>
-    <ul class="space-y-2">
-      <li>        
-        <a href="{% url 'parking_allotment:parking-allotment' %}" class="js-link flex items-center font-semibold text-white
-          text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
-          transition-colors
-         "
-        >
-          <i class="fa-solid fa-square-parking"></i>
-          Parking Allotment
-        </a>
-      </li>
-      {% if user.is_admin %}
-      <li>        
-        <a href="{% url 'parking_usage:parking-usage' %}" class="js-link flex items-center font-semibold text-white
-          text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
-          transition-colors
-         "
-        >
-          <i class="fa-solid fa-chart-line"></i>
-          Parking Usage
-        </a>
-      </li>
-      {% endif %}
-      <li>        
-        <div class="flex items-center font-semibold text-white
-          text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
-          transition-colors cursor-pointer
-          "
-          id="open-submenu"
-        >
-          <i class="fa-solid fa-gear"></i>
-          <div class="flex justify-between w-full items-center">
-            <span>Settings</span>
-            <span class="text-sm rotate-180" id="arrow">
-              <i class="fa-solid fa-chevron-down"></i>
-            </span>
-          </div>          
-        </div>
-
-        <div class="text-left text-sm text-white font-thin mt-2 w-4/5 mx-auto" id="submenu">
-          <a href="{% url 'settings:personal-information' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
-            <i class="fa-solid fa-circle-user"></i>
-            Profile Information
-          </a>
-          {% if not user.is_admin %}
-          <a href="{% url 'settings:vehicle-management' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
-            <i class="fa-solid fa-car"></i>
-            Vehicle Management
-          </a>
-          {% endif %}
-        </div>
-      </li>
-    </ul>  
-  </nav>
+			<div class="text-left text-sm text-white font-thin mt-2 w-4/5 mx-auto" id="submenu">
+				<a href="{% url 'settings:personal-information' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
+					<i class="fa-solid fa-circle-user"></i>
+						Profile Information
+				</a>
+			{% if not user.is_admin %}
+				<a href="{% url 'settings:vehicle-management' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
+					<i class="fa-solid fa-car"></i>
+						Vehicle Management
+				</a>
+			{% endif %}
+			</div>
+		</li>
+		</ul>  
+	</nav>
   
-  <footer class="fixed bottom-0 mb-2">
-    <form action="{% url 'users:logout' %}" method="POST" id="logout-form">
-      {% csrf_token %}
-      <button id="logout-button" class="font-semibold
-       text-white p-2 hover:text-red-100 cursor-pointer
-      ">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        Logout
-      </button>
-    </form>
-  </footer>
+	<footer class="fixed bottom-0 mb-2">
+		<form action="{% url 'users:logout' %}" method="POST" id="logout-form">
+			{% csrf_token %}
+			<button id="logout-button" class="font-semibold
+				text-white p-2 hover:text-red-100 cursor-pointer
+			">
+				<i class="fa-solid fa-right-from-bracket"></i>
+				Logout
+			</button>
+		</form>
+	</footer>
 </aside>

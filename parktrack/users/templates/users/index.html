@@ -22,19 +22,23 @@
     <div class="md:w-3/5 px-8 w-xs">
 
 		<div class="flex flex-col justify-center items-center mt-2">
-			<img 
-			src="{% static 'images/parktrack-logo-red.png' %}" 
-			class="w-18 h-18"
-			>
-			<h1 class="font-bold text-2xl">Login</h1>
+			<div class="flex items-center">
+				<img 
+					src="{% static 'images/parktrack-logo-red.png' %}" 
+					class="w-11 h-11"
+				>
+				<h1 class="font-bold text-3xl">ParkTrack</h1>
+			</div>
+			
+			<h1 class="font-bold text-2xl mt-5">Login</h1>
 		</div>
 
 		<form method="POST" class="flex flex-col gap-2 mt-8">
 			{% csrf_token %}
 			<label for="email" class="font-semibold text-sm">Email</label>
-			<input type="email" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="username" id="email">
+			<input type="email" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2] mb-2" name="username" id="email">
 			<label for="password" class="font-semibold text-sm">Password</label>
-			<input type="password" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="password" id="password">
+			<input type="password" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2] mb-2" name="password" id="password">
 			<button 
 				type="submit" 
 				class="
