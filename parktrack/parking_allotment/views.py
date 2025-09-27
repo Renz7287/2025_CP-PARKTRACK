@@ -1,11 +1,10 @@
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from utils.decorators import group_required
 
 
 # Create your views here.
 
-@login_required
+@group_required('Admin', 'Driver')
 def parking_allotment(request):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     context = {

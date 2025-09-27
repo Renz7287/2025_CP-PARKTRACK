@@ -19,7 +19,6 @@ form.addEventListener('submit', async event => {
         
         if (data.success) {
             clearErrors();
-            console.log(data.redirect_url);
             window.location.href = data.redirect_url;
         }
 

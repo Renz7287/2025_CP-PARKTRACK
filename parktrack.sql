@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 06, 2025 at 06:13 PM
+-- Generation Time: Sep 27, 2025 at 12:07 PM
 -- Server version: 11.8.2-MariaDB
 -- PHP Version: 8.2.12
 
@@ -31,6 +31,14 @@ CREATE TABLE `auth_group` (
   `id` int(11) NOT NULL,
   `name` varchar(150) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `auth_group`
+--
+
+INSERT INTO `auth_group` (`id`, `name`) VALUES
+(1, 'Admin'),
+(2, 'Driver');
 
 -- --------------------------------------------------------
 
@@ -176,25 +184,25 @@ CREATE TABLE `django_migrations` (
 --
 
 INSERT INTO `django_migrations` (`id`, `app`, `name`, `applied`) VALUES
-(1, 'contenttypes', '0001_initial', '2025-09-06 16:09:31.834842'),
-(2, 'contenttypes', '0002_remove_content_type_name', '2025-09-06 16:09:31.876864'),
-(3, 'auth', '0001_initial', '2025-09-06 16:09:31.993023'),
-(4, 'auth', '0002_alter_permission_name_max_length', '2025-09-06 16:09:32.019027'),
-(5, 'auth', '0003_alter_user_email_max_length', '2025-09-06 16:09:32.030318'),
-(6, 'auth', '0004_alter_user_username_opts', '2025-09-06 16:09:32.039667'),
-(7, 'auth', '0005_alter_user_last_login_null', '2025-09-06 16:09:32.048316'),
-(8, 'auth', '0006_require_contenttypes_0002', '2025-09-06 16:09:32.052310'),
-(9, 'auth', '0007_alter_validators_add_error_messages', '2025-09-06 16:09:32.061144'),
-(10, 'auth', '0008_alter_user_username_max_length', '2025-09-06 16:09:32.070006'),
-(11, 'auth', '0009_alter_user_last_name_max_length', '2025-09-06 16:09:32.077441'),
-(12, 'auth', '0010_alter_group_name_max_length', '2025-09-06 16:09:32.097775'),
-(13, 'auth', '0011_update_proxy_permissions', '2025-09-06 16:09:32.107354'),
-(14, 'auth', '0012_alter_user_first_name_max_length', '2025-09-06 16:09:32.114465'),
-(15, 'users', '0001_initial', '2025-09-06 16:09:32.400637'),
-(16, 'admin', '0001_initial', '2025-09-06 16:09:32.470473'),
-(17, 'admin', '0002_logentry_remove_auto_add', '2025-09-06 16:09:32.480488'),
-(18, 'admin', '0003_logentry_add_action_flag_choices', '2025-09-06 16:09:32.504548'),
-(19, 'sessions', '0001_initial', '2025-09-06 16:09:32.526570');
+(1, 'contenttypes', '0001_initial', '2025-09-27 08:57:33.629880'),
+(2, 'contenttypes', '0002_remove_content_type_name', '2025-09-27 08:57:33.667989'),
+(3, 'auth', '0001_initial', '2025-09-27 08:57:33.796825'),
+(4, 'auth', '0002_alter_permission_name_max_length', '2025-09-27 08:57:33.820971'),
+(5, 'auth', '0003_alter_user_email_max_length', '2025-09-27 08:57:33.831984'),
+(6, 'auth', '0004_alter_user_username_opts', '2025-09-27 08:57:33.843259'),
+(7, 'auth', '0005_alter_user_last_login_null', '2025-09-27 08:57:33.852931'),
+(8, 'auth', '0006_require_contenttypes_0002', '2025-09-27 08:57:33.856557'),
+(9, 'auth', '0007_alter_validators_add_error_messages', '2025-09-27 08:57:33.863875'),
+(10, 'auth', '0008_alter_user_username_max_length', '2025-09-27 08:57:33.873388'),
+(11, 'auth', '0009_alter_user_last_name_max_length', '2025-09-27 08:57:33.884693'),
+(12, 'auth', '0010_alter_group_name_max_length', '2025-09-27 08:57:33.903253'),
+(13, 'auth', '0011_update_proxy_permissions', '2025-09-27 08:57:33.912947'),
+(14, 'auth', '0012_alter_user_first_name_max_length', '2025-09-27 08:57:33.922195'),
+(15, 'users', '0001_initial', '2025-09-27 08:57:34.218074'),
+(16, 'admin', '0001_initial', '2025-09-27 08:57:34.280374'),
+(17, 'admin', '0002_logentry_remove_auto_add', '2025-09-27 08:57:34.291135'),
+(18, 'admin', '0003_logentry_add_action_flag_choices', '2025-09-27 08:57:34.307387'),
+(19, 'sessions', '0001_initial', '2025-09-27 08:57:34.329595');
 
 -- --------------------------------------------------------
 
@@ -213,7 +221,9 @@ CREATE TABLE `django_session` (
 --
 
 INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES
-('vhisgi8ro96kow5qanzelw9asf2fde5n', '.eJxVjruOwjAQRf_F7S7W-DHOo6Sno7dmYpvARrGInQrx76y1FEt7z71H9yE87XX2e4mbvwYxCi2-_2dM009cGwg3Wi9ZTnmt25Vlq8g3LfKUQ1yO7-6HYKYyt_XkQjQJbLLcM_KQjEGMXTdgQAoMyKwsWWVSzxysdhMn05EOSvcU8Vf6d6Cps1_yJe_VL1Sq3-J9j6W276DxAMMB3Fm5UelRgUSHRg9fACOAeL4AfeFNHA:1uuvWM:2eai83DuUTrcjs1Q-NU5Qv0v5cf8S_fl5GBGOQMXoyY', '2025-09-20 16:12:10.574104');
+('dq15uofd3cxwjbq5wmyrqvggrwtbhznc', 'e30:1v2RQW:XQYAvtoYetX8IQZVeElGrBolhJn9ZCmkAvM4FE1tTJE', '2025-10-11 09:41:12.240668'),
+('rqsjpu333h53qh78l7nor0psgqs09wim', 'e30:1v2RQw:SsSaiaRPZpEPK9qrwNPOJ8CtORBx-FFsBIvGdfV7u8c', '2025-10-11 09:41:38.088558'),
+('vsg1bu9xuxzwcx5v6gk9zvd2pc7umer0', 'e30:1v2RPN:rvyAdlFY5VtoTSSgQqhWJZdV7Jb1UAmm-7S7Q1DT4fI', '2025-10-11 09:40:01.072397');
 
 -- --------------------------------------------------------
 
@@ -44004,7 +44014,7 @@ CREATE TABLE `users_driverprofile` (
 --
 
 INSERT INTO `users_driverprofile` (`id`, `contact_number`, `gender`, `created_at`, `updated_at`, `barangay_id`, `city_id`, `user_id`) VALUES
-(1, '09123456781', 'M', '2025-09-06 16:11:10.335690', '2025-09-06 16:11:34.202220', 30328, 1133, 2);
+(1, '09123456789', 'M', '2025-09-27 09:37:37.678157', '2025-09-27 09:37:37.678157', 30328, 1133, 2);
 
 -- --------------------------------------------------------
 
@@ -44033,8 +44043,8 @@ CREATE TABLE `users_user` (
 --
 
 INSERT INTO `users_user` (`id`, `password`, `last_login`, `is_superuser`, `is_staff`, `is_active`, `date_joined`, `first_name`, `middle_name`, `last_name`, `email`, `is_admin`, `profile_picture`) VALUES
-(1, 'pbkdf2_sha256$1000000$xgfVxR1HqJOIeTOXcmERWO$e+GYFI1IqR2XEzcqAnMsra7j4PRPXBlkVDMEGbwedMs=', NULL, 1, 1, 1, '2025-09-06 16:09:53.590890', '', NULL, '', 'admin@email.com', 1, 'images/avatar.svg'),
-(2, 'pbkdf2_sha256$1000000$gRAb1U4pumR3IDfEU3JuKB$FtyAqsPZBC+PskdTpw0oRTynLZWteOdJKAekvxAeTE0=', '2025-09-06 16:11:23.745756', 0, 0, 1, '2025-09-06 16:11:09.175404', 'John', NULL, 'Doe', 'johndoe@email.com', 0, 'images/avatar.svg');
+(1, 'pbkdf2_sha256$1000000$lkiiFGo5iBSUcEuN509V6O$+odBA3oEYx+gamwEz2fGlUpKc1cLegGokmDLw5cS8hM=', NULL, 1, 1, 1, '2025-09-27 09:30:29.166716', '', NULL, '', 'admin@gmail.com', 1, 'images/avatar.svg'),
+(2, 'pbkdf2_sha256$1000000$mbhBgLg9MBjSmnyhW7k7b2$NMB/Ku64GXPKE4QQz4+UlTCJ+SyGxK3pZgqT6GKdeHU=', '2025-09-27 09:51:28.934917', 0, 0, 1, '2025-09-27 09:37:36.632358', 'John', '', 'Doe', 'johndoe@gmail.com', 0, 'images/avatar.svg');
 
 -- --------------------------------------------------------
 
@@ -44047,6 +44057,14 @@ CREATE TABLE `users_user_groups` (
   `user_id` bigint(20) NOT NULL,
   `group_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users_user_groups`
+--
+
+INSERT INTO `users_user_groups` (`id`, `user_id`, `group_id`) VALUES
+(1, 1, 1),
+(2, 2, 2);
 
 -- --------------------------------------------------------
 
@@ -44070,7 +44088,6 @@ CREATE TABLE `users_vehicle` (
   `id` bigint(20) NOT NULL,
   `color` varchar(100) NOT NULL,
   `plate_number` varchar(100) NOT NULL,
-  `gate_pass` varchar(100) DEFAULT NULL,
   `is_registered` tinyint(1) NOT NULL,
   `brand_id` int(11) DEFAULT NULL,
   `model_id` int(11) DEFAULT NULL,
@@ -44081,9 +44098,8 @@ CREATE TABLE `users_vehicle` (
 -- Dumping data for table `users_vehicle`
 --
 
-INSERT INTO `users_vehicle` (`id`, `color`, `plate_number`, `gate_pass`, `is_registered`, `brand_id`, `model_id`, `owner_id`) VALUES
-(1, 'White', 'ABC1234', NULL, 0, 8, 29, 1),
-(2, 'White', 'DEF5678', 'None', 1, 10, 38, 1);
+INSERT INTO `users_vehicle` (`id`, `color`, `plate_number`, `is_registered`, `brand_id`, `model_id`, `owner_id`) VALUES
+(1, 'Silver', 'ABC1234', 0, 20, 72, 1);
 
 -- --------------------------------------------------------
 
@@ -44329,7 +44345,7 @@ ALTER TABLE `vehicle_model`
 -- AUTO_INCREMENT for table `auth_group`
 --
 ALTER TABLE `auth_group`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `auth_group_permissions`
@@ -44389,7 +44405,7 @@ ALTER TABLE `users_user`
 -- AUTO_INCREMENT for table `users_user_groups`
 --
 ALTER TABLE `users_user_groups`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `users_user_user_permissions`
@@ -44401,7 +44417,7 @@ ALTER TABLE `users_user_user_permissions`
 -- AUTO_INCREMENT for table `users_vehicle`
 --
 ALTER TABLE `users_vehicle`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `vehicle_brand`

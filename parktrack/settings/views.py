@@ -2,14 +2,14 @@ from django.db import transaction
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from users.models import City, VehicleBrand, User, DriverProfile, Vehicle
 from users.forms import UserEditForm, DriverProfileEditForm, VehicleModalForm, ChangePasswordForm
+from utils.decorators import group_required
 
 # Create your views here.
 
-@login_required
+@group_required('Admin', 'Driver')
 def personal_information(request, pk):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
@@ -32,7 +32,7 @@ def personal_information(request, pk):
     }
     return render(request, 'settings/index.html', context)
 
-@login_required
+@group_required('Driver')
 def vehicle_management(request, pk):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
@@ -51,7 +51,7 @@ def vehicle_management(request, pk):
     }
     return render(request, 'settings/vehicle-management.html', context)
 
-@login_required
+@group_required('Admin', 'Driver')
 def edit_user(request, pk):
     user = User.objects.get(id=pk)
 
@@ -88,7 +88,7 @@ def edit_user(request, pk):
 
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid Request']}})
 
-@login_required
+@group_required('Admin', 'Driver')
 def change_password(request, pk):
     user = User.objects.get(id=pk)
 
@@ -117,7 +117,7 @@ def change_password(request, pk):
 
     return JsonResponse({'success': False, 'erros': {'__all__': ['Invalid request']}})
 
-@login_required
+@group_required('Driver')
 def add_vehicle(request):
     user = request.user
     
@@ -149,7 +149,7 @@ def add_vehicle(request):
     
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid request']}})
 
-@login_required
+@group_required('Driver')
 def edit_vehicle(request, pk):
     vehicle = Vehicle.objects.get(id=pk)
 
@@ -179,7 +179,7 @@ def edit_vehicle(request, pk):
     
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid Request']}})
 
-@login_required
+@group_required('Driver')
 def delete_vehicle(request, pk):
     if request.method == 'POST':
         try:

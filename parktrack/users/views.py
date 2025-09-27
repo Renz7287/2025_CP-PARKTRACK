@@ -4,6 +4,7 @@ from django.contrib.auth import login
 from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.http import JsonResponse
+from utils.decorators import unauthenticated_user
 from .forms import UserRegistrationForm, DriverProfileRegistrationForm, VehicleRegistrationForm
 from .models import City, Barangay, VehicleBrand, VehicleModel
 
@@ -32,6 +33,7 @@ class CustomLoginView(LoginView):
             return JsonResponse({'success': False, 'errors': form.errors, '__all__': form.non_field_errors()})
         return super().form_invalid(form)
 
+@unauthenticated_user
 def register_user(request):
     if request.method == 'POST':
         user_form = UserRegistrationForm(request.POST, prefix='user')
