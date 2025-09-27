@@ -38,69 +38,82 @@
 	<!-- ================= CAR SECTION (Picture Display) ================= -->
 	<div id="car-section" class="section-content">
 		<div class="container mx-auto px-4">
-			<div class="relative w-full h-[95vh] border border-gray-300 rounded-lg shadow-md mb-6">
-				<!-- Background Image -->
-				<img id="parking-image" class="w-full h-full object-cover rounded-lg" src="{% static 'images/parkingallotment.jpg' %}" alt="Parking Layout">
-				
-				<!-- Overlay Indicators -->
+			<!-- Mobile Controls -->
+			<div id="mobile-controls" class="flex justify-between items-center mb-4 md:hidden">
+				<div class="flex gap-2">
+					<button id="zoom-in" class="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center">
+						<i class="fa-solid fa-plus"></i>
+					</button>
+					<button id="zoom-out" class="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center">
+						<i class="fa-solid fa-minus"></i>
+					</button>
+				</div>
+				<button id="reset-view" class="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center">
+					<i class="fa-solid fa-arrows-rotate"></i>
+				</button>
+			</div>
+			
+			<div class="relative w-full h-[50vh] md:h-[95vh] border border-gray-300 rounded-lg shadow-md mb-6 overflow-hidden">
+				<!-- Interactive Container for Mobile -->
+				<div id="parking-container" class="w-full h-full touch-pan-y md:touch-none select-none cursor-grab active:cursor-grabbing">
+					<!-- Background Image -->
+					<img id="parking-image" class="w-full h-full object-cover rounded-lg transition-transform duration-300" src="{% static 'images/parkingallotment.jpg' %}" alt="Parking Layout">
+					
+					<!-- Overlay Indicators -->
 
-				<!-- Top row indicators -->
-				<div class="absolute top-[10%] left-[38.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[10%] left-[41.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[10%] left-[44.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[10%] left-[47.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[10%] left-[50.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[10%] left-[53.4%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[10%] left-[56.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[10%] left-[60%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[10%] left-[63.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[10%] left-[66.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+					<!-- Top row indicators -->
+					<div class="absolute top-[10%] left-[35.5%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[10%] left-[39.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[10%] left-[43.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[10%] left-[46.5%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[10%] left-[50.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[10%] left-[54.4%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[10%] left-[58.4%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[10%] left-[62%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[10%] left-[65.4%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[10%] left-[69.4%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
 
-				<!-- Right side -->
-				<div class="absolute top-[14%] left-[78%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[18.5%] left-[78%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[23%] left-[78%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[27.5%] left-[78%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
+					<!-- Right side -->
+					<div class="absolute top-[14%] left-[84%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[18.5%] left-[84%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[23%] left-[84%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[27.5%] left-[84%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
 
+					<!-- middle top -->
+					<div class="absolute top-[40%] left-[58.4%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[40%] left-[54.4%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[40%] left-[50.5%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[40%] left-[46.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[40%] left-[43.5%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[40%] left-[39.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[40%] left-[36.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
 
+					<div class="absolute top-[40%] left-[62%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[40%] left-[66.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
 
-				 <!-- middle top -->
-				<div class="absolute top-[40%] left-[56.4%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[40%] left-[53.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[40%] left-[50.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[40%] left-[47.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[40%] left-[44.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[40%] left-[41.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[40%] left-[38.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+					<!-- middle below -->
+					<div class="absolute top-[52%] left-[57.4%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[52%] left-[54.4%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[52%] left-[50.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[52%] left-[47.5%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[52%] left-[43.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[52%] left-[40.5%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+		
+					<div class="absolute top-[52%] left-[62%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[52%] left-[65.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
 
-				<div class="absolute top-[40%] left-[60%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[40%] left-[63.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
+					<!-- Bottom row (left side) -->
+					<div class="absolute top-[90%] left-[26.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[90%] left-[30.5%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[90%] left-[34.5%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[90%] left-[38%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
 
-				<!-- middle below -->
-				<div class="absolute top-[52%] left-[56.4%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[52%] left-[53.4%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[52%] left-[50.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[52%] left-[47.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[52%] left-[44.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[52%] left-[41.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-	
-				<div class="absolute top-[52%] left-[60%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[52%] left-[63.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-
-
-				<!-- Bottom row (left side) -->
-				<div class="absolute top-[90%] left-[30.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[90%] left-[33.5%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[90%] left-[36.5%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[90%] left-[40%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-
-
-				<!-- Bottom row (right side) -->
-				<div class="absolute top-[85%] left-[46%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[85%] left-[49%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[85%] left-[52%] w-6 h-6 bg-red-500 rounded-full shadow-md"></div>
-				<div class="absolute top-[85%] left-[55%] w-6 h-6 bg-green-500 rounded-full shadow-md"></div>
-
+					<!-- Bottom row (right side) -->
+					<div class="absolute top-[85%] left-[45%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[85%] left-[49%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[85%] left-[52%] w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full shadow-md"></div>
+					<div class="absolute top-[85%] left-[56%] w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full shadow-md"></div>
+				</div>
 			</div>
 		</div>
 
@@ -108,12 +121,12 @@
 		<div class="px-6 md:px-12 pb-10">
 			<div class="flex flex-col gap-3">
 				<div class="flex items-center gap-3">
-					<div class="w-6 h-6 bg-red-500 rounded-full"></div>
-					<span class="text-base font-semibold text-black">Occupied</span>
+					<div class="w-4 h-4 md:w-6 md:h-6 bg-red-500 rounded-full"></div>
+					<span class="text-sm md:text-base font-semibold text-black">Occupied</span>
 				</div>
 				<div class="flex items-center gap-3">
-					<div class="w-6 h-6 bg-green-500 rounded-full"></div>
-					<span class="text-base font-semibold text-black">Vacant</span>
+					<div class="w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full"></div>
+					<span class="text-sm md:text-base font-semibold text-black">Vacant</span>
 				</div>
 			</div>
 		</div>
@@ -133,7 +146,7 @@
 				</div>
 			</div>
 
-			<video id="video" class="w-full h-[80vh] border border-gray-300 rounded-lg shadow-md flex items-center justify-center mb-6" controls autoplay>
+			<video id="video" class="w-full h-[50vh] md:h-[80vh] border border-gray-300 rounded-lg shadow-md flex items-center justify-center mb-6" controls autoplay>
 			</video>
 			
 			<div class="flex justify-start">
