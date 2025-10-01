@@ -70,6 +70,12 @@
 						Vehicle Management
 				</a>
 			{% endif %}
+			{% if user.is_admin %}
+				<a href="{% url 'settings:parking-slot-management' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
+					<i class="fa-solid fa-location-dot"></i>
+						Parking Slot Management
+				</a>
+			{% endif %}
 			</div>
 		</li>
 		</ul>  

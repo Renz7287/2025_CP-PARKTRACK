@@ -51,6 +51,15 @@ def vehicle_management(request, pk):
     }
     return render(request, 'settings/vehicle-management.html', context)
 
+@group_required('Admin')
+def parking_slot_management(request, pk):
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    context = {
+        'is_partial': is_ajax
+    }
+    return render(request, 'settings/parking-slot-management.html', context)
+
 @group_required('Admin', 'Driver')
 def edit_user(request, pk):
     user = User.objects.get(id=pk)
