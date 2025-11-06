@@ -16,82 +16,82 @@
 		<div class="p-6 space-y-6">
 
 		<!-- Peak Occupancy Days Graph -->
-		<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
-			<h2 class="text-2xl font-bold">Daily Average Occupancy</h2>
-			<hr class="mb-6 border-gray-300">
-			<div class="h-[500px]">
-				<canvas id="peak-occupancy-chart"></canvas>
-			</div>
-		</section>
+			<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
+				<h2 class="text-2xl font-bold">Daily Average Occupancy</h2>
+				<hr class="mb-6 border-gray-300">
+				<div class="h-[500px]">
+					<canvas id="peak-occupancy-chart"></canvas>
+				</div>
+			</section>
 
-		<!-- Hourly Occupancy Chart (Initially Hidden) -->
-		<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto hourly-occupancy-section" style="display: none;" id="hourly-section">
-			<h2 class="text-2xl font-bold">Click a day above to view hourly occupancy</h2>
-			<hr class="mb-6 border-gray-300">
-			<div class="h-[400px]">
-				<canvas id="hourly-occupancy-chart"></canvas>
-			</div>
-			<div class="mt-4 p-4 bg-gray-50 rounded-lg">
-				<p class="text-sm text-gray-600">
-					<strong>Campus Hours:</strong> Entry from 6:00 AM, Exit by 5:00 PM
-				</p>
-			</div>
-		</section>
+			<!-- Hourly Occupancy Chart (Initially Hidden) -->
+			<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto hourly-occupancy-section" style="display: none;" id="hourly-section">
+				<h2 class="text-2xl font-bold">Click a day above to view hourly occupancy</h2>
+				<hr class="mb-6 border-gray-300">
+				<div class="h-[400px]">
+					<canvas id="hourly-occupancy-chart"></canvas>
+				</div>
+				<div class="mt-4 p-4 bg-gray-50 rounded-lg">
+					<p class="text-sm text-gray-600">
+						<strong>Campus Hours:</strong> Entry from 6:00 AM, Exit by 5:00 PM
+					</p>
+				</div>
+			</section>
 
-		<!-- Daily Vehicle Entries Table -->
-		<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
-			<h2 class="text-2xl font-bold">Daily Vehicle Entries</h2>
-			<hr class="mb-6 border-gray-300">
+			<!-- Daily Vehicle Entries Table -->
+			<section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
+				<h2 class="text-2xl font-bold">Daily Vehicle Entries</h2>
+				<hr class="mb-6 border-gray-300">
 
-			<div class="overflow-x-auto">
-			<table class="min-w-full border-separate border-spacing-y-2">
-				<thead>
-				<tr class="bg-gray-100 text-gray-700 uppercase text-sm">
-					<th class="px-4 py-2 text-left font-bold">Days</th>
-					<th class="px-4 py-2 text-left font-bold">In</th>
-					<th class="px-4 py-2 text-left font-bold">Out</th>
-				</tr>
-				</thead>
-				<tbody class="text-gray-800">
-				<tr class="border-t border-gray-300">
-					<td class="px-4 py-2 font-semibold">Monday</td>
-					<td class="px-4 py-2">50</td>
-					<td class="px-4 py-2">20</td>
-				</tr>
-				<tr class="border-t border-gray-300">
-					<td class="px-4 py-2 font-semibold">Tuesday</td>
-					<td class="px-4 py-2">33</td>
-					<td class="px-4 py-2">13</td>
-				</tr>
-				<tr class="border-t border-gray-300">
-					<td class="px-4 py-2 font-semibold">Wednesday</td>
-					<td class="px-4 py-2">23</td>
-					<td class="px-4 py-2">11</td>
-				</tr>
-				<tr class="border-t border-gray-300">
-					<td class="px-4 py-2 font-semibold">Thursday</td>
-					<td class="px-4 py-2">28</td>
-					<td class="px-4 py-2">18</td>
-				</tr>
-				<tr class="border-t border-gray-300">
-					<td class="px-4 py-2 font-semibold">Friday</td>
-					<td class="px-4 py-2">26</td>
-					<td class="px-4 py-2">19</td>
-				</tr>
-				<tr class="border-t border-gray-300">
-					<td class="px-4 py-2 font-semibold">Saturday</td>
-					<td class="px-4 py-2">15</td>
-					<td class="px-4 py-2">8</td>
-				</tr>
-				<tr class="border-t border-gray-300">
-					<td class="px-4 py-2 font-semibold">Sunday</td>
-					<td class="px-4 py-2">9</td>
-					<td class="px-4 py-2">5</td>
-				</tr>
-				</tbody>
-			</table>
-			</div>
-		</section>
+				<div class="overflow-x-auto">
+				<table class="min-w-full border-separate border-spacing-y-2">
+					<thead>
+					<tr class="bg-gray-100 text-gray-700 uppercase text-sm">
+						<th class="px-4 py-2 text-left font-bold">Days</th>
+						<th class="px-4 py-2 text-left font-bold">In</th>
+						<th class="px-4 py-2 text-left font-bold">Out</th>
+					</tr>
+					</thead>
+					<tbody class="text-gray-800">
+					<tr class="border-t border-gray-300">
+						<td class="px-4 py-2 font-semibold">Monday</td>
+						<td class="px-4 py-2">50</td>
+						<td class="px-4 py-2">20</td>
+					</tr>
+					<tr class="border-t border-gray-300">
+						<td class="px-4 py-2 font-semibold">Tuesday</td>
+						<td class="px-4 py-2">33</td>
+						<td class="px-4 py-2">13</td>
+					</tr>
+					<tr class="border-t border-gray-300">
+						<td class="px-4 py-2 font-semibold">Wednesday</td>
+						<td class="px-4 py-2">23</td>
+						<td class="px-4 py-2">11</td>
+					</tr>
+					<tr class="border-t border-gray-300">
+						<td class="px-4 py-2 font-semibold">Thursday</td>
+						<td class="px-4 py-2">28</td>
+						<td class="px-4 py-2">18</td>
+					</tr>
+					<tr class="border-t border-gray-300">
+						<td class="px-4 py-2 font-semibold">Friday</td>
+						<td class="px-4 py-2">26</td>
+						<td class="px-4 py-2">19</td>
+					</tr>
+					<tr class="border-t border-gray-300">
+						<td class="px-4 py-2 font-semibold">Saturday</td>
+						<td class="px-4 py-2">15</td>
+						<td class="px-4 py-2">8</td>
+					</tr>
+					<tr class="border-t border-gray-300">
+						<td class="px-4 py-2 font-semibold">Sunday</td>
+						<td class="px-4 py-2">9</td>
+						<td class="px-4 py-2">5</td>
+					</tr>
+					</tbody>
+				</table>
+				</div>
+			</section>
 
 		</div>
 	</section>
