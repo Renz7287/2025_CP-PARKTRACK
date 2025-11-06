@@ -45,7 +45,8 @@ export function initializeParkingAllotment() {
     showSection('car');
 
     const video = document.getElementById('video');
-    const videoSrc = 'http://192.168.1.33:8080/live/stream.m3u8';
+    // const videoSrc = 'http://192.168.1.33:8080/live/stream.m3u8';
+    const videoSrc = 'http://127.0.0.1:8000/static/live/stream.m3u8';
 
     if (!video) return;
 
@@ -63,7 +64,7 @@ export function initializeParkingAllotment() {
         hls.attachMedia(video);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.muted = true,
+            video.muted = true;
             video.play();
         });
 
