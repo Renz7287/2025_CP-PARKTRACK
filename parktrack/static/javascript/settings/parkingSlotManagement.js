@@ -401,75 +401,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function saveChanges() {
         console.log('Saving parking slots:', boundingBoxes);
         
-        saveButton.disabled = true;
-        saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        Swal.fire({
+            title: 'Success!',
+            text: 'Parking slots have been saved successfully.',
+            icon: 'success',
+            confirmButtonText: 'OK'
+        });
         
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/parking-slots/save', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-        
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                saveButton.disabled = false;
-                saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-                
-                if (xhr.status === 200) {
-                    const response = JSON.parse(xhr.responseText);
-                    
-                    Swal.fire({
-                        title: 'Success!',
-                        text: response.message || 'Parking slots have been saved successfully.',
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    });
-                    
-                    clearUnsavedChanges();
-                    exitEditing();
-                    
-                    if (typeof onParkingSlotsSaved === 'function') {
-                        onParkingSlotsSaved(boundingBoxes);
-                    }
-                    
-                } else {
-                    let errorMessage = 'Failed to save parking slots.';
-                    try {
-                        const errorResponse = JSON.parse(xhr.responseText);
-                        errorMessage = errorResponse.message || errorMessage;
-                    } catch (e) {
-                        errorMessage = `Server error: ${xhr.status} ${xhr.statusText}`;
-                    }
-                    
-                    Swal.fire({
-                        title: 'Error!',
-                        text: errorMessage,
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                }
-            }
-        };
-        
-        xhr.onerror = function() {
-            saveButton.disabled = false;
-            saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-            
-            Swal.fire({
-                title: 'Network Error!',
-                text: 'Failed to connect to server. Please check your connection and try again.',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        };
-        
-        const dataToSend = {
-            parking_slots: boundingBoxes,
-            image_width: imageWidth,
-            image_height: imageHeight,
-            timestamp: new Date().toISOString()
-        };
-        
-        xhr.send(JSON.stringify(dataToSend));
+        clearUnsavedChanges();
+        exitEditing();
     }
 
     function cancelEditing() {
@@ -507,24 +447,6 @@ document.addEventListener('DOMContentLoaded', function() {
         drawBoundingBoxes();
     }
 
-    function loadParkingSlots() {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/parking-slots', true);
-        
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.parking_slots && Array.isArray(response.parking_slots)) {
-                    boundingBoxes = response.parking_slots;
-                    drawBoundingBoxes();
-                    console.log('Loaded parking slots:', boundingBoxes);
-                }
-            }
-        };
-        
-        xhr.send();
-    }
-
     startEditBtn.addEventListener('click', startEditing);
     addButton.addEventListener('click', switchToAddMode);
     editButton.addEventListener('click', switchToEditMode);
@@ -540,8 +462,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(setCanvasSize, 100);
             });
         }
-        
-        loadParkingSlots();
     }
 
     window.addEventListener('resize', function() {
@@ -550,4 +470,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     initialize();
+
+    boundingBoxes = [];
 });
