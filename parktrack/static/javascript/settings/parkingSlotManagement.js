@@ -1,7 +1,7 @@
 function initializeParkingSlotManagement() {
     const parkingImage = document.getElementById('parking-image');
     const canvas = document.getElementById('bounding-canvas');
-    if (!parkingImage || !canvas) return; // Safety check
+    if (!parkingImage || !canvas) return;
 
     const ctx = canvas.getContext('2d');
     const modeIndicator = document.getElementById('mode-indicator');
@@ -174,14 +174,11 @@ function initializeParkingSlotManagement() {
     loadParkingSlots();
 }
 
-// ✅ Initialize only when the section exists (AJAX-safe)
 function setupParkingSlotObserver() {
-    // Watch for any DOM changes (like new page content)
     const observer = new MutationObserver(() => {
         const section = document.querySelector('.parking-slot-management');
         const parkingImage = document.getElementById('parking-image');
 
-        // Only initialize once per navigation
         if (section && !section.dataset.initialized) {
             section.dataset.initialized = "true";
 
@@ -198,7 +195,6 @@ function setupParkingSlotObserver() {
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// Initial page load
 document.addEventListener('DOMContentLoaded', () => {
     setupParkingSlotObserver();
 
