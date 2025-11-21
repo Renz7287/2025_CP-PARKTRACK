@@ -25,8 +25,11 @@ SECRET_KEY = 'django-insecure-6706e)w1%rn88^f^1oh#og_do2h4=svb^ri#xqgu=i5on6_2ls
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# For pythonanywhere
+#ALLOWED_HOSTS = ['parktrack.pythonanywhere.com']
 
+# For local testing
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 
@@ -154,3 +157,9 @@ AUTO_LOGOUT = {
     'MESSAGE': 'Session expired. Please login again to continue.',
     'REDIRECT_TO_LOGIN_IMMEDIATELY': True,
 }
+
+UPLOAD_API_KEY = 'parktrack@2025'
+
+# Increasing upload size by 50mb for local testing only
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024

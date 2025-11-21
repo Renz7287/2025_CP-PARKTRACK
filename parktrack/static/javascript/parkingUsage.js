@@ -1,11 +1,7 @@
-// parkingUsage.js
-
-// Make sure this function is called when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     initializeParkingUsage();
 });
 
-// Also export it for module usage
 export function initializeParkingUsage() {
     console.log('Initializing parking usage charts...');
     
@@ -24,7 +20,7 @@ export function initializeParkingUsage() {
         return;
     }
 
-    // Sample hourly data for each day (6 AM to 5 PM)
+    // static hourly data
     const hourlyData = {
         'Mon': [5, 15, 35, 45, 50, 52, 48, 45, 40, 35, 25, 15],
         'Tue': [3, 12, 25, 35, 38, 40, 38, 35, 30, 25, 18, 12],
@@ -40,7 +36,7 @@ export function initializeParkingUsage() {
 
     let hourlyChart = null;
 
-    // Create main bar chart with click handler
+    //bar chart 
     const mainChart = new ChartLib(context, {
         type: 'bar',
         data: {
@@ -100,11 +96,11 @@ export function initializeParkingUsage() {
 
     console.log('Main chart created successfully');
 
-    // Function to show hourly chart for selected day
+    // show hourly chart 
     function showHourlyChart(day) {
         console.log('Showing hourly chart for:', day);
         
-        // Get day name for title
+        // day name for title
         const dayNames = {
             'Mon': 'Monday',
             'Tue': 'Tuesday', 
@@ -115,7 +111,7 @@ export function initializeParkingUsage() {
             'Sun': 'Sunday'
         };
 
-        // Show the hourly section
+        // hourly section
         const hourlySection = document.getElementById('hourly-section');
         if (hourlySection) {
             hourlySection.style.display = 'block';
@@ -130,13 +126,13 @@ export function initializeParkingUsage() {
             return;
         }
 
-        // Destroy existing hourly chart if it exists
+       
         if (hourlyChart) {
             hourlyChart.destroy();
             hourlyChart = null;
         }
 
-        // Get the canvas element
+    
         const hourlyCanvasElement = document.getElementById('hourly-occupancy-chart');
         if (!hourlyCanvasElement) {
             console.error('Hourly chart canvas not found');
@@ -212,16 +208,16 @@ export function initializeParkingUsage() {
 
         console.log('Hourly chart created for', day);
 
-        // Scroll to the chart
+        // Scrolling the chart
         setTimeout(() => {
             hourlySection.scrollIntoView({ behavior: 'smooth' });
         }, 100);
     }
 }
 
-// If not using modules, you can also call it directly
+
 if (typeof module === 'undefined') {
-    // Not in a module environment, call directly when DOM is ready
+    
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeParkingUsage);
     } else {

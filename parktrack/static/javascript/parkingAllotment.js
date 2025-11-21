@@ -45,8 +45,7 @@ export function initializeParkingAllotment() {
     showSection('car');
 
     const video = document.getElementById('video');
-    // const videoSrc = 'http://192.168.1.33:8080/live/stream.m3u8';
-    const videoSrc = 'http://127.0.0.1:8000/static/live/stream.m3u8';
+    const videoSrc = '/media/video_stream/stream.m3u8';
 
     if (!video) return;
 
@@ -112,12 +111,12 @@ export function initializeParkingAllotment() {
         let isDragging = false;
         let startX, startY;
         
-        // Check if device is mobile
+        
         const isMobile = window.innerWidth < 768;
         
-        // Only enable interactive features on mobile
+        // mobile interactive features
         if (isMobile) {
-            // Touch events for mobile
+            
             parkingContainer.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) {
                     isDragging = true;
@@ -142,9 +141,9 @@ export function initializeParkingAllotment() {
                 parkingContainer.style.cursor = 'grab';
             });
             
-            // Mouse events for desktop (if needed for testing)
+           
             parkingContainer.addEventListener('mousedown', (e) => {
-                if (e.button === 0) { // Left mouse button
+                if (e.button === 0) { 
                     isDragging = true;
                     startX = e.clientX - posX;
                     startY = e.clientY - posY;
@@ -164,14 +163,14 @@ export function initializeParkingAllotment() {
                 parkingContainer.style.cursor = 'grab';
             });
             
-            // Zoom functionality
+            // zoom
             zoomInBtn.addEventListener('click', () => {
-                scale = Math.min(scale + 0.2, 3); // Max zoom 3x
+                scale = Math.min(scale + 0.2, 3); // Max
                 updateTransform();
             });
             
             zoomOutBtn.addEventListener('click', () => {
-                scale = Math.max(scale - 0.2, 1); // Min zoom 1x
+                scale = Math.max(scale - 0.2, 1); // Min 
                 updateTransform();
             });
             
@@ -182,7 +181,7 @@ export function initializeParkingAllotment() {
                 updateTransform();
             });
             
-            // Pinch to zoom for touch devices
+            // Pinch to zoom 
             let initialDistance = 0;
             
             parkingContainer.addEventListener('touchstart', (e) => {
@@ -199,7 +198,7 @@ export function initializeParkingAllotment() {
                     
                     if (zoomFactor > 1.1 || zoomFactor < 0.9) {
                         scale *= zoomFactor;
-                        scale = Math.max(1, Math.min(scale, 3)); // Keep between 1x and 3x
+                        scale = Math.max(1, Math.min(scale, 3)); 
                         initialDistance = currentDistance;
                         updateTransform();
                     }
