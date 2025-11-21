@@ -16,7 +16,7 @@ export function initializeVehicleManagement() {
             zeroRecords: "No matching vehicles found",
         },
         columnDefs: [
-            { orderable: false, targets: -1 } // disable sorting on "Actions" column
+            { orderable: false, targets: -1 } // disables sorting on "Actions" column
         ]
     });
 
@@ -111,7 +111,7 @@ export function initializeVehicleManagement() {
                             zeroRecords: "No matching vehicles found",
                         },
                         columnDefs: [
-                            { orderable: false, targets: -1 } // disable sorting on "Actions" column
+                            { orderable: false, targets: -1 } // disables sorting on "Actions" column
                         ]
                     });
                 }
