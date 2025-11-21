@@ -1,2 +1,5 @@
 *.pyc
 __pycache__/
+*.ts
+*.m3u8
+media/video_stream/
