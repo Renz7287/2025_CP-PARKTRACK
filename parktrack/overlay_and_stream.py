@@ -31,6 +31,35 @@ OUTPUT_PLAYLIST = str(VIDEO_DIR / 'stream.m3u8')
 
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
+def write_status_json(video_dir, slots):
+    status = {
+        'timestamp': int(time.time()),
+        # 'total_slots': len(slots),
+        'occupied': sum(1 for slot in slots if slot.get('is_occupied')),
+        'vacant': sum(1 for slot in slots if not slot.get('is_occupied')),
+        'slots': [
+            {'id': slot.get('id', None), 'occupied': bool(slot.get('is_occupied'))}
+            for slot in slots
+        ],
+    }
+
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=str(video_dir))
+
+    try:
+        with os.fdopen(tmp_fd, 'w') as tmpf:
+            json.dump(status, tmpf)
+            tmpf.flush()
+            os.fsync(tmpf.fileno())
+
+        final_path = os.path.join(video_dir, 'status.json')
+        os.replace(tmp_path, final_path)
+    except Exception as e:
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+        print('Failed to write status.json: ', e)
+
 model = YOLO(str(YOLO_MODEL))
 
 with open(PARKING_JSON, 'r') as file:
@@ -99,6 +128,9 @@ frame_interval = 1.0 / FPS
 last_time = 0.0
 
 print('Starting overlay+stream loop. Press Ctrl+C to stop.')
+
+loop_count = 0
+
 try:
     while True:
         now = time.time()
@@ -171,6 +203,15 @@ try:
             cv2.putText(frame, status, text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2, cv2.LINE_AA)
 
         try:
+            WRITE_EVERY = 3  # Set to 3 or 5 for less frequent writes
+
+            loop_count += 1
+            if loop_count % WRITE_EVERY == 0:
+                try:
+                    write_status_json(VIDEO_DIR, slots)
+                except Exception as e:
+                    print('Error writing status.json:', e)
+
             ffmpeg_proc.stdin.write(frame.tobytes())
         except BrokenPipeError:
             print('FFmpeg pipe closed. Exiting.')

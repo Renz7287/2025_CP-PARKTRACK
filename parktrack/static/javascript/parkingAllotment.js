@@ -1,4 +1,3 @@
-
 let hls;
 
 export function initializeParkingAllotment() {
@@ -216,4 +215,26 @@ export function initializeParkingAllotment() {
             }
         }
     }
+
+    
+    const statusUrl = '/parking-allotment/api/parking-status/';
+    const pollingMS = 2000;
+
+    async function fetchStatus() {
+        try {
+            const res = await fetch(statusUrl, {cache: 'no-store'});
+
+            if (!res.ok) throw new Error('HTTP' + res.status);
+
+            const data = await res.json();
+
+            document.getElementById('occupied-count').innerText = data.occupied;
+            document.getElementById('vacant-count').innerText = data.vacant;
+        } catch (error) {
+            console.erroror('Failed to fetch parking status', error);
+        }
+    }
+
+    setInterval(fetchStatus, pollingMS);
+    fetchStatus();
 }

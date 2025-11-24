@@ -3,7 +3,8 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from utils.decorators import group_required
-import os
+import os, json
+
 
 # Create your views here.
 
@@ -39,3 +40,18 @@ def upload_video(request):
             destination.write(chunk)
 
     return JsonResponse({'status': 'uploaded', 'path': dest_path})
+
+def parking_status(request):
+    status_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')
+
+    if not os.path.exists(status_path):
+        return JsonResponse({'occupied': 0, 'vacant': 0, 'slots': []})
+    
+    try:
+        with open(status_path, 'r') as f:
+            data = json.load(f)
+
+    except Exception as e:
+        return JsonResponse({'error': 'Failed to read status'}, status=500)
+    
+    return JsonResponse(data)
