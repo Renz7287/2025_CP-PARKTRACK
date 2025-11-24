@@ -8,7 +8,7 @@ API_KEY = 'parktrack@2025'
 # For local testing
 SERVER_UPLOAD_URL = 'http://127.0.0.1:8000/parking-allotment/upload-video/'
 
-def upload_video(path='C:/Users/Ejay/PycharmProjects/ObjectDetectionYolo/parktrack/Videos/1120.mp4'):
+def upload_video(path='C:/Users/Ejay/PycharmProjects/ObjectDetectionYolo/parktrack/Videos/test-2.mp4'):
 
     with open(path, 'rb') as file:
         files = {'file': ('sample.mp4', file, 'video/mp4')}

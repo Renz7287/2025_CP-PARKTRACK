@@ -15,9 +15,9 @@ if not os.path.exists(mp4_path):
     exit()
 
 # Delete old segments
-# for file in os.listdir(BASE):
-#     if file.endswith('.ts') or file.endswith('.m3u8'):
-#         os.remove(os.path.join(BASE, file))
+for file in os.listdir(BASE):
+    if file.endswith('.ts') or file.endswith('.m3u8'):
+        os.remove(os.path.join(BASE, file))
 
 ffmpeg_cmd = [
     'ffmpeg',
@@ -26,7 +26,7 @@ ffmpeg_cmd = [
     # '-level', '3.0',
     # '-s', '640x360',
     '-start_number', '0',
-    '-hls_time', '2',
+    '-hls_time', '',
     '-hls_list_size', '6',
     '-f', 'hls',
     output_playlist
