@@ -222,11 +222,11 @@ export function initializeParkingAllotment() {
 
     async function fetchStatus() {
         try {
-            const res = await fetch(statusUrl, {cache: 'no-store'});
+            const response = await fetch(statusUrl, {cache: 'no-store'});
 
-            if (!res.ok) throw new Error('HTTP' + res.status);
+            if (!response.ok) throw new Error('HTTP' + response.status);
 
-            const data = await res.json();
+            const data = await response.json();
 
             document.getElementById('occupied-count').innerText = data.occupied;
             document.getElementById('vacant-count').innerText = data.vacant;
@@ -237,4 +237,43 @@ export function initializeParkingAllotment() {
 
     setInterval(fetchStatus, pollingMS);
     fetchStatus();
+
+    const snapshotImage = document.getElementById('parking-snapshot');
+    const snapshotPollingMS = 60 * 1000; // 60 seconds
+
+    async function fetchSnapshot() {
+        try {
+            const response = await fetch('/parking-allotment/api/latest-snapshot/', {cache: 'no-store'});
+
+            if (!response.ok) throw new Error(response.status);
+
+            const data = await response.json();
+
+            if (data.url) {
+                snapshotImage.src = data.url + '?t=' + new Date().getTime(); // Cache-busting
+            }
+        } catch (error) {
+            console.error('Failed to fetch snapshot.', error);
+        }
+    }
+
+    fetchSnapshot();
+    setInterval(fetchSnapshot, snapshotPollingMS);
+
+    const vacantUrl = '/parking-allotment/api/vacant-slots/';
+    const vacantPollingMS = 2000;
+
+    async function fetchVacantCount() {
+        try {
+            const response = await fetch(vacantUrl, {cache: 'no-store'});
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const data = await response.json();
+            document.getElementById('available-parking').innerText = data.vacant;
+        } catch (error) {
+            console.error('Failed to fetch vacant slots count', error);
+        }
+    }
+
+    setInterval(fetchVacantCount, vacantPollingMS);
+    fetchVacantCount();
 }

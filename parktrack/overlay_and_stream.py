@@ -31,6 +31,9 @@ OUTPUT_PLAYLIST = str(VIDEO_DIR / 'stream.m3u8')
 
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
+SNAPSHOT_DIR = VIDEO_DIR / 'snapshots'
+SNAPSHOT_DIR.mkdir(exist_ok=True)
+
 def write_status_json(video_dir, slots):
     status = {
         'timestamp': int(time.time()),
@@ -130,6 +133,10 @@ last_time = 0.0
 print('Starting overlay+stream loop. Press Ctrl+C to stop.')
 
 loop_count = 0
+WRITE_EVERY = 3  # Set to 3 or 5 for less frequent writes
+SNAPSHOT_INTERVAL = 60  
+last_snapshot_time = 0.0
+MAX_SNAPSHOTS = 10
 
 try:
     while True:
@@ -175,6 +182,12 @@ try:
                 # cv2.circle(frame, (int(cx), int(cy)), 3, (255,200,0), -1)
                 # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (255,200,0), 1)
 
+        if loop_count == 0:  # First frame
+            for slot in slots:
+                present = any(slot['poly'].contains(Point(cx, cy)) for cx, cy in centroids)
+                slot['history'].extend([1 if present else 0]*HISTORY_LEN)
+                slot['is_occupied'] = present
+
         # Check if any centroid falls inside the polygon per parking slot
         # and update short history -> then decide occupancy by threshold
         SMOOTH_THRESHOLD = max(1, HISTORY_LEN // 2 + 1)
@@ -202,16 +215,31 @@ try:
             text_pos = (int(pts[0][0]), int(max(pts[0][1] - 8, 10)))
             cv2.putText(frame, status, text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2, cv2.LINE_AA)
 
+        vacant_count = sum(1 for slot in slots if not slot['is_occupied'])
+
+        loop_count += 1
+        if loop_count % WRITE_EVERY == 0:
+            try:
+                write_status_json(VIDEO_DIR, slots)
+            except Exception as e:
+                print('Error writing status.json:', e)
+
+        current_time = time.time()
+
+        if current_time - last_snapshot_time >= SNAPSHOT_INTERVAL:
+            last_snapshot_time = current_time
+
+            snapshot_filename = SNAPSHOT_DIR / f'snapshot_{int(current_time)}.jpg'
+            cv2.imwrite(str(snapshot_filename), frame)
+            print(f'Snapshot saved: {snapshot_filename}')
+
+        # Cleanups old snapshots
+        snapshots = sorted(SNAPSHOT_DIR.glob('snapshot_*.jpg'), key=os.path.getmtime)
+        if len(snapshots) > MAX_SNAPSHOTS:
+            for s in snapshots[:-MAX_SNAPSHOTS]:
+                os.remove(s)
+
         try:
-            WRITE_EVERY = 3  # Set to 3 or 5 for less frequent writes
-
-            loop_count += 1
-            if loop_count % WRITE_EVERY == 0:
-                try:
-                    write_status_json(VIDEO_DIR, slots)
-                except Exception as e:
-                    print('Error writing status.json:', e)
-
             ffmpeg_proc.stdin.write(frame.tobytes())
         except BrokenPipeError:
             print('FFmpeg pipe closed. Exiting.')

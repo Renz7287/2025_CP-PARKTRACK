@@ -55,3 +55,33 @@ def parking_status(request):
         return JsonResponse({'error': 'Failed to read status'}, status=500)
     
     return JsonResponse(data)
+
+def latest_snapshot(request):
+    snapshot_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'snapshots')
+
+    if not os.path.exists(snapshot_dir):
+        return JsonResponse({'url': ''})
+
+    snapshots = [f for f in os.listdir(snapshot_dir) if f.endswith('.jpg')]
+    if not snapshots:
+        return JsonResponse({'url': ''})
+
+    latest_file = max(snapshots, key=lambda f: os.path.getmtime(os.path.join(snapshot_dir, f)))
+    url = settings.MEDIA_URL + 'video_stream/snapshots/' + latest_file
+
+    return JsonResponse({'url': url})
+
+def vacant_slots_status(request):
+    status_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')
+
+    if not os.path.exists(status_path):
+        return JsonResponse({'vacant': 0})
+
+    try:
+        with open(status_path, 'r') as f:
+            data = json.load(f)
+            vacant_count = data.get('vacant', 0)
+    except Exception as e:
+        return JsonResponse({'error': 'Failed to read status.'}, status=500)
+
+    return JsonResponse({'vacant': vacant_count})
