@@ -4,3 +4,4 @@ __pycache__/
 *.m3u8
 *.mp4
 media/video_stream/
+status.json
