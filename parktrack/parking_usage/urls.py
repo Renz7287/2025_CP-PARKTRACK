@@ -5,4 +5,7 @@ app_name = 'parking_usage'
 
 urlpatterns = [
     path('', views.parking_usage, name='parking-usage'),
+    path('api/increment/', views.increment_vehicle_count, name='increment_count'),
+    path('api/stats/', views.get_parking_stats, name='get_stats'),
 ]
+
