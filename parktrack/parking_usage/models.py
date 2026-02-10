@@ -10,3 +10,9 @@ class SlotStatusLog(models.Model):
     slot = models.ForeignKey(ParkingSlot, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     is_occupied = models.BooleanField()
+
+class VehicleEntry(models.Model):
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Entry at {self.timestamp}"
