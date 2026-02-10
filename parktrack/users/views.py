@@ -11,7 +11,7 @@ from .models import City, Barangay, VehicleBrand, VehicleModel
 # Create your views here.
 
 class CustomLoginView(LoginView):
-    template_name = 'users/index.html'
+    template_name = 'users/login.html'
 
     def dispatch(self, request, *args, **kwargs):
 
@@ -32,6 +32,9 @@ class CustomLoginView(LoginView):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'errors': form.errors, '__all__': form.non_field_errors()})
         return super().form_invalid(form)
+    
+def home(request):
+    return render(request, 'users/index.html')
 
 @unauthenticated_user
 def register_user(request):
