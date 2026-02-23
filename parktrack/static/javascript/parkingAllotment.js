@@ -300,18 +300,29 @@ export function initializeParkingAllotment() {
     fetchStatus();
 
     const snapshotImage = document.getElementById('parking-snapshot');
-    const snapshotPollingMS = 60 * 1000; // 60 seconds
+    const dashboardTimer = document.getElementById('dashboard-snapshot-timer');
+    const SNAPSHOT_INTERVAL_MS = 60 * 1000;
+    let dashNextUpdateAt = null;
+
+    function updateDashTimerDisplay() {
+        if (!dashNextUpdateAt) return;
+        const secondsLeft = Math.max(0, Math.round((dashNextUpdateAt - Date.now()) / 1000));
+        const m = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+        const s = String(secondsLeft % 60).padStart(2, '0');
+        dashboardTimer.textContent = secondsLeft === 0 ? 'Updating...' : `${m}:${s}`;
+    }
 
     async function fetchSnapshot() {
         try {
-            const response = await fetch('/parking-allotment/api/latest-snapshot/', {cache: 'no-store'});
-
+            const response = await fetch('/parking-allotment/api/latest-snapshot/', { cache: 'no-store' });
             if (!response.ok) throw new Error(response.status);
-
             const data = await response.json();
-
             if (data.url) {
-                snapshotImage.src = data.url + '?t=' + new Date().getTime(); // Cache-busting
+                snapshotImage.src = data.url + '?t=' + new Date().getTime();
+            }
+            // Sync timer to when the file was actually last written, not when we fetched
+            if (data.last_modified) {
+                dashNextUpdateAt = data.last_modified + SNAPSHOT_INTERVAL_MS;
             }
         } catch (error) {
             console.error('Failed to fetch snapshot.', error);
@@ -319,7 +330,9 @@ export function initializeParkingAllotment() {
     }
 
     fetchSnapshot();
-    setInterval(fetchSnapshot, snapshotPollingMS);
+    // Re-poll frequently so the image updates as close to the real snapshot time as possible
+    setInterval(fetchSnapshot, 15 * 1000);
+    setInterval(updateDashTimerDisplay, 1000);
 
     const vacantUrl = '/parking-allotment/api/vacant-slots/';
     const vacantPollingMS = 2000;

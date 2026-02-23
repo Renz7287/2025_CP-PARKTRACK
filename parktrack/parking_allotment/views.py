@@ -67,9 +67,12 @@ def latest_snapshot(request):
         return JsonResponse({'url': ''})
 
     latest_file = max(snapshots, key=lambda f: os.path.getmtime(os.path.join(snapshot_dir, f)))
+    file_path = os.path.join(snapshot_dir, latest_file)
     url = settings.MEDIA_URL + 'video_stream/snapshots/' + latest_file
 
-    return JsonResponse({'url': url})
+    last_modified_ms = int(os.path.getmtime(file_path) * 1000)
+
+    return JsonResponse({'url': url, 'last_modified': last_modified_ms})
 
 def vacant_slots_status(request):
     status_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')
