@@ -103,10 +103,10 @@ class DriverProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='driver_profile'
     )
-    contact_number = models.CharField(max_length=11)
+    contact_number = models.CharField(max_length=11, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=Gender.choices)
-    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, to_field='id')
-    barangay = models.ForeignKey(Barangay, on_delete=models.SET_NULL, null=True, to_field='id')
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, blank=True, null=True, to_field='id')
+    barangay = models.ForeignKey(Barangay, on_delete=models.SET_NULL, blank=True, null=True, to_field='id')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -117,3 +117,4 @@ class Vehicle(models.Model):
     color = models.CharField(max_length=100)
     plate_number = models.CharField(max_length=100)
     is_registered = models.BooleanField(default=False)
+    vehicle_image = models.ImageField(upload_to='vehicles/', blank=True, null=True)

@@ -149,11 +149,19 @@ class BaseVehicleForm(forms.ModelForm):
             }
         )
     )
+    vehicle_image = forms.ImageField(
+        widget = forms.FileInput(
+            attrs = {
+                'id': 'vehicle-image-input', 'accept': 'image/*', 'class': 'hidden'
+            }
+        ),
+        required = False
+    )
 
     class Meta:
         model = Vehicle
         exclude = ['brand', 'model']
-        fields = ('brand', 'model', 'color', 'plate_number')
+        fields = ('brand', 'model', 'color', 'plate_number', 'vehicle_image')
 
     def clean_brand(self):
         brand_name = self.cleaned_data['brand']

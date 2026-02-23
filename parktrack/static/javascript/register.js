@@ -2,93 +2,117 @@ import { initializeBarangayField } from "./utils/barangay.js";
 import { initializeVehicleField } from "./utils/vehicle.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Activates stepper form for small devices
+
+    // Stepper
     (function () {
-        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const backBtn = document.getElementById('back-to-step-1');
+        const titleEl = document.getElementById('form-title');
 
-        const stepsSmallDevices = [
-            document.getElementById('step-personal'),
-            document.getElementById('step-contact'),
-            document.getElementById('step-vehicle'),
-            document.getElementById('step-credentials')
-        ];
-        const stepsLargeDevices = [
-            document.getElementById('step-1'),
-            document.getElementById('step-2')
-        ]
-
-        let currentSteps = stepsSmallDevices;
-
-        let page = 0;
-
-        function setStep(newIndex) {
-            page = newIndex;
-            currentSteps.forEach((step, index) => step.classList.toggle('hidden', index !== page));
-
-            if (page === 1) {
-                document.getElementById('back-to-step-1')?.classList.remove('hidden');
+        function showStep(step) {
+            if (step === 1) {
+                step1.classList.remove('hidden');
+                step2.classList.add('hidden');
+                backBtn?.classList.add('hidden');
+                if (titleEl) titleEl.textContent = 'Registration';
             } else {
-                document.getElementById('back-to-step-1')?.classList.add('hidden');
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+                backBtn?.classList.remove('hidden');
+                if (titleEl) titleEl.textContent = 'Vehicle Info';
             }
         }
 
-        function toggleStepper() {
-            if (mediaQuery.matches) {
-                currentSteps = stepsLargeDevices;
-            } else {
-                document.getElementById('step-1').classList.remove('hidden');
-                document.getElementById('step-2').classList.remove('hidden');
-                currentSteps = stepsSmallDevices;
-            }
+        document.getElementById('next-to-step-2')?.addEventListener('click', () => showStep(2));
+        backBtn?.addEventListener('click', () => showStep(1));
 
-            currentSteps.forEach(step => step.classList.add('hidden') );
-
-            setStep(0);
-        }
-
-        document.getElementById('next-to-contact')?.addEventListener('click', () => setStep(1));
-        document.getElementById('back-to-personal')?.addEventListener('click', () => setStep(0));
-        document.getElementById('next-to-vehicle')?.addEventListener('click', () => setStep(2));
-        document.getElementById('back-to-contact')?.addEventListener('click', () => setStep(1));
-        document.getElementById('next-to-credentials')?.addEventListener('click', () => setStep(3));
-        document.getElementById('back-to-vehicle')?.addEventListener('click', () => setStep(2));
-        
-        document.getElementById('next-to-step-2')?.addEventListener('click', () => setStep(1));
-        document.getElementById('back-to-step-1')?.addEventListener('click', () => setStep(0));
-
-        mediaQuery.addEventListener 
-            ? mediaQuery.addEventListener('change', toggleStepper) 
-            : mediaQuery.addListener(toggleStepper);
-
-        toggleStepper();
-        
+        showStep(1);
     })();
 
-    initializeBarangayField(
-        {
-            cityInputId: 'city-dropdown',
-            barangayInputId: 'barangay-dropdown',
-            cityListId: 'city-list',
-            barangayListId: 'barangay-list',
-            baseUrl: '/address' 
-        }
-    );
+    // Vehicle Image Upload
+    (function () {
+        const dropzone   = document.getElementById('vehicle-image-dropzone');
+        const input      = document.getElementById('vehicle-image-input');
+        const preview    = document.getElementById('vehicle-image-preview');
+        const placeholder = document.getElementById('vehicle-image-placeholder');
+        const removeBtn  = document.getElementById('vehicle-image-remove');
 
-    initializeVehicleField(
-        {
-            brandInputId: 'brand-dropdown',
-            modelInputId: 'model-dropdown',
-            brandListId: 'brand-list',
-            modelListId: 'model-list',
-            baseUrl: '/vehicles'
-        }
-    )
+        if (!dropzone || !input) return;
 
+        // Open file picker on dropzone click (but not on the remove button)
+        dropzone.addEventListener('click', (e) => {
+            if (e.target.closest('#vehicle-image-remove')) return;
+            input.click();
+        });
+
+        // Drag-and-drop
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('border-[#940B26]', 'bg-red-50');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('border-[#940B26]', 'bg-red-50');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-[#940B26]', 'bg-red-50');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                setPreview(file);
+                // Assign dropped file to input via DataTransfer
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                input.files = dt.files;
+            }
+        });
+
+        // File picker change
+        input.addEventListener('change', () => {
+            const file = input.files[0];
+            if (file) setPreview(file);
+        });
+
+        // Remove
+        removeBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearPreview();
+        });
+
+        function setPreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                removeBtn?.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearPreview() {
+            input.value = '';
+            preview.src = '#';
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            removeBtn?.classList.add('hidden');
+        }
+    })();
+
+    // Vehicle Brand/Model Datalist
+    initializeVehicleField({
+        brandInputId: 'brand-dropdown',
+        modelInputId: 'model-dropdown',
+        brandListId: 'brand-list',
+        modelListId: 'model-list',
+        baseUrl: '/vehicles'
+    });
+
+    // Form Submission
     const form = document.getElementById('register-form');
-
     if (!form) return;
 
-    form.addEventListener('submit', async event => {
+    form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         const formData = new FormData(form);
@@ -97,16 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(form.action, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
 
             const data = await response.json();
 
             if (data.success) {
                 clearErrors();
-
                 Swal.fire({
                     icon: 'success',
                     title: `${data.message}`,
@@ -116,40 +137,47 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     buttonsStyling: false
                 }).then(() => {
-                    window.location.href = "/";
+                    window.location.href = '/';
                 });
-
                 return;
             }
 
             if (data.errors) {
                 clearErrors();
-                
+
+                // If personal info errors appear while on step 2, jump back
+                const step1Fields = ['user-first_name', 'user-middle_name', 'user-last_name', 'user-email', 'user-password1', 'user-password2'];
+                const hasStep1Error = Object.keys(data.errors).some(k => step1Fields.includes(k));
+                if (hasStep1Error) {
+                    document.getElementById('next-to-step-2')?.click();
+                    // Briefly switch to step 1 via our showStep equivalent
+                    document.getElementById('back-to-step-1')?.click();
+                }
+
                 Object.entries(data.errors).forEach(([fieldName, fieldErrors]) => {
                     const field = form.querySelector(`[name=${fieldName}]`);
-
                     if (field) {
-                        
-                        let errorElement = document.createElement('p');
-                        errorElement.classList.add('text-red-500', 'text-xs', 'mt-1');
-                        errorElement.innerText = fieldErrors.join(', ');
-                        field.insertAdjacentElement('afterend', errorElement);
+                        const errorEl = document.createElement('p');
+                        errorEl.classList.add('text-red-500', 'text-xs', 'mt-1');
+                        errorEl.innerText = fieldErrors.join(', ');
+                        field.insertAdjacentElement('afterend', errorEl);
                     }
                 });
             }
 
-            if (data.errors.__all__) {
-                let formError = document.createElement('p');
+            if (data.errors?.__all__) {
+                const formError = document.createElement('p');
                 formError.classList.add('text-red-500', 'text-xs', 'mt-1');
                 formError.innerText = data.errors.__all__.join(', ');
                 form.prepend(formError);
             }
+
         } catch (error) {
-            console.log('Error submitting form:', error);
+            console.error('Error submitting form:', error);
         }
     });
 
     function clearErrors() {
-        form.querySelectorAll('.text-red-500').forEach(element => element.remove());
+        form.querySelectorAll('.text-red-500').forEach(el => el.remove());
     }
-})
+});

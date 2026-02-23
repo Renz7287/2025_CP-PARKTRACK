@@ -6,7 +6,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from utils.decorators import unauthenticated_user
 from .forms import UserRegistrationForm, DriverProfileRegistrationForm, VehicleRegistrationForm
-from .models import City, Barangay, VehicleBrand, VehicleModel
+from .models import DriverProfile, Barangay, VehicleBrand, VehicleModel
 
 # Create your views here.
 
@@ -40,45 +40,37 @@ def home(request):
 def register_user(request):
     if request.method == 'POST':
         user_form = UserRegistrationForm(request.POST, prefix='user')
-        driver_profile_form = DriverProfileRegistrationForm(request.POST, prefix='driver_profile')
-        vehicle_form = VehicleRegistrationForm(request.POST, prefix='vehicle')
+        vehicle_form = VehicleRegistrationForm(request.POST, request.FILES, prefix='vehicle')
 
-        if user_form.is_valid() and driver_profile_form.is_valid() and vehicle_form.is_valid():
-
+        if user_form.is_valid() and vehicle_form.is_valid():
             with transaction.atomic():
                 user = user_form.save()
-                driver_profile = driver_profile_form.save(commit=False)
-                driver_profile.user = user
-                driver_profile.save()
+
+                driver_profile = DriverProfile.objects.create(user=user)
+
                 vehicle = vehicle_form.save(commit=False)
                 vehicle.owner = driver_profile
                 vehicle.save()
 
             return JsonResponse({'success': True, 'message': 'You have been registered successfully.'})
-        
-        errors = {}
 
-        for form in [user_form, driver_profile_form, vehicle_form]:
+        errors = {}
+        for form in [user_form, vehicle_form]:
             for field, field_errors in form.errors.items():
                 prefix_name = f'{form.prefix}-{field}' if form.prefix else field
                 errors[prefix_name] = field_errors
 
         return JsonResponse({'success': False, 'errors': errors})
-                        
+
     else:
         user_form = UserRegistrationForm(prefix='user')
-        driver_profile_form = DriverProfileRegistrationForm(prefix='driver_profile')
         vehicle_form = VehicleRegistrationForm(prefix='vehicle')
 
-    cities = list(City.objects.all().values('citymunDesc', 'citymunCode'))
     brands = list(VehicleBrand.objects.all().values('id', 'brand_name'))
-
     context = {
         'user_form': user_form,
-        'driver_profile_form': driver_profile_form,
         'vehicle_form': vehicle_form,
-        'cities': cities,
-        'brands': brands
+        'brands': brands,
     }
     return render(request, 'users/register.html', context)
 
