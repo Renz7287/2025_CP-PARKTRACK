@@ -1,321 +1,152 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ParkTrack - Smart Parking Solutions</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <!-- Custom Styles -->
-    <style>
-      html {
-        scroll-behavior: smooth;
-      }
-      .theme-bg {
-        background-color: #940b26;
-      }
-      .theme-text {
-        color: #940b26;
-      }
-      .theme-border {
-        border-color: #940b26;
-      }
-      .theme-hover:hover {
-        background-color: #7d0920;
-      }
-      .section-title {
-        position: relative;
-        display: inline-block;
-      }
-      .section-title::after {
-        content: "";
-        position: absolute;
-        bottom: -8px;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        background-color: #940b26;
-        border-radius: 2px;
-      }
-      .feature-card {
-        border-left: 4px solid #940b26;
-      }
-      .nav-link {
-        position: relative;
-      }
-      .nav-link.active::after {
-        content: "";
-        position: absolute;
-        bottom: -5px;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background-color: white;
-      }
-    </style>
-  </head>
-  <body class="bg-gray-50">
-    <!-- Header/Navigation -->
-    <header
-      class="top-0 sticky bg-[#940B26] shadow-xl h-20 z-[5] pt-[0.5px] pb-3"
-    >
-      <div class="container mx-auto px-4 h-full">
-        <div class="flex justify-between items-center h-full">
-          <!-- Logo -->
-          <h1
-            class="mt-4 md:ml-5 pb-2 md:text-left text-center text-white font-bold text-4xl"
-          >
-            <span class="flex items-center">
-              <i class="fas fa-parking mr-3"></i>
-              ParkTrack
-            </span>
-          </h1>
+{% extends 'base-auth.html' %}
+{% load static %}
 
-          <!-- Desktop Navigation -->
-          <nav class="hidden md:flex space-x-8">
-            <a
-              href="#home"
-              class="nav-link text-white font-medium text-lg hover:text-gray-200 transition duration-300"
-              >HOME</a
-            >
-            <a
-              href="#about"
-              class="nav-link text-white font-medium text-lg hover:text-gray-200 transition duration-300"
-              >ABOUT</a
-            >
-            <a
-              href="#features"
-              class="nav-link text-white font-medium text-lg hover:text-gray-200 transition duration-300"
-              >FEATURES</a
-            >
-            <a
-              href="{% url 'users:login' %}"
-              class="nav-link text-white font-medium text-lg hover:text-gray-200 transition duration-300"
-              >LOGIN</a
-            >
-          </nav>
+{% block title %}
+  ParkTrack - Smart Parking Solutions
+{% endblock title %}
 
-          <!-- Mobile menu button -->
-          <button id="mobile-menu-button" class="md:hidden text-white">
-            <i class="fas fa-bars text-2xl"></i>
-          </button>
+{% block content %}
+<style>
+  html { scroll-behavior: smooth; }
+  /* Theme Colors */
+  .bg-park-red { background-color: #940b26; }
+  .text-park-red { color: #940b26; }
+  .bg-nav-active { background-color: #b62c2c !important; }
+  
+  /* Custom Font & spacing */
+  .font-heading { font-family: 'Inter', sans-serif; }
+</style>
+
+<div class="flex flex-col w-full min-h-screen font-sans bg-[#dcdbdb]">
+  
+  <header class="top-0 sticky bg-[#940B26] shadow-xl h-20 z-50">
+    <div class="container mx-auto px-4 md:px-12 h-full flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-white rounded-full h-12 w-12 overflow-hidden flex items-center justify-center shadow-md">
+           <img src="{% static 'images/parktrack-logo-red.png' %}" alt="ParkTrack Logo" class="w-full h-full object-cover">
+        </div>
+        <h1 class="text-white font-extrabold text-3xl tracking-tight">ParkTrack</h1>
+      </div>
+
+      <nav class="hidden md:flex items-center space-x-2">
+        <a href="#home" id="nav-home" class="text-white font-bold text-sm px-5 py-2 hover:bg-white/10 rounded-md transition duration-200">HOME</a>
+        <a href="#about" id="nav-about" class="text-white font-bold text-sm px-5 py-2 hover:bg-white/10 rounded-md transition duration-200">ABOUT</a>
+        <a href="#features" id="nav-features" class="text-white font-bold text-sm px-5 py-2 hover:bg-white/10 rounded-md transition duration-200">FEATURES</a>
+        <a href="{% url 'users:login' %}" class="bg-[#b62c2c] text-white font-black text-sm px-8 py-3 rounded-xl shadow-lg ml-4 hover:brightness-110 transition active:scale-95">LOGIN</a>
+      </nav>
+
+      <button id="mobile-menu-button" class="md:hidden text-white text-2xl">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    
+    <div id="mobile-menu" class="hidden md:hidden bg-[#940B26] w-full absolute shadow-2xl border-t border-white/10">
+       <div class="flex flex-col p-6 space-y-4">
+         <a href="#home" class="text-white font-bold text-lg">HOME</a>
+         <a href="#about" class="text-white font-bold text-lg">ABOUT</a>
+         <a href="#features" class="text-white font-bold text-lg">FEATURES</a>
+         <a href="{% url 'users:login' %}" class="text-white font-bold text-lg">LOGIN</a>
+       </div>
+    </div>
+  </header>
+
+  <section id="home" class="min-h-screen py-12 px-6">
+    <div class="container mx-auto max-w-6xl">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6">
+        <h2 class="text-park-red text-5xl md:text-7xl font-black leading-tight tracking-tight">
+          Welcome to ParkTrack
+        </h2>
+
+        <div class="bg-[#e8e8e8] border border-white/60 rounded-2xl shadow-sm px-6 py-4 w-44 text-center">
+          <p class="text-[10px] font-black text-gray-700 uppercase tracking-widest mb-1">Available Parking</p>
+          <span class="text-4xl font-black text-green-500">10</span>
         </div>
       </div>
 
-      <!-- Mobile Navigation -->
-      <div
-        id="mobile-menu"
-        class="md:hidden hidden bg-[#940B26] px-4 py-3 absolute w-full shadow-lg"
-      >
-        <div class="flex flex-col space-y-4">
-          <a
-            href="#home"
-            class="text-white font-medium text-lg py-2 hover:text-gray-200 transition duration-300"
-            >HOME</a
-          >
-          <a
-            href="#about"
-            class="text-white font-medium text-lg py-2 hover:text-gray-200 transition duration-300"
-            >ABOUT</a
-          >
-          <a
-            href="#features"
-            class="text-white font-medium text-lg py-2 hover:text-gray-200 transition duration-300"
-            >FEATURES</a
-          >
-          <a
-            href="{% url 'users:login' %}"
-            class="text-white font-medium text-lg py-2 hover:text-gray-200 transition duration-300"
-            >LOGIN</a
-          >
+      <div class="rounded-[35px] overflow-hidden shadow-2xl border-4 border-white/20">
+        <img src="{% static 'images/parking_hero.jpg' %}" alt="Real-time Parking" class="w-full h-auto">
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="min-h-screen bg-park-red flex items-center py-20 px-6">
+    <div class="container mx-auto max-w-6xl">
+      <h2 class="text-white text-5xl font-black text-center mb-16 tracking-tight uppercase">About Us</h2>
+      
+      <div class="flex flex-col md:flex-row items-center gap-12 md:gap-20">
+        <div class="w-full md:w-1/2">
+          <img src="{% static 'images/parking_about.jpg' %}" alt="WMSU Parking" class="rounded-xl shadow-2xl border-2 border-white/10">
+        </div>
+        <div class="w-full md:w-1/2">
+          <p class="text-white text-xl leading-relaxed text-justify font-medium opacity-95">
+            ParkTrack is an innovative computer vision-based smart parking
+            management system designed to make parking faster, smarter, and
+            more efficient. Developed as a capstone project by BSIT students
+            from Western Mindanao State University, the system uses real-time
+            video feeds and advanced AI technology—powered by the YOLOv8
+            object detection model—to automatically detect vehicles and
+            determine whether parking slots are occupied or vacant.
+          </p>
         </div>
       </div>
-    </header>
+    </div>
+  </section>
 
-    <section
-      id="home"
-      class="min-h-screen flex flex-col justify-center bg-gradient-to-b from-gray-50 to-white"
-    >
-      <div class="container mx-auto px-4 py-12">
-        <div
-          class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6"
-        >
-          <h2 class="text-5xl md:text-6xl font-bold text-gray-800">
-            Welcome to <span class="theme-text">ParkTrack</span>
-          </h2>
-
-          <div id="status-container">
-            <div
-              id="car-status"
-              class="w-full md:w-[280px] h-[130px] bg-white border border-gray-300 rounded-lg shadow px-4 py-2 text-center flex flex-col justify-center"
-            >
-              <p class="text-lg md:text-xl text-black-500">Available Parking</p>
-              <span
-                id="available-parking"
-                class="text-4xl font-bold text-green-500"
-                >10</span
-              >
-            </div>
-          </div>
+  <section id="features" class="min-h-screen bg-white flex items-center py-20 px-6">
+    <div class="container mx-auto max-w-6xl">
+      <h2 class="text-park-red text-5xl font-black text-center mb-20 tracking-wide">FEATURES</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div class="bg-park-red rounded-[30px] p-10 text-center shadow-xl flex flex-col items-center hover:scale-105 transition duration-300">
+          <i class="fas fa-car-side text-white text-[100px] mb-8"></i>
+          <h3 class="text-white text-xl font-bold mb-4">Smart Slot Reservation</h3>
+          <p class="text-white/80 text-justify text-sm leading-relaxed">Easily reserve a parking slot ahead of time to ensure you always have a spot waiting for you.</p>
         </div>
-
-        <div class="car-image-container">
-          <img
-            src="https://www.autoshippers.co.uk/blog/wp-content/uploads/bugatti-centodieci.jpg"
-            alt="Parking Lot View"
-            class="w-full h-auto rounded-2xl shadow-xl border border-gray-200"
-          />
+        <div class="bg-park-red rounded-[30px] p-10 text-center shadow-xl flex flex-col items-center hover:scale-105 transition duration-300">
+          <i class="fas fa-history text-white text-[100px] mb-8"></i>
+          <h3 class="text-white text-xl font-bold mb-4">Real-Time Vacancy View</h3>
+          <p class="text-white/80 text-justify text-sm leading-relaxed">View real-time updates of which parking slots are vacant or occupied so you can plan your parking quickly.</p>
+        </div>
+        <div class="bg-park-red rounded-[30px] p-10 text-center shadow-xl flex flex-col items-center hover:scale-105 transition duration-300">
+          <i class="fas fa-user-check text-white text-[100px] mb-8"></i>
+          <h3 class="text-white text-xl font-bold mb-4">Personalized User Account</h3>
+          <p class="text-white/80 text-justify text-sm leading-relaxed">Create a personal account to save your preferences, track your activity, and enjoy a smoother experience.</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
+</div>
+{% endblock content %}
 
-    <section
-      id="about"
-      class="min-h-screen flex flex-col justify-center bg-[#940B26]"
-    >
-      <div class="container mx-auto px-4 py-16">
-        <div class="text-center mb-12">
-          <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
-            ABOUT US
-          </h2>
-        </div>
+{% block script %}
+<script>
+  // Mobile Menu Toggle logic
+  const menuBtn = document.getElementById('mobile-menu-button');
+  const menu = document.getElementById('mobile-menu');
+  menuBtn.addEventListener('click', () => menu.classList.toggle('hidden'));
 
-        <div
-          class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-8 md:gap-16"
-        >
-          <div class="w-full md:w-1/2">
-            <img
-              src="https://www.autoshippers.co.uk/blog/wp-content/uploads/bugatti-centodieci.jpg"
-              alt="About ParkTrack"
-              class="rounded-lg shadow-2xl w-full object-cover"
-            />
-          </div>
+  // Scroll Spy for Active Navigation with #b62c2c color
+  const sections = document.querySelectorAll('section');
+  const navLinks = {
+    'home': document.getElementById('nav-home'),
+    'about': document.getElementById('nav-about'),
+    'features': document.getElementById('nav-features')
+  };
 
-          <div class="w-full md:w-1/2">
-            <p
-              class="text-white text-l md:text-xl leading-relaxed text-justify"
-            >
-              ParkTrack is an innovative computer vision-based smart parking
-              management system designed to make parking faster, smarter, and
-              more efficient. Developed as a capstone project by BSIT students
-              from Western Mindanao State University, the system uses real-time
-              video feeds and advanced AI technology—powered by the YOLOv8
-              object detection model—to automatically detect vehicles and
-              determine whether parking slots are occupied or vacant.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
+  window.addEventListener('scroll', () => {
+    let current = "";
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop;
+      if (window.pageYOffset >= sectionTop - 100) {
+        current = section.getAttribute('id');
+      }
+    });
 
-    <section
-      id="features"
-      class="min-h-screen flex flex-col justify-center bg-white"
-    >
-      <div class="container mx-auto px-4 py-16">
-        <div class="text-center mb-16">
-          <h2
-            class="text-4xl md:text-5xl font-bold text-[#940B26] tracking-wide"
-          >
-            FEATURES
-          </h2>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <div
-            class="bg-[#940B26] rounded-2xl shadow-2xl p-10 text-center flex flex-col items-center"
-          >
-            <div class="text-white mb-6">
-              <i class="fas fa-car-side text-[150px]"></i>
-            </div>
-            <h3 class="text-xl font-bold text-white mb-4">
-              Smart Slot Reservation
-            </h3>
-            <p class="text-white text-lg text-justify leading-relaxed px-4">
-              Easily reserve a parking slot ahead of time to ensure you always
-              have a spot waiting for you.
-            </p>
-          </div>
-
-          <div
-            class="bg-[#940B26] rounded-2xl shadow-2xl p-10 text-center flex flex-col items-center"
-          >
-            <div class="text-white mb-6">
-              <i class="fas fa-history text-[150px]"></i>
-            </div>
-            <h3 class="text-xl font-bold text-white mb-4">
-              Real-Time Vacancy View
-            </h3>
-            <p class="text-white text-lg text-justify leading-relaxed px-4">
-              View real-time updates of which parking slots are vacant or
-              occupied so you can plan your parking quickly.
-            </p>
-          </div>
-
-          <div
-            class="bg-[#940B26] rounded-2xl shadow-2xl p-10 text-center flex flex-col items-center"
-          >
-            <div class="text-white mb-6">
-              <i class="fas fa-user-check text-[150px]"></i>
-            </div>
-            <h3 class="text-xl font-bold text-white mb-4">
-              Personalized User Account
-            </h3>
-            <p class="text-white text-lg text-justify leading-relaxed px-4">
-              Create a personal account to save your preferences, track your
-              parking activity, and enjoy a smoother experience.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <script>
-      // Mobile menu toggle
-      document
-        .getElementById("mobile-menu-button")
-        .addEventListener("click", function () {
-          const mobileMenu = document.getElementById("mobile-menu");
-          mobileMenu.classList.toggle("hidden");
-        });
-
-      // Close mobile menu when clicking a link
-      document.querySelectorAll("#mobile-menu a").forEach((link) => {
-        link.addEventListener("click", function () {
-          document.getElementById("mobile-menu").classList.add("hidden");
-        });
-      });
-
-      // Active navigation highlighting
-      window.addEventListener("scroll", function () {
-        const sections = document.querySelectorAll("section");
-        const navLinks = document.querySelectorAll("nav a");
-
-        let current = "";
-
-        sections.forEach((section) => {
-          const sectionTop = section.offsetTop;
-          const sectionHeight = section.clientHeight;
-          if (scrollY >= sectionTop - 100) {
-            current = section.getAttribute("id");
-          }
-        });
-
-        navLinks.forEach((link) => {
-          link.classList.remove("active");
-          if (link.getAttribute("href") === `#${current}`) {
-            link.classList.add("active");
-          }
-        });
-      });
-
-      // Set initial active link
-      document.addEventListener("DOMContentLoaded", function () {
-        document.querySelector('nav a[href="#home"]').classList.add("active");
-      });
-    </script>
-  </body>
-</html>
+    Object.values(navLinks).forEach(link => link?.classList.remove('bg-nav-active'));
+    if (navLinks[current]) {
+      navLinks[current].classList.add('bg-nav-active');
+    }
+  });
+</script>
+{% endblock script %}

@@ -43,6 +43,67 @@ export function initializeParkingAllotment() {
 
     showSection('car');
 
+    /* ================= RESERVATION MODAL LOGIC (NEW FEATURE) ================= */
+
+    const reserveBtn = document.getElementById("reserve-toggle");
+    const modal = document.getElementById("reservation-modal");
+    const closeModal = document.getElementById("close-reservation");
+    const confirmReservation = document.getElementById("confirm-reservation");
+
+    if (reserveBtn && modal) {
+
+        reserveBtn.addEventListener("click", () => {
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        });
+
+        closeModal.addEventListener("click", () => {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        });
+
+        confirmReservation.addEventListener("click", async () => {
+
+            const plate = document.getElementById("plate-number").value.trim();
+            const arrival = document.getElementById("arrival-time").value;
+            const duration = document.getElementById("duration").value;
+
+            if (!plate || !arrival || !duration) {
+                alert("Please complete all fields.");
+                return;
+            }
+
+            try {
+                // 🔴 This will connect to Django later
+                await fetch('/parking-allotment/api/reserve-slot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        plate_number: plate,
+                        arrival_time: arrival,
+                        duration: duration
+                    })
+                });
+
+                alert("Reservation Successful!");
+
+            } catch (error) {
+                console.error("Reservation failed:", error);
+                alert("Reservation failed. Try again.");
+            }
+
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        });
+    }
+
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    }
+
     const video = document.getElementById('video');
     const videoSrc = '/media/video_stream/stream.m3u8';
 
