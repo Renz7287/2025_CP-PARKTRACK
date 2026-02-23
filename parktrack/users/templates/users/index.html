@@ -64,6 +64,15 @@
         </div>
       </div>
 
+      <div class="mb-4 flex items-center gap-3">
+        <div class="w-1.5 h-7 bg-[#940B26] rounded-full"></div>
+        <h3 class="text-[#940B26] text-xl font-black uppercase tracking-wide">Parking Lot Live Snapshot</h3>
+        <span class="flex items-center gap-1.5 bg-[#940B26]/10 text-[#940B26] text-xs font-bold px-3 py-1 rounded-full">
+            <span class="w-2 h-2 bg-[#940B26] rounded-full animate-pulse"></span>
+            LIVE
+        </span>
+      </div>
+
       <div class="rounded-[35px] overflow-hidden shadow-2xl border-4 border-white/20 relative">
         <img 
             id="parking-snapshot-home"
@@ -190,7 +199,8 @@
           if (data.url) {
               snapshotImgHome.src = data.url + '?t=' + new Date().getTime();
           }
-          // Sync timer to when the file was actually last written, not when we fetched
+          // Update vacant count from the same response as the snapshot
+          document.getElementById('available-parking').innerText = data.vacant ?? '--';
           if (data.last_modified) {
               homeNextUpdateAt = data.last_modified + SNAPSHOT_INTERVAL_MS;
           }
@@ -199,23 +209,8 @@
       }
   }
 
-  async function fetchHomeVacantCount() {
-      try {
-          const response = await fetch('/parking-allotment/api/vacant-slots/', { cache: 'no-store' });
-          if (!response.ok) throw new Error('HTTP ' + response.status);
-          const data = await response.json();
-          document.getElementById('available-parking').innerText = data.vacant;
-      } catch (error) {
-          console.error('Failed to fetch vacant slots count.', error);
-      }
-  }
-
   fetchHomeSnapshot();
-  // Re-poll frequently so we catch the new snapshot as soon as it's written
   setInterval(fetchHomeSnapshot, 15 * 1000);
   setInterval(updateHomeTimerDisplay, 1000);
-
-  fetchHomeVacantCount();
-  setInterval(fetchHomeVacantCount, 2000);
 </script>
 {% endblock script %}

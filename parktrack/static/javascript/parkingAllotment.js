@@ -276,29 +276,25 @@ export function initializeParkingAllotment() {
             }
         }
     }
-
     
+    // Live video counter
     const statusUrl = '/parking-allotment/api/parking-status/';
-    const pollingMS = 2000;
 
     async function fetchStatus() {
         try {
-            const response = await fetch(statusUrl, {cache: 'no-store'});
-
-            if (!response.ok) throw new Error('HTTP' + response.status);
-
+            const response = await fetch(statusUrl, { cache: 'no-store' });
+            if (!response.ok) throw new Error('HTTP ' + response.status);
             const data = await response.json();
-
             document.getElementById('occupied-count').innerText = data.occupied;
             document.getElementById('vacant-count').innerText = data.vacant;
         } catch (error) {
-            console.erroror('Failed to fetch parking status', error);
+            console.error('Failed to fetch parking status', error);
         }
     }
-
-    setInterval(fetchStatus, pollingMS);
     fetchStatus();
+    setInterval(fetchStatus, 2000);
 
+    // Snapshot and counter
     const snapshotImage = document.getElementById('parking-snapshot');
     const dashboardTimer = document.getElementById('dashboard-snapshot-timer');
     const SNAPSHOT_INTERVAL_MS = 60 * 1000;
@@ -320,7 +316,10 @@ export function initializeParkingAllotment() {
             if (data.url) {
                 snapshotImage.src = data.url + '?t=' + new Date().getTime();
             }
-            // Sync timer to when the file was actually last written, not when we fetched
+            // Snapshot counter updates ONLY here, in sync with the image
+            const availableEl = document.getElementById('available-parking');
+            if (availableEl) availableEl.innerText = data.vacant ?? '--';
+            // Sync timer to actual file write time
             if (data.last_modified) {
                 dashNextUpdateAt = data.last_modified + SNAPSHOT_INTERVAL_MS;
             }
@@ -328,26 +327,7 @@ export function initializeParkingAllotment() {
             console.error('Failed to fetch snapshot.', error);
         }
     }
-
     fetchSnapshot();
-    // Re-poll frequently so the image updates as close to the real snapshot time as possible
     setInterval(fetchSnapshot, 15 * 1000);
     setInterval(updateDashTimerDisplay, 1000);
-
-    const vacantUrl = '/parking-allotment/api/vacant-slots/';
-    const vacantPollingMS = 2000;
-
-    async function fetchVacantCount() {
-        try {
-            const response = await fetch(vacantUrl, {cache: 'no-store'});
-            if (!response.ok) throw new Error('HTTP ' + response.status);
-            const data = await response.json();
-            document.getElementById('available-parking').innerText = data.vacant;
-        } catch (error) {
-            console.error('Failed to fetch vacant slots count', error);
-        }
-    }
-
-    setInterval(fetchVacantCount, vacantPollingMS);
-    fetchVacantCount();
 }
