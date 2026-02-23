@@ -131,7 +131,7 @@ def add_vehicle(request):
     user = request.user
     
     if request.method == 'POST':
-        form = VehicleModalForm(request.POST)
+        form = VehicleModalForm(request.POST, request.FILES)
 
         if form.is_valid():
             vehicle = form.save(commit=False)
@@ -163,7 +163,7 @@ def edit_vehicle(request, pk):
     vehicle = Vehicle.objects.get(id=pk)
 
     if request.method == 'POST':
-        form = VehicleModalForm(request.POST, instance=vehicle)
+        form = VehicleModalForm(request.POST, request.FILES, instance=vehicle)
 
         if form.is_valid():
             form.save()

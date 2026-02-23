@@ -12,6 +12,7 @@
                     data-brand="{{ vehicle.brand }}"
                     data-model="{{ vehicle.model }}"
                     data-color="{{ vehicle.color }}"
+                    data-vehicle-image="{% if vehicle.vehicle_image %}{{ vehicle.vehicle_image.url }}{% endif %}"
                 >
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>
