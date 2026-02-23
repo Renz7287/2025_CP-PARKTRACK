@@ -160,8 +160,7 @@ class BaseVehicleForm(forms.ModelForm):
 
     class Meta:
         model = Vehicle
-        exclude = ['brand', 'model']
-        fields = ('brand', 'model', 'color', 'plate_number', 'vehicle_image')
+        fields = ('color', 'plate_number', 'vehicle_image')
 
     def clean_brand(self):
         brand_name = self.cleaned_data['brand']
@@ -209,6 +208,10 @@ class BaseVehicleForm(forms.ModelForm):
 
         instance.brand = brand
         instance.model = model
+
+        vehicle_image = self.cleaned_data.get('vehicle_image')
+        if vehicle_image:
+            instance.vehicle_image = vehicle_image
 
         if commit:
             instance.save()
