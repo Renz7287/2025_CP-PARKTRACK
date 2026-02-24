@@ -58,18 +58,41 @@ def parking_status(request):
 
 def latest_snapshot(request):
     snapshot_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'snapshots')
+    status_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')
 
     if not os.path.exists(snapshot_dir):
-        return JsonResponse({'url': ''})
+        return JsonResponse({'url': '', 'last_modified': None, 'vacant': 0})
 
     snapshots = [f for f in os.listdir(snapshot_dir) if f.endswith('.jpg')]
     if not snapshots:
-        return JsonResponse({'url': ''})
+        return JsonResponse({'url': '', 'last_modified': None, 'vacant': 0})
 
     latest_file = max(snapshots, key=lambda f: os.path.getmtime(os.path.join(snapshot_dir, f)))
+    file_path = os.path.join(snapshot_dir, latest_file)
     url = settings.MEDIA_URL + 'video_stream/snapshots/' + latest_file
+    last_modified_ms = int(os.path.getmtime(file_path) * 1000)
 
-    return JsonResponse({'url': url})
+    vacant = 0
+    # First, try reading the sidecar JSON saved at the moment the snapshot was taken
+    sidecar_path = file_path.replace('.jpg', '.json')
+    if os.path.exists(sidecar_path):
+        try:
+            with open(sidecar_path, 'r') as f:
+                sidecar_data = json.load(f)
+                vacant = sidecar_data.get('vacant', 0)
+        except Exception:
+            vacant = 0
+    else:
+        # Fallback to live status.json only if no sidecar exists yet
+        if os.path.exists(status_path):
+            try:
+                with open(status_path, 'r') as f:
+                    data = json.load(f)
+                    vacant = data.get('vacant', 0)
+            except Exception:
+                vacant = 0
+
+    return JsonResponse({'url': url, 'last_modified': last_modified_ms, 'vacant': vacant})
 
 def vacant_slots_status(request):
     status_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')

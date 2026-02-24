@@ -60,14 +60,43 @@
 
         <div class="bg-[#e8e8e8] border border-white/60 rounded-2xl shadow-sm px-6 py-4 w-44 text-center">
           <p class="text-[10px] font-black text-gray-700 uppercase tracking-widest mb-1">Available Parking</p>
-          <span class="text-4xl font-black text-green-500">10</span>
+          <span id="available-parking" class="text-4xl font-black text-green-500">--</span>
         </div>
       </div>
 
-      <div class="rounded-[35px] overflow-hidden shadow-2xl border-4 border-white/20">
-        <img src="{% static 'images/parking_hero.jpg' %}" alt="Real-time Parking" class="w-full h-auto">
+      <div class="mb-4 flex items-center gap-3">
+        <div class="w-1.5 h-7 bg-[#940B26] rounded-full"></div>
+        <h3 class="text-[#940B26] text-xl font-black uppercase tracking-wide">Parking Lot Live Snapshot</h3>
+        <span class="flex items-center gap-1.5 bg-[#940B26]/10 text-[#940B26] text-xs font-bold px-3 py-1 rounded-full">
+            <span class="w-2 h-2 bg-[#940B26] rounded-full animate-pulse"></span>
+            LIVE
+        </span>
       </div>
-    </div>
+
+      <div class="rounded-[35px] overflow-hidden shadow-2xl border-4 border-white/20 relative">
+        <img 
+            id="parking-snapshot-home"
+            src=""
+            alt="Live Parking Snapshot"
+            class="w-full h-[50vh] md:h-[80vh] object-cover"
+        >
+        <div class="absolute bottom-4 left-4 flex flex-col gap-2 bg-black/40 rounded-xl px-4 py-3">
+            <div class="flex items-center gap-2">
+                <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                <span class="text-sm font-semibold text-white">Occupied</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                <span class="text-sm font-semibold text-white">Vacant</span>
+            </div>
+        </div>
+
+        <div class="absolute bottom-4 right-4 bg-black/40 rounded-xl px-4 py-3">
+          <p class="text-xs font-semibold text-white/70 uppercase tracking-widest mb-0.5">Next Update</p>
+          <p id="home-snapshot-timer" class="text-sm font-bold text-white">--:--</p>
+        </div>
+      </div>
+      
   </section>
 
   <section id="about" class="min-h-screen bg-park-red flex items-center py-20 px-6">
@@ -148,5 +177,40 @@
       navLinks[current].classList.add('bg-nav-active');
     }
   });
+
+  const snapshotImgHome = document.getElementById('parking-snapshot-home');
+  const homeTimer = document.getElementById('home-snapshot-timer');
+  const SNAPSHOT_INTERVAL_MS = 60 * 1000;
+  let homeNextUpdateAt = null;
+
+  function updateHomeTimerDisplay() {
+      if (!homeNextUpdateAt) return;
+      const secondsLeft = Math.max(0, Math.round((homeNextUpdateAt - Date.now()) / 1000));
+      const m = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+      const s = String(secondsLeft % 60).padStart(2, '0');
+      homeTimer.textContent = secondsLeft === 0 ? 'Updating...' : `${m}:${s}`;
+  }
+
+  async function fetchHomeSnapshot() {
+      try {
+          const response = await fetch('/parking-allotment/api/latest-snapshot/', { cache: 'no-store' });
+          if (!response.ok) throw new Error(response.status);
+          const data = await response.json();
+          if (data.url) {
+              snapshotImgHome.src = data.url + '?t=' + new Date().getTime();
+          }
+          // Update vacant count from the same response as the snapshot
+          document.getElementById('available-parking').innerText = data.vacant ?? '--';
+          if (data.last_modified) {
+              homeNextUpdateAt = data.last_modified + SNAPSHOT_INTERVAL_MS;
+          }
+      } catch (error) {
+          console.error('Failed to fetch snapshot.', error);
+      }
+  }
+
+  fetchHomeSnapshot();
+  setInterval(fetchHomeSnapshot, 15 * 1000);
+  setInterval(updateHomeTimerDisplay, 1000);
 </script>
 {% endblock script %}
