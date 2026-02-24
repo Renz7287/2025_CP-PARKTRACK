@@ -233,6 +233,15 @@ try:
             cv2.imwrite(str(snapshot_filename), frame)
             print(f'Snapshot saved: {snapshot_filename}')
 
+            sidecar_filename = SNAPSHOT_DIR / f'snapshot_{int(current_time)}.json'
+            snapshot_status = {
+                'vacant': sum(1 for slot in slots if not slot['is_occupied']),
+                'occupied': sum(1 for slot in slots if slot.get('is_occupied')),
+            }
+            with open(str(sidecar_filename), 'w') as sf:
+                json.dump(snapshot_status, sf)
+            print(f'Snapshot sidecar saved: {sidecar_filename}')
+
         # Cleanups old snapshots
         snapshots = sorted(SNAPSHOT_DIR.glob('snapshot_*.jpg'), key=os.path.getmtime)
         if len(snapshots) > MAX_SNAPSHOTS:
