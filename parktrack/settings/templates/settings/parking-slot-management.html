@@ -1,10 +1,7 @@
 {% extends 'base.html' %}
-
 {% load static %}
 
-{% block title %}
-    Parking Slot Management
-{% endblock title %}
+{% block title %}Parking Slot Management{% endblock title %}
 
 {% block header %}
     <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center text-white font-bold text-4xl">Parking Slot Management</h1>
@@ -13,101 +10,194 @@
 {% block content %}
 <section class="parking-slot-management">
     <div class="p-5 bg-[#dcdbdb] min-h-screen">
-        <div class="flex items-center gap-6 w-full mx-auto">
-            <div class="w-full bg-white rounded-xl shadow-md overflow-hidden p-8 mb-6">
-                <div id="initial-controls" class="flex flex-col sm:flex-row justify-between items-center gap-3 mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800">Parking Slot Management</h2>
-                    <button id="start-edit" class="px-6 py-3 bg-[#7cd1f9] hover:bg-[#78cbf2] text-white rounded-lg transition-colors font-medium">
-                        Edit Parking Layout
-                    </button>
-                </div>
+        <div class="w-full mx-auto">
 
-                <div id="editing-controls" class="hidden flex-col sm:flex-row justify-between items-center gap-3 mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800">Editing Mode</h2>
-                    <div class="flex flex-wrap gap-3">
-                        <button id="add-slot" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                            Add Slot
-                        </button>
-                        <button id="edit-slot" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
-                            Edit Slot
-                        </button>
-                        <button id="delete-slot" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
-                            Delete Slot
-                        </button>
-                        <button id="save-changes" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                            Save Changes
-                        </button>
-                        <button id="cancel-edit" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors">
-                            Cancel
-                        </button>
+            <!-- Camera Selector -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-5">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-camera text-[#940B26] text-xl"></i>
+                        <label for="camera-select" class="font-semibold text-gray-700 text-lg whitespace-nowrap">
+                            Select Camera
+                        </label>
                     </div>
-                </div>
+                    <select id="camera-select"
+                            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#940B26] focus:border-transparent bg-white">
+                        <option value="">-- Choose a camera --</option>
+                        {% for camera in cameras %}
+                            <option value="{{ camera.id }}"
+                                    data-snapshot="{{ camera.stream_url }}"
+                                    data-name="{{ camera.name }}">
+                                {{ camera.name }}{% if camera.location %} — {{ camera.location }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
 
-                <div id="instructions" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 hidden">
-                    <h3 class="font-semibold text-blue-800 mb-2">How to use:</h3>
-                    <ul class="text-blue-700 text-sm list-disc list-inside space-y-1">
-                        <li><span class="font-medium">Add:</span> Click and drag to draw bounding boxes</li>
-                        <li><span class="font-medium">Edit:</span> Click to select, drag corners to resize</li>
-                        <li><span class="font-medium">Delete:</span> Click on boxes to remove them</li>
-                        <li><span class="font-medium">Save:</span> Click Save Changes to apply your modifications</li>
-                    </ul>
-                </div>
-
-                <div class="bg-white rounded-lg overflow-hidden relative">
-                    <div class="relative w-full">
-                        <img id="parking-image" 
-                             class="w-full h-auto block" 
-                             src="{% static 'images/parkingallotment.jpg' %}" 
-                             alt="Parking Layout"
-                             style="display: block;">
-                        <canvas id="bounding-canvas" class="absolute top-0 left-0 w-full h-full cursor-default"></canvas>
-                    </div>
-                    
-                    <div id="mode-indicator" class="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg text-sm font-medium hidden">
-                        Mode: View
-                    </div>
-
-                    <div id="selected-info" class="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg text-sm hidden">
-                        Selected: <span id="selected-slot">None</span>
-                    </div>
-                </div>
-
-                <div id="unsaved-warning" class="hidden mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-yellow-700 font-medium">You have unsaved changes</span>
+                    {# Status badge — updated by JS #}
+                    <div id="camera-status" class="hidden items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-500 whitespace-nowrap">
+                        <span id="status-dot" class="w-2 h-2 rounded-full bg-gray-400 inline-block"></span>
+                        <span id="status-text">No camera</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Main Editor Card -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden mb-5">
+
+                <!-- Toolbar -->
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <div id="toolbar-view" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">Parking Layout Editor</h2>
+                            <p class="text-sm text-gray-500 mt-0.5">Select a camera above then click Edit to start drawing slots.</p>
+                        </div>
+                        <button id="start-edit"
+                                disabled
+                                class="flex items-center gap-2 px-5 py-2.5 bg-[#940B26] hover:bg-[#7a0920] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium text-sm">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            Edit Parking Layout
+                        </button>
+                    </div>
+
+                    <div id="toolbar-edit" class="hidden flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">Editing Mode</h2>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span id="mode-badge"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                                    <span id="mode-dot" class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                    <span id="mode-label">Select mode</span>
+                                </span>
+                                <span id="unsaved-badge" class="hidden items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                                    <i class="fa-solid fa-circle-exclamation text-xs"></i>
+                                    Unsaved changes
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="btn-add"
+                                    class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border-2 border-transparent
+                                           bg-emerald-50 text-emerald-700 hover:bg-emerald-100">
+                                <i class="fa-solid fa-plus"></i> Add Slot
+                            </button>
+                            <button id="btn-edit"
+                                    class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border-2 border-transparent
+                                           bg-blue-50 text-blue-700 hover:bg-blue-100">
+                                <i class="fa-solid fa-arrows-up-down-left-right"></i> Move / Reshape
+                            </button>
+                            <button id="btn-delete"
+                                    class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border-2 border-transparent
+                                           bg-red-50 text-red-700 hover:bg-red-100">
+                                <i class="fa-solid fa-trash"></i> Delete Slot
+                            </button>
+                            <div class="w-px bg-gray-200 self-stretch mx-1"></div>
+                            <button id="btn-save"
+                                    class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium
+                                           bg-[#940B26] hover:bg-[#7a0920] text-white transition-colors">
+                                <i class="fa-solid fa-floppy-disk"></i> Save
+                            </button>
+                            <button id="btn-cancel"
+                                    class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium
+                                           border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors">
+                                <i class="fa-solid fa-xmark"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instructions strip — visible in edit mode -->
+                <div id="instructions-bar" class="hidden bg-blue-50 border-b border-blue-100 px-6 py-3">
+                    <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-blue-700">
+                        <span><i class="fa-solid fa-plus text-emerald-600 mr-1"></i><strong>Add:</strong> Click points to build a polygon, double-click last point to close it</span>
+                        <span><i class="fa-solid fa-arrows-up-down-left-right text-blue-600 mr-1"></i><strong>Move/Reshape:</strong> Click a slot to select, drag the whole shape or drag corner handles</span>
+                        <span><i class="fa-solid fa-trash text-red-600 mr-1"></i><strong>Delete:</strong> Click any slot to remove it</span>
+                    </div>
+                </div>
+
+                <!-- Canvas Area -->
+                <div class="relative bg-gray-900" id="canvas-wrapper">
+
+                    {# Empty state — no camera selected #}
+                    <div id="empty-state" class="flex flex-col items-center justify-center py-32 text-gray-400">
+                        <i class="fa-solid fa-camera text-6xl mb-4 opacity-30"></i>
+                        <p class="text-lg font-medium">No camera selected</p>
+                        <p class="text-sm mt-1">Choose a camera from the dropdown above to get started.</p>
+                    </div>
+
+                    <!-- Snapshot + canvas overlay -->
+                    <div id="image-wrapper" class="relative hidden">
+                        <img id="parking-snapshot"
+                             class="w-full h-auto block select-none"
+                             alt="Parking snapshot"
+                             draggable="false">
+                        <canvas id="polygon-canvas"
+                                class="absolute top-0 left-0 w-full h-full"
+                                style="touch-action: none; cursor: default;"></canvas>
+
+                        <!-- Floating label during polygon drawing -->
+                        <div id="draw-hint"
+                             class="hidden absolute bottom-4 left-1/2 -translate-x-1/2
+                                    bg-black bg-opacity-75 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none">
+                            Click to add points · Double-click to finish polygon
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slot table footer -->
+                <div id="slots-footer" class="hidden border-t border-gray-200 px-6 py-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-gray-700 text-sm">
+                            Slots on this camera
+                            <span id="slot-count" class="ml-2 px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs font-normal">0</span>
+                        </h3>
+                    </div>
+                    <div id="slots-table-body" class="flex flex-wrap gap-2">
+                        <!-- Populated by js -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Label Modal -->
+            <!-- Shown after drawing a polygon so the admin names the slot -->
+            <div id="label-modal"
+                 class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">Name this slot</h3>
+                    <p class="text-sm text-gray-500 mb-4">Give this parking slot a unique label (e.g. A1, B3).</p>
+                    <input id="label-input"
+                           type="text"
+                           maxlength="50"
+                           placeholder="e.g. A1"
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#940B26] mb-4">
+                    <div id="label-error" class="hidden text-sm text-red-600 mb-3 -mt-2">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                        <span id="label-error-text"></span>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="label-confirm"
+                                class="flex-1 px-4 py-2.5 bg-[#940B26] hover:bg-[#7a0920] text-white rounded-lg font-medium text-sm transition-colors">
+                            Confirm
+                        </button>
+                        <button id="label-discard"
+                                class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-medium text-sm transition-colors">
+                            Discard
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </section>
+
+<!-- Pass Django URLs and CSRF token to JS via data attributes -->
+<div id="js-config"
+     data-get-slots-url="{% url 'settings:api_get_slots' %}"
+     data-add-slot-url="{% url 'settings:api_add_slot' %}"
+     data-bulk-save-url="{% url 'settings:api_bulk_save_slots' %}"
+     data-update-slot-url-template="/settings/api/slots/__ID__/update/"
+     data-delete-slot-url-template="/settings/api/slots/__ID__/delete/"
+     data-csrf-token="{{ csrf_token }}"
+     style="display:none;">
+</div>
 {% endblock content %}
-
-{% block script %}
-    <script src="{% static 'javascript/settings/parkingSlotManagement.js' %}"></script>
-    
-<style>
-    #bounding-canvas {
-    pointer-events: auto;
-    touch-action: none;
-}
-
-#mode-indicator {
-    z-index: 10;
-}
-
-#selected-info {
-    z-index: 10;
-}
-
-
-#parking-image {
-    max-width: 100%;
-    height: auto;
-    display: block;
-}
-</style>
-{% endblock script %}
