@@ -1,6 +1,24 @@
+// parkingslotmanagement.js
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Parking Slot Management JS loaded -', new Date().toLocaleTimeString());
+    
+    // Get all DOM elements with error checking
     const parkingImage = document.getElementById('parking-image');
     const canvas = document.getElementById('bounding-canvas');
+    
+    // Check if critical elements exist
+    if (!parkingImage) {
+        console.error('CRITICAL: parking-image element not found!');
+        return;
+    }
+    
+    if (!canvas) {
+        console.error('CRITICAL: bounding-canvas element not found!');
+        return;
+    }
+    
+    console.log('✓ Canvas and image elements found');
+    
     const ctx = canvas.getContext('2d');
     const modeIndicator = document.getElementById('mode-indicator');
     const selectedInfo = document.getElementById('selected-info');
@@ -10,12 +28,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const instructions = document.getElementById('instructions');
     const unsavedWarning = document.getElementById('unsaved-warning');
     
+    // Get all buttons with error checking
     const startEditBtn = document.getElementById('start-edit');
     const addButton = document.getElementById('add-slot');
     const editButton = document.getElementById('edit-slot');
     const deleteButton = document.getElementById('delete-slot');
     const saveButton = document.getElementById('save-changes');
     const cancelButton = document.getElementById('cancel-edit');
+    
+    // Log button status
+    console.log('Button status:', {
+        'start-edit': startEditBtn ? '✓ Found' : '✗ Missing',
+        'add-slot': addButton ? '✓ Found' : '✗ Missing',
+        'edit-slot': editButton ? '✓ Found' : '✗ Missing',
+        'delete-slot': deleteButton ? '✓ Found' : '✗ Missing',
+        'save-changes': saveButton ? '✓ Found' : '✗ Missing',
+        'cancel-edit': cancelButton ? '✓ Found' : '✗ Missing'
+    });
+    
+    // Verify all buttons exist
+    if (!startEditBtn || !addButton || !editButton || !deleteButton || !saveButton || !cancelButton) {
+        console.error('Some buttons are missing! Check the HTML IDs.');
+        return;
+    }
+    
+    console.log('✓ All buttons found');
     
     let currentMode = 'view';
     let boundingBoxes = [];
@@ -45,9 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
         scaleX = imageWidth / imgRect.width;
         scaleY = imageHeight / imgRect.height;
         
-        console.log('Image natural size:', imageWidth, 'x', imageHeight);
-        console.log('Image displayed size:', imgRect.width, 'x', imgRect.height);
-        console.log('Scale factors:', scaleX, scaleY);
+        console.log('Canvas size set:', canvas.width, 'x', canvas.height);
         
         drawBoundingBoxes();
     }
@@ -141,13 +176,21 @@ document.addEventListener('DOMContentLoaded', function() {
                screenY >= screenCoords.y && screenY <= screenCoords.y + screenHeight;
     }
 
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseup', handleMouseUp);
+    // Add event listeners with error handling
+    try {
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mouseleave', handleMouseUp);
 
-    canvas.addEventListener('touchstart', handleTouchStart);
-    canvas.addEventListener('touchmove', handleTouchMove);
-    canvas.addEventListener('touchend', handleTouchEnd);
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd);
+        
+        console.log('✓ Canvas event listeners added');
+    } catch (e) {
+        console.error('Error adding canvas event listeners:', e);
+    }
 
     function handleMouseDown(e) {
         if (currentMode === 'view') return;
@@ -166,8 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const screenX = clientX - imgRect.left;
         const screenY = clientY - imgRect.top;
         const imageCoords = screenToImageCoords(clientX, clientY);
-
-        console.log('Pointer down - Screen:', screenX, screenY, 'Image:', imageCoords.x, imageCoords.y);
 
         if (currentMode === 'add') {
             startX = imageCoords.x;
@@ -327,7 +368,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 boundingBoxes.push(normalizedBox);
                 markUnsavedChanges();
-                console.log('Added box:', normalizedBox);
             }
             currentBox = null;
             isDrawing = false;
@@ -359,6 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function startEditing() {
+        console.log('▶ Start Editing clicked');
         originalBoxes = JSON.parse(JSON.stringify(boundingBoxes));
         
         initialControls.classList.add('hidden');
@@ -374,6 +415,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function switchToAddMode() {
+        console.log('➕ Add Mode clicked');
         currentMode = 'add';
         modeIndicator.textContent = 'Mode: Add Parking Slot';
         canvas.style.cursor = 'crosshair';
@@ -383,6 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function switchToEditMode() {
+        console.log('✏️ Edit Mode clicked');
         currentMode = 'edit';
         modeIndicator.textContent = 'Mode: Edit Parking Slot';
         canvas.style.cursor = 'pointer';
@@ -390,6 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function switchToDeleteMode() {
+        console.log('🗑️ Delete Mode clicked');
         currentMode = 'delete';
         modeIndicator.textContent = 'Mode: Delete Parking Slot';
         canvas.style.cursor = 'not-allowed';
@@ -399,40 +443,53 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function saveChanges() {
-        console.log('Saving parking slots:', boundingBoxes);
+        console.log('💾 Save Changes clicked', boundingBoxes);
         
-        Swal.fire({
-            title: 'Success!',
-            text: 'Parking slots have been saved successfully.',
-            icon: 'success',
-            confirmButtonText: 'OK'
-        });
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Success!',
+                text: 'Parking slots have been saved successfully.',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+        } else {
+            alert('Parking slots saved successfully!');
+        }
         
         clearUnsavedChanges();
         exitEditing();
     }
 
     function cancelEditing() {
+        console.log('❌ Cancel Editing clicked');
         if (hasUnsavedChanges) {
-            Swal.fire({
-                title: 'Discard Changes?',
-                text: 'You have unsaved changes. Are you sure you want to discard them?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Discard',
-                cancelButtonText: 'Continue Editing'
-            }).then((result) => {
-                if (result.isConfirmed) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Discard Changes?',
+                    text: 'You have unsaved changes. Are you sure you want to discard them?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Discard',
+                    cancelButtonText: 'Continue Editing'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        boundingBoxes = JSON.parse(JSON.stringify(originalBoxes));
+                        exitEditing();
+                    }
+                });
+            } else {
+                if (confirm('You have unsaved changes. Discard them?')) {
                     boundingBoxes = JSON.parse(JSON.stringify(originalBoxes));
                     exitEditing();
                 }
-            });
+            }
         } else {
             exitEditing();
         }
     }
 
     function exitEditing() {
+        console.log('🚪 Exiting edit mode');
         initialControls.classList.remove('hidden');
         editingControls.classList.add('hidden');
         instructions.classList.add('hidden');
@@ -447,14 +504,42 @@ document.addEventListener('DOMContentLoaded', function() {
         drawBoundingBoxes();
     }
 
-    startEditBtn.addEventListener('click', startEditing);
-    addButton.addEventListener('click', switchToAddMode);
-    editButton.addEventListener('click', switchToEditMode);
-    deleteButton.addEventListener('click', switchToDeleteMode);
-    saveButton.addEventListener('click', saveChanges);
-    cancelButton.addEventListener('click', cancelEditing);
+    // Add click handlers with verification
+    function addButtonListener(button, handler, buttonName) {
+        if (button) {
+            button.addEventListener('click', function(e) {
+                console.log(`📌 ${buttonName} button clicked`);
+                handler(e);
+            });
+            console.log(`✓ Listener added to ${buttonName} button`);
+        } else {
+            console.error(`✗ Cannot add listener to ${buttonName} - button not found`);
+        }
+    }
+
+    // Add all button listeners
+    addButtonListener(startEditBtn, startEditing, 'Start Edit');
+    addButtonListener(addButton, switchToAddMode, 'Add Slot');
+    addButtonListener(editButton, switchToEditMode, 'Edit Slot');
+    addButtonListener(deleteButton, switchToDeleteMode, 'Delete Slot');
+    addButtonListener(saveButton, saveChanges, 'Save Changes');
+    addButtonListener(cancelButton, cancelEditing, 'Cancel Edit');
+
+    // Force a re-check after a short delay (in case of dynamic loading)
+    setTimeout(() => {
+        console.log('🔄 Re-checking button listeners...');
+        console.log('Current button states:', {
+            'start-edit': startEditBtn ? '✓' : '✗',
+            'add-slot': addButton ? '✓' : '✗',
+            'edit-slot': editButton ? '✓' : '✗',
+            'delete-slot': deleteButton ? '✓' : '✗',
+            'save-changes': saveButton ? '✓' : '✗',
+            'cancel-edit': cancelButton ? '✓' : '✗'
+        });
+    }, 1000);
 
     function initialize() {
+        console.log('Initializing canvas...');
         if (parkingImage.complete && parkingImage.naturalWidth > 0) {
             setCanvasSize();
         } else {
@@ -470,6 +555,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     initialize();
-
-    boundingBoxes = [];
+    
+    drawBoundingBoxes();
+    
+    console.log('✅ Parking Slot Management initialization complete');
 });
