@@ -17,4 +17,9 @@ urlpatterns = [
     path('api/slots/bulk-save/', views.api_bulk_save_slots, name='api_bulk_save_slots'),
     path('api/slots/<int:pk>/update/',views.api_update_slot, name='api_update_slot'),
     path('api/slots/<int:pk>/delete/', views.api_delete_slot, name='api_delete_slot'),
+    path('api/cameras/', views.api_get_cameras, name='api_get_cameras'),
+    path('api/cameras/add/', views.api_add_camera, name='api_add_camera'),
+    path('api/cameras/<int:pk>/edit/', views.api_edit_camera, name='api_edit_camera'),
+    path('api/cameras/<int:pk>/delete/', views.api_delete_camera, name='api_delete_camera'),
+    path('api/cameras/<int:pk>/upload-snapshot/', views.api_upload_snapshot, name='api_upload_snapshot'),
 ]

@@ -3,12 +3,8 @@ from django.db import models
 # Create your models here.
 
 class Camera(models.Model):
-    """
-    Represents a physical camera/webcam connected to a Raspberry Pi device.
-    Each camera monitors a parking area and can have multiple parking slots.
-    """
-    name = models.CharField(max_length=100)                         # e.g. "Main Entrance Camera"
-    location = models.CharField(max_length=255, blank=True)         # e.g. "Building A - Ground Floor"
+    name = models.CharField(max_length=100)                         
+    location = models.CharField(max_length=255, blank=True)         
     stream_url = models.CharField(max_length=500, blank=True)       # URL where Pi streams video
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -21,17 +17,18 @@ class Camera(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def to_dict(self):
+        return {
+            'id':         self.id,
+            'name':       self.name,
+            'location':   self.location,
+            'stream_url': self.stream_url,
+            'is_active':  self.is_active,
+        }
 
 
 class ParkingSlot(models.Model):
-    """
-    Represents a single parking slot with a polygon drawn over the camera feed.
-    polygon_points stores a list of [x, y] normalized coordinates (0.0 to 1.0)
-    so they scale correctly regardless of video resolution.
-
-    Example polygon_points value:
-    [[0.1, 0.2], [0.3, 0.2], [0.3, 0.5], [0.1, 0.5]]
-    """
     STATUS_CHOICES = [
         ('available', 'Available'),
         ('occupied', 'Occupied'),

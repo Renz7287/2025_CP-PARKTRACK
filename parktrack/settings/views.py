@@ -1,6 +1,7 @@
-import json
+import json, os
 from django.db import transaction
 from django.shortcuts import render
+from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.http import JsonResponse
@@ -395,3 +396,125 @@ def api_bulk_save_slots(request):
             saved_slots.append(slot.to_dict())
 
     return JsonResponse({'success': True, 'message': f'{len(saved_slots)} slot(s) saved successfully.', 'slots': saved_slots})
+
+@group_required('Admin')
+@require_http_methods(['GET'])
+def api_get_cameras(request):
+    cameras = Camera.objects.filter(is_active=True).order_by('name')
+
+    return JsonResponse({'success': True,   'cameras': [c.to_dict() for c in cameras]})
+
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_add_camera(request):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
+
+    name     = data.get('name', '').strip()
+    location = data.get('location', '').strip()
+
+    if not name:
+        return JsonResponse({'success': False, 'error': 'Camera name is required.'}, status=400)
+
+    if Camera.objects.filter(name=name, is_active=True).exists():
+        return JsonResponse({'success': False, 'error': f'A camera named "{name}" already exists.'}, status=400)
+
+    camera = Camera.objects.create(
+        name=name,
+        location=location,
+        stream_url='',
+        is_active=True,
+    )
+
+    return JsonResponse({'success': True, 'message': f'Camera "{name}" added successfully.', 'camera': camera.to_dict()}, status=201)
+
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_edit_camera(request, pk):
+    try:
+        camera = Camera.objects.get(id=pk, is_active=True)
+    except Camera.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
+
+    name     = data.get('name', '').strip()
+    location = data.get('location', '').strip()
+
+    if not name:
+        return JsonResponse({'success': False, 'error': 'Camera name is required.'}, status=400)
+
+    # Check for duplicate name — exclude current camera from the check
+    if Camera.objects.filter(name=name, is_active=True).exclude(id=pk).exists():
+        return JsonResponse({'success': False, 'error': f'A camera named "{name}" already exists.'}, status=400)
+
+    camera.name     = name
+    camera.location = location
+    camera.save()
+
+    return JsonResponse({
+        'success': True, 'message': f'Camera updated successfully.', 'camera': camera.to_dict()})
+
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_delete_camera(request, pk):
+    try:
+        camera = Camera.objects.get(id=pk, is_active=True)
+    except Camera.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
+
+    camera_name = camera.name
+
+    with transaction.atomic():
+        # Soft-delete all slots belonging to this camera first
+        ParkingSlot.objects.filter(camera=camera).update(is_active=False)
+        camera.is_active = False
+        camera.save()
+
+    return JsonResponse({'success': True, 'message': f'Camera "{camera_name}" deleted successfully.'})
+
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_upload_snapshot(request, pk):
+    try:
+        camera = Camera.objects.get(id=pk, is_active=True)
+    except Camera.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
+
+    snapshot_file = request.FILES.get('snapshot')
+
+    if not snapshot_file:
+        return JsonResponse({'success': False, 'error': 'No file was uploaded.'}, status=400)
+
+    allowed_types = ['image/jpeg', 'image/png', 'image/webp']
+    if snapshot_file.content_type not in allowed_types:
+        return JsonResponse({'success': False,'error': 'Invalid file type. Please upload a JPEG, PNG, or WEBP image.'}, status=400)
+
+    max_size = 10 * 1024 * 1024
+    if snapshot_file.size > max_size:
+        return JsonResponse({'success': False, 'error': 'File too large. Maximum size is 10MB.'}, status=400)
+
+    ext         = os.path.splitext(snapshot_file.name)[1].lower() or '.jpg'
+    filename    = f'snapshot_camera_{pk}{ext}'
+    save_dir    = os.path.join(django_settings.MEDIA_ROOT, 'snapshots')
+    os.makedirs(save_dir, exist_ok=True)
+    save_path   = os.path.join(save_dir, filename)
+
+    with open(save_path, 'wb') as f:
+        for chunk in snapshot_file.chunks():
+            f.write(chunk)
+
+    media_url = f'{django_settings.MEDIA_URL}snapshots/{filename}'
+    camera.stream_url = media_url
+    camera.save()
+
+    return JsonResponse({'success': True,   'message': 'Snapshot uploaded successfully.', 'snapshot_url': media_url, 'camera': camera.to_dict()})
