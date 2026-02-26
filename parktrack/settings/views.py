@@ -1,11 +1,15 @@
+import json
 from django.db import transaction
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 from users.models import City, VehicleBrand, User, DriverProfile, Vehicle
 from users.forms import UserEditForm, DriverProfileEditForm, VehicleModalForm, ChangePasswordForm
 from utils.decorators import group_required
+from utils.decorators import group_required
+from .models import Camera, ParkingSlot
 
 # Create your views here.
 
@@ -54,9 +58,11 @@ def vehicle_management(request, pk):
 @group_required('Admin')
 def parking_slot_management(request, pk):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    cameras = Camera.objects.filter(is_active=True)
 
     context = {
-        'is_partial': is_ajax
+        'is_partial': is_ajax,
+        'cameras': cameras
     }
     return render(request, 'settings/parking-slot-management.html', context)
 
@@ -200,3 +206,192 @@ def delete_vehicle(request, pk):
             return JsonResponse({'success': False, 'errors': 'Vehicle not found'})
     
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid Request']}})
+
+@require_http_methods(['GET'])
+def api_get_slots(request):
+    camera_id = request.GET.get('camera_id')
+
+    if not camera_id:
+        return JsonResponse({'success': False, 'error': 'camera_id is required.'}, status=400)
+
+    try:
+        camera = Camera.objects.get(id=camera_id, is_active=True)
+    except Camera.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
+
+    slots = ParkingSlot.objects.filter(camera=camera, is_active=True)
+
+    return JsonResponse({
+        'success': True,
+        'slots': [slot.to_dict() for slot in slots]
+    })
+
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_add_slot(request):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON body.'}, status=400)
+
+    camera_id      = data.get('camera_id')
+    slot_label     = data.get('slot_label', '').strip()
+    polygon_points = data.get('polygon_points', [])
+
+    # Validation────────────────
+    if not camera_id:
+        return JsonResponse({'success': False, 'error': 'camera_id is required.'}, status=400)
+
+    if not slot_label:
+        return JsonResponse({'success': False, 'error': 'slot_label is required.'}, status=400)
+
+    if not isinstance(polygon_points, list) or len(polygon_points) < 3:
+        return JsonResponse({'success': False, 'error': 'polygon_points must be a list with at least 3 points.'}, status=400)
+
+    for point in polygon_points:
+        if not isinstance(point, list) or len(point) != 2:
+            return JsonResponse({'success': False, 'error': 'Each point must be a list of [x, y].'}, status=400)
+        x, y = point
+        if not (0.0 <= x <= 1.0 and 0.0 <= y <= 1.0):
+            return JsonResponse({'success': False, 'error': 'Polygon coordinates must be normalized between 0.0 and 1.0.'}, status=400)
+
+    try:
+        camera = Camera.objects.get(id=camera_id, is_active=True)
+    except Camera.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
+
+    if ParkingSlot.objects.filter(camera=camera, slot_label=slot_label).exists():
+        return JsonResponse({'success': False, 'error': f'Slot label "{slot_label}" already exists for this camera.'}, status=400)
+
+    slot = ParkingSlot.objects.create(
+        camera=camera,
+        slot_label=slot_label,
+        polygon_points=polygon_points,
+    )
+
+    return JsonResponse({'success': True, 'message': f'Slot {slot_label} added successfully.', 'slot': slot.to_dict()}, status=201)
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_update_slot(request, pk):
+    try:
+        slot = ParkingSlot.objects.get(id=pk)
+    except ParkingSlot.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Parking slot not found.'}, status=404)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON body.'}, status=400)
+
+    # Optional field: slot_label
+    new_label = data.get('slot_label', '').strip()
+    if new_label and new_label != slot.slot_label:
+        if ParkingSlot.objects.filter(camera=slot.camera, slot_label=new_label).exclude(id=pk).exists():
+            return JsonResponse({'success': False, 'error': f'Slot label "{new_label}" already exists for this camera.'}, status=400)
+        slot.slot_label = new_label
+
+    # Optional field: polygon_points
+    polygon_points = data.get('polygon_points')
+    if polygon_points is not None:
+        if not isinstance(polygon_points, list) or len(polygon_points) < 3:
+            return JsonResponse({'success': False, 'error': 'polygon_points must be a list with at least 3 points.'}, status=400)
+
+        for point in polygon_points:
+            if not isinstance(point, list) or len(point) != 2:
+                return JsonResponse({'success': False, 'error': 'Each point must be a list of [x, y].'}, status=400)
+            x, y = point
+            if not (0.0 <= x <= 1.0 and 0.0 <= y <= 1.0):
+                return JsonResponse({'success': False, 'error': 'Polygon coordinates must be normalized between 0.0 and 1.0.'}, status=400)
+
+        slot.polygon_points = polygon_points
+
+    slot.save()
+
+    return JsonResponse({'success': True, 'message': f'Slot {slot.slot_label} updated successfully.', 'slot': slot.to_dict()})
+
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_delete_slot(request, pk):
+    try:
+        slot = ParkingSlot.objects.get(id=pk)
+    except ParkingSlot.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Parking slot not found.'}, status=404)
+
+    slot_label = slot.slot_label
+    slot.is_active = False
+    slot.save()
+
+    return JsonResponse({'success': True, 'message': f'Slot {slot_label} deleted successfully.'})
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_bulk_save_slots(request):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON body.'}, status=400)
+
+    camera_id = data.get('camera_id')
+    slots_data = data.get('slots', [])
+
+    if not camera_id:
+        return JsonResponse({'success': False, 'error': 'camera_id is required.'}, status=400)
+
+    if not isinstance(slots_data, list):
+        return JsonResponse({'success': False, 'error': 'slots must be a list.'}, status=400)
+
+    try:
+        camera = Camera.objects.get(id=camera_id, is_active=True)
+    except Camera.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
+
+    # Validate all slots before touching the DB
+    seen_labels = set()
+    for i, slot_data in enumerate(slots_data):
+        label  = slot_data.get('slot_label', '').strip()
+        points = slot_data.get('polygon_points', [])
+
+        if not label:
+            return JsonResponse({'success': False, 'error': f'Slot at index {i} is missing a slot_label.'}, status=400)
+
+        if label in seen_labels:
+            return JsonResponse({'success': False, 'error': f'Duplicate slot_label "{label}" found in the submitted data.'}, status=400)
+
+        seen_labels.add(label)
+
+        if not isinstance(points, list) or len(points) < 3:
+            return JsonResponse({'success': False, 'error': f'Slot "{label}" must have at least 3 polygon points.'}, status=400)
+
+        for point in points:
+            if not isinstance(point, list) or len(point) != 2:
+                return JsonResponse({'success': False, 'error': f'Slot "{label}" has an invalid point format. Expected [x, y].'}, status=400)
+            x, y = point
+            if not (0.0 <= x <= 1.0 and 0.0 <= y <= 1.0):
+                return JsonResponse({'success': False, 'error': f'Slot "{label}" has coordinates outside the 0.0–1.0 range.'}, status=400)
+
+    # Wipe old slots, insert new ones
+    with transaction.atomic():
+        # Soft-delete all existing slots for this camera
+        ParkingSlot.objects.filter(camera=camera).update(is_active=False)
+
+        saved_slots = []
+        for slot_data in slots_data:
+            label  = slot_data['slot_label'].strip()
+            points = slot_data['polygon_points']
+
+            # Reactivate if a slot with this label existed before, else create new
+            slot, created = ParkingSlot.objects.update_or_create(
+                camera=camera,
+                slot_label=label,
+                defaults={
+                    'polygon_points': points,
+                    'is_active': True,
+                    'status': 'available',
+                }
+            )
+            saved_slots.append(slot.to_dict())
+
+    return JsonResponse({'success': True, 'message': f'{len(saved_slots)} slot(s) saved successfully.', 'slots': saved_slots})
