@@ -29,7 +29,7 @@ DEBUG = True
 #ALLOWED_HOSTS = ['parktrack.pythonanywhere.com']
 
 # For local testing
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.246.146.103']
 
 # Application definition
 

@@ -1,562 +1,751 @@
-// parkingslotmanagement.js
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Parking Slot Management JS loaded -', new Date().toLocaleTimeString());
-    
-    // Get all DOM elements with error checking
-    const parkingImage = document.getElementById('parking-image');
-    const canvas = document.getElementById('bounding-canvas');
-    
-    // Check if critical elements exist
-    if (!parkingImage) {
-        console.error('CRITICAL: parking-image element not found!');
-        return;
-    }
-    
-    if (!canvas) {
-        console.error('CRITICAL: bounding-canvas element not found!');
-        return;
-    }
-    
-    console.log('✓ Canvas and image elements found');
-    
-    const ctx = canvas.getContext('2d');
-    const modeIndicator = document.getElementById('mode-indicator');
-    const selectedInfo = document.getElementById('selected-info');
-    const selectedSlot = document.getElementById('selected-slot');
-    const initialControls = document.getElementById('initial-controls');
-    const editingControls = document.getElementById('editing-controls');
-    const instructions = document.getElementById('instructions');
-    const unsavedWarning = document.getElementById('unsaved-warning');
-    
-    // Get all buttons with error checking
-    const startEditBtn = document.getElementById('start-edit');
-    const addButton = document.getElementById('add-slot');
-    const editButton = document.getElementById('edit-slot');
-    const deleteButton = document.getElementById('delete-slot');
-    const saveButton = document.getElementById('save-changes');
-    const cancelButton = document.getElementById('cancel-edit');
-    
-    // Log button status
-    console.log('Button status:', {
-        'start-edit': startEditBtn ? '✓ Found' : '✗ Missing',
-        'add-slot': addButton ? '✓ Found' : '✗ Missing',
-        'edit-slot': editButton ? '✓ Found' : '✗ Missing',
-        'delete-slot': deleteButton ? '✓ Found' : '✗ Missing',
-        'save-changes': saveButton ? '✓ Found' : '✗ Missing',
-        'cancel-edit': cancelButton ? '✓ Found' : '✗ Missing'
-    });
-    
-    // Verify all buttons exist
-    if (!startEditBtn || !addButton || !editButton || !deleteButton || !saveButton || !cancelButton) {
-        console.error('Some buttons are missing! Check the HTML IDs.');
-        return;
-    }
-    
-    console.log('✓ All buttons found');
-    
-    let currentMode = 'view';
-    let boundingBoxes = [];
-    let originalBoxes = [];
-    let currentBox = null;
-    let isDrawing = false;
-    let isResizing = false;
-    let isMoving = false;
-    let startX, startY;
-    let selectedBoxIndex = -1;
-    let resizeHandleIndex = -1;
-    let imageWidth = 0;
-    let imageHeight = 0;
+export function initializeParkingSlotManagement() {
+
+    if (!document.getElementById('js-config')) return;
+
+    // ── Config ────────────────────────────────────────────────────────────────
+
+    const cfg  = document.getElementById('js-config').dataset;
+    const URLS = {
+        getSlots:        cfg.getSlotsUrl,
+        bulkSave:        cfg.bulkSaveUrl,
+        getCamera:       cfg.getCameraUrl,
+        editCamera:      (id) => cfg.editCameraUrlTemplate.replace('__ID__', id),
+        uploadSnapshot:  (id) => cfg.uploadSnapshotUrlTemplate.replace('__ID__', id),
+        captureSnapshot: (id) => cfg.captureSnapshotUrlTemplate.replace('__ID__', id),
+    };
+    const CSRF = cfg.csrfToken;
+
+    // ── DOM refs ──────────────────────────────────────────────────────────────
+
+    const canvas          = document.getElementById('polygon-canvas');
+    const ctx             = canvas.getContext('2d');
+    const parkingSnapshot = document.getElementById('parking-snapshot');
+    const emptyState      = document.getElementById('empty-state');
+    const imageWrapper    = document.getElementById('image-wrapper');
+    const slotsFooter     = document.getElementById('slots-footer');
+    const slotsTableBody  = document.getElementById('slots-table-body');
+    const slotCount       = document.getElementById('slot-count');
+    const labelModal      = document.getElementById('label-modal');
+    const labelInput      = document.getElementById('label-input');
+    const labelError      = document.getElementById('label-error');
+    const labelErrorText  = document.getElementById('label-error-text');
+    const labelConfirm    = document.getElementById('label-confirm');
+    const labelDiscard    = document.getElementById('label-discard');
+
+    // ── State ─────────────────────────────────────────────────────────────────
+
+    let camera            = null;   // the single camera object from API
+    let slots             = [];
+    let originalSlots     = [];
+    let currentMode       = 'view';
     let hasUnsavedChanges = false;
-    let scaleX = 1;
-    let scaleY = 1;
+    let isDrawingPolygon  = false;
+    let currentPoints     = [];
+    let selectedIndex     = -1;
+    let dragState         = null;
+    let _modalConfirmFn   = null;
+    let _modalDiscardFn   = null;
+    let _modalEnterFn     = null;
+    let lastClickTime     = 0;
+    let lastClickX        = 0;
+    let lastClickY        = 0;
+    const DBL_MS          = 300;
+    const DBL_PX          = 10;
 
-    function setCanvasSize() {
-        const imgRect = parkingImage.getBoundingClientRect();
-        
-        canvas.width = imgRect.width;
-        canvas.height = imgRect.height;
-        
-        imageWidth = parkingImage.naturalWidth;
-        imageHeight = parkingImage.naturalHeight;
-        
-        scaleX = imageWidth / imgRect.width;
-        scaleY = imageHeight / imgRect.height;
-        
-        console.log('Canvas size set:', canvas.width, 'x', canvas.height);
-        
-        drawBoundingBoxes();
+    // ── Resize ────────────────────────────────────────────────────────────────
+
+    if (window._psmResizeHandler) window.removeEventListener('resize', window._psmResizeHandler);
+    window._psmResizeHandler = debounce(syncCanvasSize, 120);
+    window.addEventListener('resize', window._psmResizeHandler);
+
+    // ── Canvas events ─────────────────────────────────────────────────────────
+
+    if (canvas._psmHandlers) {
+        const h = canvas._psmHandlers;
+        canvas.removeEventListener('mousedown',  h.mousedown);
+        canvas.removeEventListener('mousemove',  h.mousemove);
+        canvas.removeEventListener('mouseup',    h.mouseup);
+        canvas.removeEventListener('dblclick',   h.dblclick);
+        canvas.removeEventListener('touchstart', h.touchstart);
+        canvas.removeEventListener('touchmove',  h.touchmove);
+        canvas.removeEventListener('touchend',   h.touchend);
+    }
+    const _handlers = {
+        mousedown:  (e) => onPointerDown(e),
+        mousemove:  (e) => onPointerMove(e),
+        mouseup:    ()  => onPointerUp(),
+        dblclick:   (e) => onDoubleClick(e),
+        touchstart: (e) => { e.preventDefault(); onPointerDown(e); },
+        touchmove:  (e) => { e.preventDefault(); onPointerMove(e); },
+        touchend:   (e) => { e.preventDefault(); onPointerUp(e); },
+    };
+    canvas._psmHandlers = _handlers;
+    canvas.addEventListener('mousedown',  _handlers.mousedown);
+    canvas.addEventListener('mousemove',  _handlers.mousemove);
+    canvas.addEventListener('mouseup',    _handlers.mouseup);
+    canvas.addEventListener('dblclick',   _handlers.dblclick);
+    canvas.addEventListener('touchstart', _handlers.touchstart, { passive: false });
+    canvas.addEventListener('touchmove',  _handlers.touchmove,  { passive: false });
+    canvas.addEventListener('touchend',   _handlers.touchend,   { passive: false });
+
+    // ── Rebind helper ─────────────────────────────────────────────────────────
+
+    function rebind(id, fn) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const fresh = el.cloneNode(true);
+        el.replaceWith(fresh);
+        fresh.addEventListener('click', fn);
     }
 
-    function screenToImageCoords(screenX, screenY) {
-        const imgRect = parkingImage.getBoundingClientRect();
-        
-        const relativeX = screenX - imgRect.left;
-        const relativeY = screenY - imgRect.top;
-        
-        return {
-            x: Math.round(relativeX * scaleX),
-            y: Math.round(relativeY * scaleY)
-        };
+    rebind('start-edit',          enterEditingMode);
+    rebind('btn-add',             () => switchMode('add'));
+    rebind('btn-edit',            () => switchMode('edit'));
+    rebind('btn-delete',          () => switchMode('delete'));
+    rebind('btn-save',            saveChanges);
+    rebind('btn-cancel',          cancelEditing);
+    rebind('btn-upload-snapshot', () => openSnapshotModal());
+    rebind('btn-edit-camera',     () => openEditCameraModal());
+
+    // ── Canvas helpers ────────────────────────────────────────────────────────
+
+    function toNorm(px, py) {
+        return [Math.min(1, Math.max(0, px / canvas.width)),
+                Math.min(1, Math.max(0, py / canvas.height))];
+    }
+    function toPx(nx, ny) { return [nx * canvas.width, ny * canvas.height]; }
+    function getCanvasPos(e) {
+        const r = canvas.getBoundingClientRect();
+        const s = e.touches ? e.touches[0] : e;
+        return { x: s.clientX - r.left, y: s.clientY - r.top };
+    }
+    function syncCanvasSize() {
+        const r = parkingSnapshot.getBoundingClientRect();
+        canvas.width  = r.width;
+        canvas.height = r.height;
+        redraw();
     }
 
-    function imageToScreenCoords(imageX, imageY) {
-        const imgRect = parkingImage.getBoundingClientRect();
-        
-        return {
-            x: Math.round(imageX / scaleX),
-            y: Math.round(imageY / scaleY)
-        };
-    }
+    // ── Drawing ───────────────────────────────────────────────────────────────
 
-    function drawBoundingBoxes() {
+    const COLORS = {
+        default:  { stroke: '#22c55e', fill: 'rgba(34,197,94,0.15)',  label: '#22c55e' },
+        selected: { stroke: '#940B26', fill: 'rgba(148,11,38,0.20)',  label: '#940B26' },
+        occupied: { stroke: '#f97316', fill: 'rgba(249,115,22,0.15)', label: '#f97316' },
+        drawing:  { stroke: '#3b82f6', fill: 'rgba(59,130,246,0.12)', label: '#3b82f6' },
+    };
+    const HR = 6;
+
+    function redraw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        boundingBoxes.forEach((box, index) => {
-            const screenCoords = imageToScreenCoords(box.x, box.y);
-            const screenWidth = box.width / scaleX;
-            const screenHeight = box.height / scaleY;
-            
-            ctx.strokeStyle = index === selectedBoxIndex ? '#ff0000' : '#00aa00';
-            ctx.lineWidth = index === selectedBoxIndex ? 3 : 2;
-            ctx.strokeRect(screenCoords.x, screenCoords.y, screenWidth, screenHeight);
-            
-            ctx.fillStyle = index === selectedBoxIndex ? '#ff0000' : '#00aa00';
-            ctx.font = '14px Arial';
-            ctx.fillText(box.id, screenCoords.x + 5, screenCoords.y - 5);
-            
-            if (currentMode === 'edit' && index === selectedBoxIndex) {
-                drawResizeHandles(screenCoords.x, screenCoords.y, screenWidth, screenHeight);
-            }
+        slots.forEach((slot, idx) => {
+            const sel = (currentMode === 'edit' && idx === selectedIndex);
+            drawPolygon(slot.polygon_points,
+                sel ? COLORS.selected : slot.status === 'occupied' ? COLORS.occupied : COLORS.default,
+                slot.slot_label, sel);
         });
-        
-        if (currentBox && isDrawing) {
-            ctx.strokeStyle = '#0000ff';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(currentBox.startScreenX, currentBox.startScreenY, currentBox.width, currentBox.height);
+        if (isDrawingPolygon && currentPoints.length > 0) drawInProgress();
+    }
+
+    function drawPolygon(pts, pal, label, handles) {
+        if (pts.length < 2) return;
+        ctx.beginPath();
+        ctx.moveTo(...toPx(...pts[0]));
+        pts.slice(1).forEach(p => ctx.lineTo(...toPx(...p)));
+        ctx.closePath();
+        ctx.fillStyle = pal.fill; ctx.fill();
+        ctx.strokeStyle = pal.stroke; ctx.lineWidth = handles ? 2.5 : 2; ctx.stroke();
+        const cx = pts.reduce((s,p) => s+p[0], 0) / pts.length;
+        const cy = pts.reduce((s,p) => s+p[1], 0) / pts.length;
+        ctx.fillStyle = pal.label; ctx.font = 'bold 13px monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, ...toPx(cx, cy));
+        if (handles) {
+            pts.forEach(p => {
+                ctx.beginPath(); ctx.arc(...toPx(...p), HR, 0, Math.PI*2);
+                ctx.fillStyle = '#940B26'; ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+            });
         }
     }
 
-    function drawResizeHandles(x, y, width, height) {
-        const handleSize = 8;
-        const handles = [
-            { x: x - handleSize/2, y: y - handleSize/2, type: 'top-left' },
-            { x: x + width - handleSize/2, y: y - handleSize/2, type: 'top-right' },
-            { x: x - handleSize/2, y: y + height - handleSize/2, type: 'bottom-left' },
-            { x: x + width - handleSize/2, y: y + height - handleSize/2, type: 'bottom-right' }
-        ];
-        
-        ctx.fillStyle = '#ff0000';
-        handles.forEach(handle => {
-            ctx.fillRect(handle.x, handle.y, handleSize, handleSize);
+    function drawInProgress() {
+        const p = COLORS.drawing;
+        ctx.beginPath(); ctx.moveTo(...toPx(...currentPoints[0]));
+        currentPoints.slice(1).forEach(pt => ctx.lineTo(...toPx(...pt)));
+        ctx.strokeStyle = p.stroke; ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+        currentPoints.forEach(pt => {
+            ctx.beginPath(); ctx.arc(...toPx(...pt), 4, 0, Math.PI*2);
+            ctx.fillStyle = p.stroke; ctx.fill();
         });
+        if (currentPoints.length >= 3) {
+            ctx.beginPath(); ctx.arc(...toPx(...currentPoints[0]), HR+2, 0, Math.PI*2);
+            ctx.strokeStyle = p.stroke; ctx.lineWidth = 2; ctx.stroke();
+        }
     }
 
-    function getResizeHandles(x, y, width, height) {
-        const handleSize = 8;
-        return [
-            { x: x - handleSize/2, y: y - handleSize/2, type: 'top-left' },
-            { x: x + width - handleSize/2, y: y - handleSize/2, type: 'top-right' },
-            { x: x - handleSize/2, y: y + height - handleSize/2, type: 'bottom-left' },
-            { x: x + width - handleSize/2, y: y + height - handleSize/2, type: 'bottom-right' }
-        ];
+    // ── Hit testing ───────────────────────────────────────────────────────────
+
+    function isNearFirst(nx, ny) {
+        if (currentPoints.length < 3) return false;
+        const [fx, fy] = currentPoints[0];
+        return Math.hypot((nx-fx)*canvas.width, (ny-fy)*canvas.height) < HR+4;
+    }
+    function hitSlot(nx, ny) {
+        for (let i = slots.length-1; i >= 0; i--)
+            if (pip(nx, ny, slots[i].polygon_points)) return i;
+        return -1;
+    }
+    function hitHandle(nx, ny) {
+        if (selectedIndex === -1) return -1;
+        const pts = slots[selectedIndex].polygon_points;
+        for (let i = 0; i < pts.length; i++) {
+            const [px,py] = toPx(...pts[i]), [ex,ey] = toPx(nx,ny);
+            if (Math.hypot(ex-px, ey-py) <= HR+2) return i;
+        }
+        return -1;
+    }
+    function pip(nx, ny, pts) {
+        let inside = false;
+        for (let i=0, j=pts.length-1; i<pts.length; j=i++) {
+            const [xi,yi]=pts[i],[xj,yj]=pts[j];
+            if (((yi>ny)!==(yj>ny)) && (nx < (xj-xi)*(ny-yi)/(yj-yi)+xi))
+                inside = !inside;
+        }
+        return inside;
     }
 
-    function isPointInHandle(x, y, handle) {
-        const handleSize = 8;
-        return x >= handle.x && x <= handle.x + handleSize && 
-               y >= handle.y && y <= handle.y + handleSize;
-    }
+    // ── Pointer events ────────────────────────────────────────────────────────
 
-    function isPointInBox(screenX, screenY, box) {
-        const screenCoords = imageToScreenCoords(box.x, box.y);
-        const screenWidth = box.width / scaleX;
-        const screenHeight = box.height / scaleY;
-        
-        return screenX >= screenCoords.x && screenX <= screenCoords.x + screenWidth && 
-               screenY >= screenCoords.y && screenY <= screenCoords.y + screenHeight;
-    }
-
-    // Add event listeners with error handling
-    try {
-        canvas.addEventListener('mousedown', handleMouseDown);
-        canvas.addEventListener('mousemove', handleMouseMove);
-        canvas.addEventListener('mouseup', handleMouseUp);
-        canvas.addEventListener('mouseleave', handleMouseUp);
-
-        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-        canvas.addEventListener('touchend', handleTouchEnd);
-        
-        console.log('✓ Canvas event listeners added');
-    } catch (e) {
-        console.error('Error adding canvas event listeners:', e);
-    }
-
-    function handleMouseDown(e) {
+    function onPointerDown(e) {
         if (currentMode === 'view') return;
-        handlePointerDown(e.clientX, e.clientY);
-    }
-
-    function handleTouchStart(e) {
-        if (currentMode === 'view') return;
-        e.preventDefault();
-        const touch = e.touches[0];
-        handlePointerDown(touch.clientX, touch.clientY);
-    }
-
-    function handlePointerDown(clientX, clientY) {
-        const imgRect = parkingImage.getBoundingClientRect();
-        const screenX = clientX - imgRect.left;
-        const screenY = clientY - imgRect.top;
-        const imageCoords = screenToImageCoords(clientX, clientY);
-
+        const {x, y} = getCanvasPos(e);
+        const [nx, ny] = toNorm(x, y);
         if (currentMode === 'add') {
-            startX = imageCoords.x;
-            startY = imageCoords.y;
-            
-            currentBox = {
-                startScreenX: screenX,
-                startScreenY: screenY,
-                width: 0,
-                height: 0
-            };
-            isDrawing = true;
+            const now = Date.now();
+            const second = (now-lastClickTime < DBL_MS) && (Math.abs(x-lastClickX) < DBL_PX) && (Math.abs(y-lastClickY) < DBL_PX);
+            lastClickTime = now; lastClickX = x; lastClickY = y;
+            if (second) return;
+            handleAdd(nx, ny);
         } else if (currentMode === 'edit') {
-            if (selectedBoxIndex !== -1) {
-                const box = boundingBoxes[selectedBoxIndex];
-                const screenCoords = imageToScreenCoords(box.x, box.y);
-                const screenWidth = box.width / scaleX;
-                const screenHeight = box.height / scaleY;
-                const handles = getResizeHandles(screenCoords.x, screenCoords.y, screenWidth, screenHeight);
-                
-                for (let i = 0; i < handles.length; i++) {
-                    if (isPointInHandle(screenX, screenY, handles[i])) {
-                        resizeHandleIndex = i;
-                        isResizing = true;
-                        startX = imageCoords.x;
-                        startY = imageCoords.y;
-                        drawBoundingBoxes();
-                        return;
-                    }
-                }
-            }
-            
-            selectedBoxIndex = -1;
-            for (let i = boundingBoxes.length - 1; i >= 0; i--) {
-                const box = boundingBoxes[i];
-                if (isPointInBox(screenX, screenY, box)) {
-                    selectedBoxIndex = i;
-                    isMoving = true;
-                    startX = imageCoords.x;
-                    startY = imageCoords.y;
-                    updateSelectedInfo();
-                    markUnsavedChanges();
-                    break;
-                }
-            }
-            drawBoundingBoxes();
+            const hi = hitHandle(nx, ny);
+            if (hi !== -1) { dragState = {type:'handle', handleIndex:hi, lastNormX:nx, lastNormY:ny}; return; }
+            const si = hitSlot(nx, ny);
+            selectedIndex = si;
+            dragState = si !== -1 ? {type:'move', lastNormX:nx, lastNormY:ny} : null;
+            redraw();
         } else if (currentMode === 'delete') {
-            for (let i = boundingBoxes.length - 1; i >= 0; i--) {
-                const box = boundingBoxes[i];
-                if (isPointInBox(screenX, screenY, box)) {
-                    boundingBoxes.splice(i, 1);
-                    selectedBoxIndex = -1;
-                    updateSelectedInfo();
-                    markUnsavedChanges();
-                    break;
-                }
-            }
-            drawBoundingBoxes();
+            const si = hitSlot(nx, ny);
+            if (si !== -1) { slots.splice(si,1); selectedIndex=-1; markUnsaved(); redraw(); refreshFooter(); }
         }
     }
 
-    function handleMouseMove(e) {
-        if (currentMode === 'view') return;
-        handlePointerMove(e.clientX, e.clientY);
-    }
-
-    function handleTouchMove(e) {
-        if (currentMode === 'view') return;
-        e.preventDefault();
-        const touch = e.touches[0];
-        handlePointerMove(touch.clientX, touch.clientY);
-    }
-
-    function handlePointerMove(clientX, clientY) {
-        const imgRect = parkingImage.getBoundingClientRect();
-        const screenX = clientX - imgRect.left;
-        const screenY = clientY - imgRect.top;
-        const imageCoords = screenToImageCoords(clientX, clientY);
-
-        if (currentMode === 'add' && currentBox && isDrawing) {
-            currentBox.width = screenX - currentBox.startScreenX;
-            currentBox.height = screenY - currentBox.startScreenY;
-            drawBoundingBoxes();
-        } else if (currentMode === 'edit' && selectedBoxIndex !== -1) {
-            const box = boundingBoxes[selectedBoxIndex];
-            
-            if (isResizing) {
-                const deltaX = imageCoords.x - startX;
-                const deltaY = imageCoords.y - startY;
-                
-                switch (resizeHandleIndex) {
-                    case 0: // top-left
-                        box.x += deltaX;
-                        box.y += deltaY;
-                        box.width -= deltaX;
-                        box.height -= deltaY;
-                        break;
-                    case 1: // top-right
-                        box.y += deltaY;
-                        box.width += deltaX;
-                        box.height -= deltaY;
-                        break;
-                    case 2: // bottom-left
-                        box.x += deltaX;
-                        box.width -= deltaX;
-                        box.height += deltaY;
-                        break;
-                    case 3: // bottom-right
-                        box.width += deltaX;
-                        box.height += deltaY;
-                        break;
-                }
-                
-                box.width = Math.max(20, box.width);
-                box.height = Math.max(20, box.height);
-                
-                startX = imageCoords.x;
-                startY = imageCoords.y;
-                markUnsavedChanges();
-                drawBoundingBoxes();
-            } else if (isMoving) {
-                const deltaX = imageCoords.x - startX;
-                const deltaY = imageCoords.y - startY;
-                box.x += deltaX;
-                box.y += deltaY;
-                startX = imageCoords.x;
-                startY = imageCoords.y;
-                markUnsavedChanges();
-                drawBoundingBoxes();
-            }
-        }
-    }
-
-    function handleMouseUp() {
-        handlePointerUp();
-    }
-
-    function handleTouchEnd() {
-        handlePointerUp();
-    }
-
-    function handlePointerUp() {
-        if (currentMode === 'add' && currentBox && isDrawing) {
-            const endX = startX + (currentBox.width * scaleX);
-            const endY = startY + (currentBox.height * scaleY);
-            
-            const finalWidth = Math.abs(endX - startX);
-            const finalHeight = Math.abs(endY - startY);
-            
-            if (finalWidth > 20 && finalHeight > 20) {
-                const normalizedBox = {
-                    x: currentBox.width < 0 ? endX : startX,
-                    y: currentBox.height < 0 ? endY : startY,
-                    width: finalWidth,
-                    height: finalHeight,
-                    id: `P${boundingBoxes.length + 1}`
-                };
-                boundingBoxes.push(normalizedBox);
-                markUnsavedChanges();
-            }
-            currentBox = null;
-            isDrawing = false;
-            drawBoundingBoxes();
-        }
-        
-        isResizing = false;
-        isMoving = false;
-        resizeHandleIndex = -1;
-    }
-
-    function updateSelectedInfo() {
-        if (selectedBoxIndex !== -1) {
-            selectedInfo.classList.remove('hidden');
-            selectedSlot.textContent = boundingBoxes[selectedBoxIndex].id;
+    function onPointerMove(e) {
+        if (currentMode !== 'edit' || !dragState) return;
+        const {x, y} = getCanvasPos(e);
+        const [nx, ny] = toNorm(x, y);
+        const dx = nx-dragState.lastNormX, dy = ny-dragState.lastNormY;
+        if (dragState.type === 'move') {
+            slots[selectedIndex].polygon_points = slots[selectedIndex].polygon_points.map(
+                ([px,py]) => [Math.min(1,Math.max(0,px+dx)), Math.min(1,Math.max(0,py+dy))]);
         } else {
-            selectedInfo.classList.add('hidden');
+            const pts = slots[selectedIndex].polygon_points, hi = dragState.handleIndex;
+            pts[hi] = [Math.min(1,Math.max(0,pts[hi][0]+dx)), Math.min(1,Math.max(0,pts[hi][1]+dy))];
         }
+        dragState.lastNormX = nx; dragState.lastNormY = ny;
+        markUnsaved(); redraw();
     }
 
-    function markUnsavedChanges() {
-        hasUnsavedChanges = true;
-        unsavedWarning.classList.remove('hidden');
+    function onPointerUp()  { dragState = null; }
+    function onDoubleClick(e) {
+        if (currentMode !== 'add' || !isDrawingPolygon) return;
+        if (currentPoints.length >= 3) finalise();
     }
 
-    function clearUnsavedChanges() {
-        hasUnsavedChanges = false;
-        unsavedWarning.classList.add('hidden');
-    }
-
-    function startEditing() {
-        console.log('▶ Start Editing clicked');
-        originalBoxes = JSON.parse(JSON.stringify(boundingBoxes));
-        
-        initialControls.classList.add('hidden');
-        editingControls.classList.remove('hidden');
-        instructions.classList.remove('hidden');
-        modeIndicator.classList.remove('hidden');
-        
-        canvas.style.cursor = 'default';
-        currentMode = 'edit';
-        modeIndicator.textContent = 'Mode: Edit Parking Slot';
-        
-        switchToEditMode();
-    }
-
-    function switchToAddMode() {
-        console.log('➕ Add Mode clicked');
-        currentMode = 'add';
-        modeIndicator.textContent = 'Mode: Add Parking Slot';
-        canvas.style.cursor = 'crosshair';
-        selectedBoxIndex = -1;
-        updateSelectedInfo();
-        drawBoundingBoxes();
-    }
-
-    function switchToEditMode() {
-        console.log('✏️ Edit Mode clicked');
-        currentMode = 'edit';
-        modeIndicator.textContent = 'Mode: Edit Parking Slot';
-        canvas.style.cursor = 'pointer';
-        drawBoundingBoxes();
-    }
-
-    function switchToDeleteMode() {
-        console.log('🗑️ Delete Mode clicked');
-        currentMode = 'delete';
-        modeIndicator.textContent = 'Mode: Delete Parking Slot';
-        canvas.style.cursor = 'not-allowed';
-        selectedBoxIndex = -1;
-        updateSelectedInfo();
-        drawBoundingBoxes();
-    }
-
-    function saveChanges() {
-        console.log('💾 Save Changes clicked', boundingBoxes);
-        
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Success!',
-                text: 'Parking slots have been saved successfully.',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert('Parking slots saved successfully!');
+    function handleAdd(nx, ny) {
+        if (!isDrawingPolygon) {
+            isDrawingPolygon = true; currentPoints = [[nx,ny]];
+            document.getElementById('draw-hint').classList.remove('hidden');
+            redraw(); return;
         }
-        
-        clearUnsavedChanges();
-        exitEditing();
+        if (isNearFirst(nx, ny)) { finalise(); return; }
+        currentPoints.push([nx, ny]); redraw();
     }
 
-    function cancelEditing() {
-        console.log('❌ Cancel Editing clicked');
-        if (hasUnsavedChanges) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Discard Changes?',
-                    text: 'You have unsaved changes. Are you sure you want to discard them?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, Discard',
-                    cancelButtonText: 'Continue Editing'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        boundingBoxes = JSON.parse(JSON.stringify(originalBoxes));
-                        exitEditing();
-                    }
-                });
-            } else {
-                if (confirm('You have unsaved changes. Discard them?')) {
-                    boundingBoxes = JSON.parse(JSON.stringify(originalBoxes));
-                    exitEditing();
-                }
-            }
-        } else {
-            exitEditing();
+    function finalise() {
+        isDrawingPolygon = false;
+        document.getElementById('draw-hint').classList.add('hidden');
+        const captured = currentPoints.map(p => [p[0], p[1]]);
+        currentPoints = []; redraw();
+        openLabelModal(captured);
+    }
+
+    // ── Label modal ───────────────────────────────────────────────────────────
+
+    function openLabelModal(points) {
+        labelInput.value = ''; labelError.classList.add('hidden');
+        labelModal.classList.remove('hidden'); labelInput.focus();
+        const existing = slots.map(s => s.slot_label);
+        let n = slots.length + 1;
+        while (existing.includes(`P${n}`)) n++;
+        labelInput.value = `P${n}`; labelInput.placeholder = `e.g. P${n}`;
+        if (_modalConfirmFn) {
+            labelConfirm.removeEventListener('click', _modalConfirmFn);
+            labelDiscard.removeEventListener('click', _modalDiscardFn);
+            labelInput.removeEventListener('keydown', _modalEnterFn);
         }
+        _modalConfirmFn = () => {
+            const label = labelInput.value.trim();
+            if (!label) { showLabelErr('Please enter a slot label.'); return; }
+            if (slots.some(s => s.slot_label === label)) { showLabelErr(`"${label}" is already used.`); return; }
+            closeLabelModal();
+            slots.push({id:null, slot_label:label, polygon_points:points, status:'available'});
+            markUnsaved(); redraw(); refreshFooter();
+        };
+        _modalDiscardFn = () => { closeLabelModal(); redraw(); };
+        _modalEnterFn   = (e) => { if (e.key === 'Enter') _modalConfirmFn(); };
+        labelConfirm.addEventListener('click', _modalConfirmFn);
+        labelDiscard.addEventListener('click', _modalDiscardFn);
+        labelInput.addEventListener('keydown', _modalEnterFn);
     }
+    function showLabelErr(msg) { labelErrorText.textContent = msg; labelError.classList.remove('hidden'); }
+    function closeLabelModal()  { labelModal.classList.add('hidden'); }
 
-    function exitEditing() {
-        console.log('🚪 Exiting edit mode');
-        initialControls.classList.remove('hidden');
-        editingControls.classList.add('hidden');
-        instructions.classList.add('hidden');
-        modeIndicator.classList.add('hidden');
-        selectedInfo.classList.add('hidden');
-        unsavedWarning.classList.add('hidden');
-        
-        canvas.style.cursor = 'default';
-        currentMode = 'view';
-        
-        selectedBoxIndex = -1;
-        drawBoundingBoxes();
-    }
+    // ── Slots footer ──────────────────────────────────────────────────────────
 
-    // Add click handlers with verification
-    function addButtonListener(button, handler, buttonName) {
-        if (button) {
-            button.addEventListener('click', function(e) {
-                console.log(`📌 ${buttonName} button clicked`);
-                handler(e);
-            });
-            console.log(`✓ Listener added to ${buttonName} button`);
-        } else {
-            console.error(`✗ Cannot add listener to ${buttonName} - button not found`);
-        }
-    }
-
-    // Add all button listeners
-    addButtonListener(startEditBtn, startEditing, 'Start Edit');
-    addButtonListener(addButton, switchToAddMode, 'Add Slot');
-    addButtonListener(editButton, switchToEditMode, 'Edit Slot');
-    addButtonListener(deleteButton, switchToDeleteMode, 'Delete Slot');
-    addButtonListener(saveButton, saveChanges, 'Save Changes');
-    addButtonListener(cancelButton, cancelEditing, 'Cancel Edit');
-
-    // Force a re-check after a short delay (in case of dynamic loading)
-    setTimeout(() => {
-        console.log('🔄 Re-checking button listeners...');
-        console.log('Current button states:', {
-            'start-edit': startEditBtn ? '✓' : '✗',
-            'add-slot': addButton ? '✓' : '✗',
-            'edit-slot': editButton ? '✓' : '✗',
-            'delete-slot': deleteButton ? '✓' : '✗',
-            'save-changes': saveButton ? '✓' : '✗',
-            'cancel-edit': cancelButton ? '✓' : '✗'
+    function refreshFooter() {
+        if (slots.length === 0) { slotsFooter.classList.add('hidden'); return; }
+        slotsFooter.classList.remove('hidden');
+        slotCount.textContent = slots.length;
+        slotsTableBody.innerHTML = '';
+        slots.forEach((slot, idx) => {
+            const occ = slot.status === 'occupied';
+            const tag = document.createElement('div');
+            tag.className = ['flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium cursor-pointer transition-colors',
+                occ ? 'border-orange-300 bg-orange-50 text-orange-700' : 'border-green-300 bg-green-50 text-green-700'].join(' ');
+            tag.innerHTML = `<span class="w-2 h-2 rounded-full inline-block ${occ?'bg-orange-400':'bg-green-400'}"></span>
+                ${esc(slot.slot_label)}${slot.id===null?'<span class="text-xs font-normal text-gray-400 ml-1">(new)</span>':''}`;
+            tag.addEventListener('click', () => { if (currentMode==='edit') { selectedIndex=idx; redraw(); } });
+            slotsTableBody.appendChild(tag);
         });
-    }, 1000);
+    }
 
-    function initialize() {
-        console.log('Initializing canvas...');
-        if (parkingImage.complete && parkingImage.naturalWidth > 0) {
-            setCanvasSize();
-        } else {
-            parkingImage.addEventListener('load', function() {
-                setTimeout(setCanvasSize, 100);
-            });
+    // ── API ───────────────────────────────────────────────────────────────────
+
+    async function loadCamera() {
+        try {
+            const r = await fetch(URLS.getCamera);
+            const d = await r.json();
+            if (!d.success) throw new Error(d.error || 'Camera not found.');
+            camera = d.camera;
+            document.getElementById('camera-label').textContent =
+                camera.name + (camera.location ? ` — ${camera.location}` : '');
+            await loadSnapshotAsync(camera.snapshot_url || '');
+            const fetched = await fetchSlots(camera.id);
+            slots = fetched; originalSlots = clone(fetched);
+            syncCanvasSize(); refreshFooter(); redraw();
+        } catch(e) {
+            emptyState.innerHTML = `
+                <i class="fa-solid fa-circle-exclamation text-4xl mb-4 opacity-50 text-red-400"></i>
+                <p class="text-lg font-medium text-red-400">Failed to load camera</p>
+                <p class="text-sm mt-1">${esc(e.message)}</p>`;
+            emptyState.classList.remove('hidden');
         }
     }
 
-    window.addEventListener('resize', function() {
-        clearTimeout(this.resizeTimeout);
-        this.resizeTimeout = setTimeout(setCanvasSize, 100);
+    async function fetchSlots(cameraId) {
+        try {
+            const r = await fetch(`${URLS.getSlots}?camera_id=${cameraId}`);
+            const d = await r.json();
+            return d.success ? d.slots : [];
+        } catch { return []; }
+    }
+
+    async function bulkSave(cameraId, slotsToSave) {
+        const r = await fetch(URLS.bulkSave, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json','X-CSRFToken':CSRF,'X-Requested-With':'XMLHttpRequest'},
+            body: JSON.stringify({camera_id:cameraId, slots:slotsToSave.map(s=>({slot_label:s.slot_label,polygon_points:s.polygon_points}))}),
+        });
+        return r.json();
+    }
+
+    function loadSnapshotAsync(url) {
+        emptyState.classList.add('hidden');
+        imageWrapper.classList.remove('hidden');
+        return new Promise(resolve => {
+            if (!url) {
+                parkingSnapshot.removeAttribute('src');
+                parkingSnapshot.style.cssText = 'width:100%;height:400px;background:#1f2937;display:block;';
+                syncCanvasSize(); resolve(); return;
+            }
+            parkingSnapshot.style.cssText = '';
+            parkingSnapshot.onload  = () => { syncCanvasSize(); resolve(); };
+            parkingSnapshot.onerror = () => {
+                parkingSnapshot.style.cssText = 'width:100%;height:400px;background:#1f2937;display:block;';
+                syncCanvasSize(); resolve();
+            };
+            parkingSnapshot.src = url;
+            if (parkingSnapshot.complete && parkingSnapshot.naturalWidth > 0) {
+                parkingSnapshot.onload = null; parkingSnapshot.onerror = null;
+                syncCanvasSize(); resolve();
+            }
+        });
+    }
+
+    // ── Edit mode ─────────────────────────────────────────────────────────────
+
+    function enterEditingMode() {
+        originalSlots = clone(slots); hasUnsavedChanges = false;
+        document.getElementById('toolbar-view').classList.add('hidden');
+        const te = document.getElementById('toolbar-edit');
+        te.classList.remove('hidden'); te.classList.add('flex');
+        document.getElementById('instructions-bar').classList.remove('hidden');
+        switchMode('edit');
+    }
+
+    function exitEdit() {
+        currentMode = 'view'; isDrawingPolygon = false;
+        currentPoints = []; selectedIndex = -1; dragState = null;
+        document.getElementById('toolbar-view').classList.remove('hidden');
+        const te = document.getElementById('toolbar-edit');
+        te.classList.add('hidden'); te.classList.remove('flex');
+        document.getElementById('instructions-bar').classList.add('hidden');
+        document.getElementById('unsaved-badge').classList.add('hidden');
+        document.getElementById('draw-hint').classList.add('hidden');
+        canvas.style.cursor = 'default'; redraw();
+    }
+
+    function switchMode(mode) {
+        currentMode = mode; isDrawingPolygon = false;
+        currentPoints = []; selectedIndex = -1; dragState = null;
+        const MC = {
+            add:    {label:'Add Slot',       dot:'bg-emerald-500', cur:'crosshair'},
+            edit:   {label:'Move / Reshape', dot:'bg-blue-500',    cur:'pointer'},
+            delete: {label:'Delete Slot',    dot:'bg-red-500',     cur:'not-allowed'},
+        }[mode];
+        document.getElementById('mode-label').textContent = MC.label;
+        document.getElementById('mode-dot').className     = `w-1.5 h-1.5 rounded-full ${MC.dot}`;
+        canvas.style.cursor = MC.cur;
+        ['btn-add','btn-edit','btn-delete'].forEach(id =>
+            document.getElementById(id)?.classList.remove('ring-2','ring-offset-1','ring-[#940B26]'));
+        document.getElementById({add:'btn-add',edit:'btn-edit',delete:'btn-delete'}[mode])
+            ?.classList.add('ring-2','ring-offset-1','ring-[#940B26]');
+        document.getElementById('draw-hint').classList.toggle('hidden', mode !== 'add');
+        redraw();
+    }
+
+    async function saveChanges() {
+        if (!camera) return;
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+        try {
+            const result = await bulkSave(camera.id, slots);
+            if (result.success) {
+                slots = result.slots; originalSlots = clone(result.slots);
+                clearUnsaved(); refreshFooter(); exitEdit();
+                swal('Saved!', result.message, 'success');
+            } else {
+                swal('Save Failed', result.error||'Something went wrong.', 'error');
+            }
+        } catch { swal('Error', 'Could not reach the server.', 'error'); }
+        finally {
+            const b = document.getElementById('btn-save');
+            if (b) { b.disabled=false; b.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save'; }
+        }
+    }
+
+    async function cancelEditing() {
+        if (hasUnsavedChanges && !(await confirmDiscard())) return;
+        slots = clone(originalSlots); clearUnsaved(); refreshFooter(); exitEdit();
+    }
+
+    function confirmDiscard() {
+        return Swal.fire({
+            title:'Discard Changes?', text:'You have unsaved changes.',
+            icon:'warning', showCancelButton:true,
+            confirmButtonText:'Yes, Discard', cancelButtonText:'Keep Editing',
+            confirmButtonColor:'#940B26', cancelButtonColor:'#6b7280',
+        }).then(r => r.isConfirmed);
+    }
+
+    function swal(title, text, icon) {
+        Swal.fire({title, text, icon, confirmButtonText:'OK', confirmButtonColor:'#940B26'});
+    }
+
+    function markUnsaved() {
+        hasUnsavedChanges = true;
+        const b = document.getElementById('unsaved-badge');
+        b.classList.remove('hidden'); b.classList.add('flex');
+    }
+    function clearUnsaved() {
+        hasUnsavedChanges = false;
+        const b = document.getElementById('unsaved-badge');
+        b.classList.add('hidden'); b.classList.remove('flex');
+    }
+
+    // ── Edit Camera modal ─────────────────────────────────────────────────────
+
+    function openEditCameraModal() {
+        if (!camera) return;
+        document.getElementById('edit-camera-id').value         = camera.id;
+        document.getElementById('edit-camera-name').value       = camera.name;
+        document.getElementById('edit-camera-location').value   = camera.location || '';
+        document.getElementById('edit-camera-stream-url').value = camera.stream_url || '';
+        document.getElementById('edit-camera-error').classList.add('hidden');
+        document.getElementById('edit-camera-modal').classList.remove('hidden');
+    }
+    function closeEditCameraModal() {
+        document.getElementById('edit-camera-modal').classList.add('hidden');
+    }
+
+    rebind('btn-edit-camera-cancel', closeEditCameraModal);
+    document.getElementById('edit-camera-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditCameraModal();
     });
 
-    initialize();
-    
-    drawBoundingBoxes();
-    
-    console.log('✅ Parking Slot Management initialization complete');
-});
+    rebind('btn-edit-camera-save', async () => {
+        const id        = document.getElementById('edit-camera-id').value;
+        const name      = document.getElementById('edit-camera-name').value.trim();
+        const location  = document.getElementById('edit-camera-location').value.trim();
+        const streamUrl = document.getElementById('edit-camera-stream-url').value.trim();
+        const errDiv    = document.getElementById('edit-camera-error');
+        const errTxt    = document.getElementById('edit-camera-error-text');
+        errDiv.classList.add('hidden');
+
+        if (!name) { errTxt.textContent = 'Camera name is required.'; errDiv.classList.remove('hidden'); return; }
+
+        const btn = document.getElementById('btn-edit-camera-save');
+        btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+
+        try {
+            const r = await fetch(URLS.editCamera(id), {
+                method: 'POST',
+                headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+                body: JSON.stringify({name, location, stream_url: streamUrl}),
+            });
+            const d = await r.json();
+            if (d.success) {
+                // Update local camera state immediately — no need to re-fetch
+                camera.name       = d.camera.name;
+                camera.location   = d.camera.location;
+                camera.stream_url = d.camera.stream_url;
+                document.getElementById('camera-label').textContent =
+                    camera.name + (camera.location ? ` — ${camera.location}` : '');
+                closeEditCameraModal();
+                swal('Saved!', 'Camera settings updated.', 'success');
+            } else {
+                errTxt.textContent = d.error||'Failed to update camera.';
+                errDiv.classList.remove('hidden');
+            }
+        } catch { errTxt.textContent = 'Server error. Please try again.'; errDiv.classList.remove('hidden'); }
+        finally {
+            const b = document.getElementById('btn-edit-camera-save');
+            if (b) { b.disabled=false; b.innerHTML='Save Changes'; }
+        }
+    });
+
+    // ── Snapshot modal ────────────────────────────────────────────────────────
+
+    const tabUpload    = document.getElementById('tab-upload');
+    const tabCapture   = document.getElementById('tab-capture');
+    const panelUpload  = document.getElementById('panel-upload');
+    const panelCapture = document.getElementById('panel-capture');
+    let captureHls     = null;
+
+    function startCaptureStream(streamUrl) {
+        const video    = document.getElementById('capture-stream-video');
+        const noStream = document.getElementById('capture-no-stream');
+        if (captureHls) { captureHls.destroy(); captureHls = null; }
+        if (!streamUrl) {
+            noStream.classList.remove('hidden');
+            video.classList.add('hidden');
+            document.getElementById('btn-capture-snap').disabled = true;
+            return;
+        }
+        noStream.classList.add('hidden');
+        video.classList.remove('hidden');
+        document.getElementById('btn-capture-snap').disabled = false;
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+            captureHls = new Hls({
+                liveSyncDurationCount: 3, liveMaxLatencyDurationCount: 6,
+                maxBufferLength: 10, lowLatencyMode: false,
+            });
+            captureHls.loadSource(streamUrl);
+            captureHls.attachMedia(video);
+            captureHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            video.play().catch(() => {});
+        }
+    }
+
+    function stopCaptureStream() {
+        if (captureHls) { captureHls.destroy(); captureHls = null; }
+        const video = document.getElementById('capture-stream-video');
+        if (video) {
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+            video.classList.add('hidden');
+        }
+    }
+
+    function activateTab(tab) {
+        const isUpload = tab === 'upload';
+        tabUpload.classList.toggle('bg-white',       isUpload);
+        tabUpload.classList.toggle('shadow-sm',      isUpload);
+        tabUpload.classList.toggle('text-gray-800',  isUpload);
+        tabUpload.classList.toggle('text-gray-500',  !isUpload);
+        tabCapture.classList.toggle('bg-white',      !isUpload);
+        tabCapture.classList.toggle('shadow-sm',     !isUpload);
+        tabCapture.classList.toggle('text-gray-800', !isUpload);
+        tabCapture.classList.toggle('text-gray-500',  isUpload);
+        panelUpload.classList.toggle('hidden',  !isUpload);
+        panelCapture.classList.toggle('hidden',  isUpload);
+        if (!isUpload) {
+            document.getElementById('capture-overlay').classList.add('hidden');
+            document.getElementById('capture-error').classList.add('hidden');
+            startCaptureStream(document.getElementById('snapshot-stream-url').value);
+        } else {
+            stopCaptureStream();
+        }
+    }
+
+    tabUpload.addEventListener('click',  () => activateTab('upload'));
+    tabCapture.addEventListener('click', () => activateTab('capture'));
+
+    function openSnapshotModal() {
+        if (!camera) return;
+        document.getElementById('snapshot-camera-id').value         = camera.id;
+        document.getElementById('snapshot-camera-name').textContent = camera.name;
+        document.getElementById('snapshot-stream-url').value        = camera.stream_url || '';
+        // Reset upload panel
+        document.getElementById('snapshot-file-input').value = '';
+        document.getElementById('snapshot-preview-wrapper').classList.add('hidden');
+        document.getElementById('snapshot-error').classList.add('hidden');
+        document.getElementById('btn-snapshot-upload').disabled = true;
+        // Reset capture panel
+        stopCaptureStream();
+        document.getElementById('capture-overlay').classList.add('hidden');
+        document.getElementById('capture-error').classList.add('hidden');
+        activateTab('upload');
+        document.getElementById('snapshot-modal').classList.remove('hidden');
+    }
+
+    function closeSnapshotModal() {
+        stopCaptureStream();
+        document.getElementById('snapshot-modal').classList.add('hidden');
+    }
+
+    rebind('btn-snapshot-cancel', closeSnapshotModal);
+    rebind('btn-capture-cancel',  closeSnapshotModal);
+    document.getElementById('snapshot-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeSnapshotModal();
+    });
+
+    // File input preview
+    document.getElementById('snapshot-file-input').addEventListener('change', function() {
+        const file   = this.files[0];
+        const errDiv = document.getElementById('snapshot-error');
+        const errTxt = document.getElementById('snapshot-error-text');
+        errDiv.classList.add('hidden');
+        if (!file) return;
+        const allowed = ['image/jpeg','image/png','image/webp'];
+        if (!allowed.includes(file.type)) {
+            errTxt.textContent = 'Invalid file type. Please upload a JPEG, PNG or WEBP image.';
+            errDiv.classList.remove('hidden'); return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            errTxt.textContent = 'File too large. Maximum size is 10MB.';
+            errDiv.classList.remove('hidden'); return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            document.getElementById('snapshot-preview').src = ev.target.result;
+            document.getElementById('snapshot-file-name').textContent = file.name;
+            document.getElementById('snapshot-preview-wrapper').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+        document.getElementById('btn-snapshot-upload').disabled = false;
+    });
+
+    // Upload submit
+    rebind('btn-snapshot-upload', async () => {
+        const camId = document.getElementById('snapshot-camera-id').value;
+        const file  = document.getElementById('snapshot-file-input').files[0];
+        if (!camId || !file) return;
+        const btn = document.getElementById('btn-snapshot-upload');
+        btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading…';
+        const form = new FormData();
+        form.append('snapshot', file);
+        try {
+            const r = await fetch(URLS.uploadSnapshot(camId), {
+                method: 'POST', headers: {'X-CSRFToken':CSRF}, body: form,
+            });
+            const d = await r.json();
+            if (d.success) {
+                camera.snapshot_url = d.snapshot_url;
+                closeSnapshotModal();
+                await loadSnapshotAsync(d.snapshot_url);
+                syncCanvasSize(); redraw();
+                swal('Uploaded!', 'Snapshot updated successfully.', 'success');
+            } else {
+                document.getElementById('snapshot-error-text').textContent = d.error||'Upload failed.';
+                document.getElementById('snapshot-error').classList.remove('hidden');
+            }
+        } catch {
+            document.getElementById('snapshot-error-text').textContent = 'Server error. Please try again.';
+            document.getElementById('snapshot-error').classList.remove('hidden');
+        } finally {
+            const b = document.getElementById('btn-snapshot-upload');
+            if (b) { b.disabled=false; b.innerHTML='<i class="fa-solid fa-upload mr-1"></i> Upload'; }
+        }
+    });
+
+    // Capture submit
+    rebind('btn-capture-snap', async () => {
+        const camId = document.getElementById('snapshot-camera-id').value;
+        if (!camId) return;
+        const btn = document.getElementById('btn-capture-snap');
+        btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Capturing…';
+        document.getElementById('capture-error').classList.add('hidden');
+        try {
+            const r = await fetch(URLS.captureSnapshot(camId), {
+                method: 'POST', headers: {'X-CSRFToken': CSRF},
+            });
+            const d = await r.json();
+            if (d.success) {
+                camera.snapshot_url = d.snapshot_url;
+                stopCaptureStream();
+                document.getElementById('capture-overlay').classList.remove('hidden');
+                await loadSnapshotAsync(d.snapshot_url);
+                syncCanvasSize(); redraw();
+                setTimeout(() => {
+                    closeSnapshotModal();
+                    swal('Captured!', 'Snapshot captured from live feed.', 'success');
+                }, 1000);
+            } else {
+                document.getElementById('capture-error-text').textContent = d.error||'Capture failed.';
+                document.getElementById('capture-error').classList.remove('hidden');
+            }
+        } catch {
+            document.getElementById('capture-error-text').textContent = 'Server error. Please try again.';
+            document.getElementById('capture-error').classList.remove('hidden');
+        } finally {
+            const b = document.getElementById('btn-capture-snap');
+            if (b) { b.disabled=false; b.innerHTML='<i class="fa-solid fa-camera mr-1"></i> Capture Snapshot'; }
+        }
+    });
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+
+    function clone(obj)       { return JSON.parse(JSON.stringify(obj)); }
+    function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; }
+    function esc(s)           { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+
+    loadCamera();
+}
