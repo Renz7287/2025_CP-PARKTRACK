@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}
+    Reservations
+{% endblock title %}
+
+{% block header %}
+    <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center text-white font-bold text-4xl">Reservations</h1>
+{% endblock header %}
+
+{% block content %}
+<section class="reservations-section px-4 md:px-10 py-6">
+
+    <!-- ===================== USER VIEW ===================== -->
+    {% if not user.is_admin %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- LEFT: Parking snapshot + visual slot picker -->
+        <div>
+            <h2 class="text-xl font-bold text-gray-700 mb-3">Select a Parking Slot</h2>
+            <p class="text-sm text-gray-500 mb-4">
+                Click an available (green) slot on the map below to reserve it.
+                Red slots are occupied, yellow are already reserved.
+            </p>
+
+            <!-- Snapshot container with clickable overlays -->
+            <div class="relative rounded-[20px] overflow-hidden shadow-xl border-2 border-white/30 bg-gray-200">
+                <img
+                    id="res-parking-snapshot"
+                    src=""
+                    alt="Parking Layout"
+                    class="w-full h-[340px] md:h-[420px] object-cover"
+                >
+
+                <!-- Slot overlay buttons — positioned via inline style from JS -->
+                <div id="slot-overlay-container" class="absolute inset-0">
+                    <!-- Populated dynamically by reservationTab.js -->
+                </div>
+
+                <!-- Legend -->
+                <div class="absolute bottom-3 left-3 flex flex-col gap-1.5 bg-black/50 rounded-xl px-3 py-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                        <span class="text-xs text-white font-semibold">Available</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span class="text-xs text-white font-semibold">Occupied</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        <span class="text-xs text-white font-semibold">Reserved</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-gray-400"></div>
+                        <span class="text-xs text-white font-semibold">Maintenance</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slot grid list (alternative to clicking on image) -->
+            <div class="mt-4">
+                <p class="text-sm text-gray-500 mb-2 font-medium">Or select from the list:</p>
+                <div id="slot-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <!-- Populated by JS -->
+                    <div class="animate-pulse bg-gray-200 rounded-lg h-12"></div>
+                    <div class="animate-pulse bg-gray-200 rounded-lg h-12"></div>
+                    <div class="animate-pulse bg-gray-200 rounded-lg h-12"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Reservation form + My Reservations -->
+        <div class="flex flex-col gap-6">
+
+            <!-- Reservation Form (shown after slot selected) -->
+            <div id="reservation-form-card" class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                <h2 class="text-xl font-bold text-gray-700 mb-1">Reserve a Slot</h2>
+                <p id="selected-slot-info" class="text-sm text-gray-400 mb-4">No slot selected yet.</p>
+
+                <!-- Selected slot badge -->
+                <div id="selected-slot-badge" class="hidden mb-4 flex items-center gap-3 bg-[#e8f7fe] rounded-xl px-4 py-3 border border-[#7cd1f9]">
+                    <i class="fa-solid fa-square-parking text-2xl text-[#7cd1f9]"></i>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Selected Slot</p>
+                        <p id="selected-slot-label" class="text-xl font-bold text-gray-800">--</p>
+                    </div>
+                    <button id="clear-slot-selection" class="ml-auto text-gray-400 hover:text-red-500 transition-colors" title="Clear selection">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="reservation-form" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" id="selected-slot-id" value="">
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600 mb-1">Vehicle Plate Number</label>
+                        <input
+                            id="res-plate-number"
+                            type="text"
+                            placeholder="e.g., ABC-1234"
+                            maxlength="20"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9] uppercase"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600 mb-1">Expected Arrival Time</label>
+                        <input
+                            id="res-arrival-time"
+                            type="time"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]"
+                        >
+                        <p class="text-xs text-gray-400 mt-1">
+                            <i class="fa-solid fa-clock-rotate-left mr-1"></i>
+                            Reservation expires 5 minutes after your arrival time.
+                        </p>
+                    </div>
+
+                    <button
+                        id="submit-reservation-btn"
+                        type="button"
+                        disabled
+                        class="w-full py-3 rounded-xl font-semibold text-white bg-gray-300 cursor-not-allowed transition-all duration-200"
+                    >
+                        <i class="fa-solid fa-calendar-check mr-2"></i>
+                        Reserve Slot
+                    </button>
+                </form>
+            </div>
+
+            <!-- My Active Reservations -->
+            <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-700">My Reservations</h2>
+                    <button id="refresh-my-reservations" class="text-[#7cd1f9] hover:text-sky-500 transition-colors" title="Refresh">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                <div id="my-reservations-container">
+                    <p class="text-gray-400 text-sm text-center py-6" id="no-reservations-msg">
+                        <i class="fa-solid fa-calendar-times text-3xl block mb-2"></i>
+                        You have no active reservations.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===================== ADMIN VIEW ===================== -->
+    {% if user.is_admin %}
+    <div>
+        <!-- Header bar with stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-calendar-check text-blue-500 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 uppercase font-semibold tracking-wide">Total</p>
+                    <p class="text-2xl font-bold text-gray-800" id="admin-total-count">—</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-clock text-green-500 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 uppercase font-semibold tracking-wide">Active</p>
+                    <p class="text-2xl font-bold text-green-600" id="admin-active-count">—</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+                <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-hourglass-end text-gray-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 uppercase font-semibold tracking-wide">Expired</p>
+                    <p class="text-2xl font-bold text-gray-600" id="admin-expired-count">—</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+            <div class="flex flex-col md:flex-row gap-3">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input
+                        type="text"
+                        id="admin-search"
+                        placeholder="Search by plate, slot, or user name..."
+                        class="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]"
+                    >
+                </div>
+                <select
+                    id="admin-filter-status"
+                    class="px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]"
+                >
+                    <option value="all">All Reservations</option>
+                    <option value="active">Active Only</option>
+                    <option value="expired">Expired Only</option>
+                    <option value="cancelled">Cancelled Only</option>
+                </select>
+                <button
+                    id="admin-refresh-btn"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-[#7cd1f9] text-white rounded-lg text-sm font-semibold hover:bg-sky-400 transition-colors"
+                >
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="py-3 px-4 text-left font-semibold text-gray-500">User</th>
+                            <th class="py-3 px-4 text-left font-semibold text-gray-500">Plate Number</th>
+                            <th class="py-3 px-4 text-left font-semibold text-gray-500">Slot</th>
+                            <th class="py-3 px-4 text-left font-semibold text-gray-500">Arrival Time</th>
+                            <th class="py-3 px-4 text-left font-semibold text-gray-500">Expiry Time</th>
+                            <th class="py-3 px-4 text-left font-semibold text-gray-500">Status</th>
+                            <th class="py-3 px-4 text-left font-semibold text-gray-500">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-reservations-body" class="divide-y divide-gray-100">
+                        <!-- populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="admin-empty-state" class="hidden p-12 text-center text-gray-400">
+                <i class="fa-solid fa-calendar-times text-5xl mb-3 block"></i>
+                <p class="text-lg font-semibold">No reservations found</p>
+                <p class="text-sm">Try adjusting your filters or search criteria.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</section>
+
+<!-- ===================== CONFIRMATION MODAL ===================== -->
+<div id="res-confirm-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <div class="mb-4">
+            <i class="fa-solid fa-circle-question text-6xl text-yellow-400"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-1">Confirm Reservation</h3>
+        <p class="text-gray-500 text-sm mb-5">Please review your reservation details below.</p>
+
+        <div class="bg-gray-50 rounded-xl p-4 mb-5 text-left space-y-2">
+            <div class="flex justify-between">
+                <span class="text-sm font-semibold text-gray-500">Slot</span>
+                <span class="text-sm font-bold text-gray-800" id="modal-slot">--</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm font-semibold text-gray-500">Plate Number</span>
+                <span class="text-sm font-bold text-gray-800" id="modal-plate">--</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm font-semibold text-gray-500">Arrival Time</span>
+                <span class="text-sm font-bold text-gray-800" id="modal-time">--</span>
+            </div>
+            <div class="flex justify-between border-t pt-2 mt-2">
+                <span class="text-sm font-semibold text-gray-500">Expires At</span>
+                <span class="text-sm font-bold text-red-500" id="modal-expiry">--</span>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button id="modal-cancel-btn" class="flex-1 py-2.5 rounded-xl bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-colors">
+                Go Back
+            </button>
+            <button id="modal-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">
+                <i class="fa-solid fa-check mr-1"></i> Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    // Pass Django template variables to JS
+    const PARK_TRACK = {
+        isAdmin: {{ user.is_admin|yesno:"true,false" }},
+        csrfToken: '{{ csrf_token }}',
+        urls: {
+            slots:        '{% url "reservation_slots" %}',
+            myReservations: '{% url "my_reservations" %}',
+            create:       '{% url "create_reservation" %}',
+            adminAll:     '{% url "admin_all_reservations" %}',
+            cancelBase:   '/reservations/',   // + id + /cancel/
+            snapshot:     '{% url "get_parking_snapshot" %}',  // reuse your existing snapshot URL
+        }
+    };
+</script>
+<script type="module" src="{% static 'javascript/reservationTab.js' %}"></script>
+{% endblock script %}

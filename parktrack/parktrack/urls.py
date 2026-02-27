@@ -25,6 +25,7 @@ urlpatterns = [
     path('settings/', include('settings.urls', namespace='settings')),
     path('parking-usage/', include('parking_usage.urls', namespace='parking-usage')),
     path('notification/', include('notification.urls', namespace='notification')),
+    path('reservation/', include('reservation.urls', namespace='reservation')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

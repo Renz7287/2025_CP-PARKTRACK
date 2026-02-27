@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'settings',
     'parking_usage',
     'notification',
-
+    'reservation',
     'django_extensions',
 ]
 
