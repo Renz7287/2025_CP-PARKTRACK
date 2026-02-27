@@ -12,41 +12,6 @@
     <div class="p-5 bg-[#dcdbdb] min-h-screen">
         <div class="w-full mx-auto">
 
-            <!-- Camera Selector Row -->
-            <div class="bg-white rounded-xl shadow-md p-6 mb-5">
-                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div class="flex items-center gap-3 shrink-0">
-                        <i class="fa-solid fa-camera text-[#940B26] text-xl"></i>
-                        <label for="camera-select" class="font-semibold text-gray-700 text-lg whitespace-nowrap">
-                            Select Camera
-                        </label>
-                    </div>
-
-                    <select id="camera-select"
-                            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#940B26] focus:border-transparent bg-white">
-                        <option value="">-- Choose a camera --</option>
-                        {% for camera in cameras %}
-                            <option value="{{ camera.id }}"
-                                    data-snapshot="{{ camera.stream_url }}"
-                                    data-name="{{ camera.name }}">
-                                {{ camera.name }}{% if camera.location %} — {{ camera.location }}{% endif %}
-                            </option>
-                        {% endfor %}
-                    </select>
-
-                    <div id="camera-status" class="hidden items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-500 whitespace-nowrap">
-                        <span id="status-dot" class="w-2 h-2 rounded-full bg-gray-400 inline-block"></span>
-                        <span id="status-text">No camera</span>
-                    </div>
-
-                    <button id="btn-manage-cameras"
-                            class="shrink-0 flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors">
-                        <i class="fa-solid fa-sliders"></i>
-                        Manage Cameras
-                    </button>
-                </div>
-            </div>
-
             <!-- Main Editor Card -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden mb-5">
 
@@ -56,18 +21,24 @@
                     <div id="toolbar-view" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <h2 class="text-xl font-bold text-gray-800">Parking Layout Editor</h2>
-                            <p class="text-sm text-gray-500 mt-0.5">Select a camera above then click Edit to start drawing slots.</p>
+                            <p class="text-sm text-gray-500 mt-0.5">
+                                <i class="fa-solid fa-camera text-[#940B26] mr-1"></i>
+                                <span id="camera-label">Loading camera…</span>
+                            </p>
                         </div>
                         <div class="flex items-center gap-2">
                             <button id="btn-upload-snapshot"
-                                    disabled
-                                    class="flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors font-medium text-sm">
+                                    class="flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors font-medium text-sm">
                                 <i class="fa-solid fa-image"></i>
                                 Update Snapshot
                             </button>
+                            <button id="btn-edit-camera"
+                                    class="flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors font-medium text-sm">
+                                <i class="fa-solid fa-sliders"></i>
+                                Camera Settings
+                            </button>
                             <button id="start-edit"
-                                    disabled
-                                    class="flex items-center gap-2 px-5 py-2.5 bg-[#940B26] hover:bg-[#7a0920] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium text-sm">
+                                    class="flex items-center gap-2 px-5 py-2.5 bg-[#940B26] hover:bg-[#7a0920] text-white rounded-lg transition-colors font-medium text-sm">
                                 <i class="fa-solid fa-pen-to-square"></i>
                                 Edit Parking Layout
                             </button>
@@ -122,9 +93,8 @@
                 <!-- Canvas -->
                 <div class="relative bg-gray-900" id="canvas-wrapper">
                     <div id="empty-state" class="flex flex-col items-center justify-center py-32 text-gray-400">
-                        <i class="fa-solid fa-camera text-6xl mb-4 opacity-30"></i>
-                        <p class="text-lg font-medium">No camera selected</p>
-                        <p class="text-sm mt-1">Choose a camera from the dropdown above to get started.</p>
+                        <i class="fa-solid fa-spinner fa-spin text-4xl mb-4 opacity-50"></i>
+                        <p class="text-lg font-medium">Loading camera…</p>
                     </div>
                     <div id="image-wrapper" class="relative hidden">
                         <img id="parking-snapshot" class="w-full h-auto block select-none" alt="Parking snapshot" draggable="false">
@@ -139,7 +109,7 @@
                 <div id="slots-footer" class="hidden border-t border-gray-200 px-6 py-4">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-gray-700 text-sm">
-                            Slots on this camera
+                            Parking Slots
                             <span id="slot-count" class="ml-2 px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs font-normal">0</span>
                         </h3>
                     </div>
@@ -165,68 +135,11 @@
                 </div>
             </div>
 
-            <!-- MODAL: Manage Cameras -->
-            <div id="camera-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-                <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
-
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
-                        <h3 class="text-lg font-bold text-gray-800">
-                            <i class="fa-solid fa-camera text-[#940B26] mr-2"></i>Manage Cameras
-                        </h3>
-                        <button id="camera-modal-close" class="text-gray-400 hover:text-gray-600 transition-colors">
-                            <i class="fa-solid fa-xmark text-xl"></i>
-                        </button>
-                    </div>
-
-                    <div class="overflow-y-auto flex-1 px-6 py-4">
-
-                        Add camera form
-                        <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-5">
-                            <h4 class="font-semibold text-gray-700 text-sm mb-3">
-                                <i class="fa-solid fa-plus text-[#940B26] mr-1"></i> Add New Camera
-                            </h4>
-                            <div class="flex flex-col gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Camera Name <span class="text-red-500">*</span></label>
-                                    <input id="new-camera-name" type="text" maxlength="100" placeholder="e.g. Main Entrance"
-                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#940B26]">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Location <span class="text-gray-400 font-normal">(optional)</span></label>
-                                    <input id="new-camera-location" type="text" maxlength="255" placeholder="e.g. Ground Floor"
-                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#940B26]">
-                                </div>
-                                <div id="add-camera-error" class="hidden text-xs text-red-600">
-                                    <i class="fa-solid fa-circle-exclamation mr-1"></i>
-                                    <span id="add-camera-error-text"></span>
-                                </div>
-                                <button id="btn-add-camera"
-                                        class="self-end flex items-center gap-2 px-4 py-2 bg-[#940B26] hover:bg-[#7a0920] text-white rounded-lg text-sm font-medium transition-colors">
-                                    <i class="fa-solid fa-plus"></i> Add Camera
-                                </button>
-                            </div>
-                        </div>
-
-                        Camera list
-                        <h4 class="font-semibold text-gray-700 text-sm mb-3">
-                            <i class="fa-solid fa-list text-gray-400 mr-1"></i> Existing Cameras
-                        </h4>
-                        <div id="camera-list">
-                            <div class="text-center py-8 text-gray-400 text-sm" id="camera-list-loading">
-                                <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i>
-                                Loading…
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <!-- MODAL: Edit Camera -->
+            <!-- MODAL: Camera Settings -->
             <div id="edit-camera-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
                 <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4">
-                        <i class="fa-solid fa-pen text-[#940B26] mr-2"></i>Edit Camera
+                        <i class="fa-solid fa-sliders text-[#940B26] mr-2"></i>Camera Settings
                     </h3>
                     <input type="hidden" id="edit-camera-id">
                     <div class="flex flex-col gap-3 mb-4">
@@ -240,6 +153,13 @@
                             <input id="edit-camera-location" type="text" maxlength="255"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#940B26]">
                         </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Stream URL</label>
+                            <input id="edit-camera-stream-url" type="text" maxlength="500"
+                                   placeholder="e.g. /stream/stream.m3u8"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#940B26]">
+                            <p class="text-xs text-gray-400 mt-1">Used for capturing snapshots from the live feed.</p>
+                        </div>
                         <div id="edit-camera-error" class="hidden text-xs text-red-600">
                             <i class="fa-solid fa-circle-exclamation mr-1"></i>
                             <span id="edit-camera-error-text"></span>
@@ -252,43 +172,98 @@
                 </div>
             </div>
 
-            <!-- MODAL: Upload Snapshot -->
+            <!-- MODAL: Update Snapshot -->
             <div id="snapshot-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
-                <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-1">
-                        <i class="fa-solid fa-image text-[#940B26] mr-2"></i>Upload Snapshot
-                    </h3>
-                    <p class="text-sm text-gray-500 mb-4">
-                        Upload a photo of the parking lot for <strong id="snapshot-camera-name">this camera</strong>.
-                        This image will be used as the background for drawing parking slots.
-                    </p>
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+
+                    <div class="mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">
+                            <i class="fa-solid fa-image text-[#940B26] mr-2"></i>Update Snapshot
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-0.5">
+                            <span id="snapshot-camera-name">—</span>
+                        </p>
+                    </div>
+
                     <input type="hidden" id="snapshot-camera-id">
+                    <input type="hidden" id="snapshot-stream-url">
 
-                    <label id="snapshot-dropzone"
-                           class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors mb-3">
-                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
-                        <span class="text-sm text-gray-500">Click to choose or drag an image here</span>
-                        <span class="text-xs text-gray-400 mt-1">JPEG, PNG or WEBP · Max 10MB</span>
-                        <input id="snapshot-file-input" type="file" accept="image/jpeg,image/png,image/webp" class="hidden">
-                    </label>
-
-                    <div id="snapshot-preview-wrapper" class="hidden mb-3">
-                        <img id="snapshot-preview" class="w-full h-40 object-cover rounded-lg border border-gray-200" alt="Preview">
-                        <p id="snapshot-file-name" class="text-xs text-gray-500 mt-1 truncate"></p>
-                    </div>
-
-                    <div id="snapshot-error" class="hidden text-xs text-red-600 mb-3">
-                        <i class="fa-solid fa-circle-exclamation mr-1"></i>
-                        <span id="snapshot-error-text"></span>
-                    </div>
-
-                    <div class="flex gap-3">
-                        <button id="btn-snapshot-upload" disabled
-                                class="flex-1 px-4 py-2.5 bg-[#940B26] hover:bg-[#7a0920] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition-colors">
-                            <i class="fa-solid fa-upload mr-1"></i> Upload
+                    <!-- Tab bar -->
+                    <div class="flex rounded-lg border border-gray-200 p-1 bg-gray-50 mb-5 gap-1">
+                        <button id="tab-upload"
+                                class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-white shadow-sm text-gray-800">
+                            <i class="fa-solid fa-upload"></i> Upload File
                         </button>
-                        <button id="btn-snapshot-cancel" class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-medium text-sm transition-colors">Cancel</button>
+                        <button id="tab-capture"
+                                class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors text-gray-500 hover:text-gray-700">
+                            <i class="fa-solid fa-video"></i> Capture from Feed
+                        </button>
                     </div>
+
+                    <!-- PANEL: Upload -->
+                    <div id="panel-upload">
+                        <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors mb-3">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
+                            <span class="text-sm text-gray-500">Click to choose or drag an image here</span>
+                            <span class="text-xs text-gray-400 mt-1">JPEG, PNG or WEBP · Max 10 MB</span>
+                            <input id="snapshot-file-input" type="file" accept="image/jpeg,image/png,image/webp" class="hidden">
+                        </label>
+
+                        <div id="snapshot-preview-wrapper" class="hidden mb-3">
+                            <img id="snapshot-preview" class="w-full h-40 object-cover rounded-lg border border-gray-200" alt="Preview">
+                            <p id="snapshot-file-name" class="text-xs text-gray-500 mt-1 truncate"></p>
+                        </div>
+
+                        <div id="snapshot-error" class="hidden text-xs text-red-600 mb-3">
+                            <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                            <span id="snapshot-error-text"></span>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button id="btn-snapshot-upload" disabled
+                                    class="flex-1 px-4 py-2.5 bg-[#940B26] hover:bg-[#7a0920] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition-colors">
+                                <i class="fa-solid fa-upload mr-1"></i> Upload
+                            </button>
+                            <button id="btn-snapshot-cancel" class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-medium text-sm transition-colors">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PANEL: Capture from live feed -->
+                    <div id="panel-capture" class="hidden">
+                        <div class="relative w-full bg-gray-900 rounded-xl overflow-hidden mb-3" style="aspect-ratio:16/9;">
+                            <div id="capture-no-stream" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 text-sm">
+                                <i class="fa-solid fa-video-slash text-3xl mb-2 opacity-40"></i>
+                                <span>No stream URL configured.</span>
+                                <span class="text-xs mt-1 text-gray-400">Set it in Camera Settings first.</span>
+                            </div>
+                            <video id="capture-stream-video"
+                                   class="hidden w-full h-full object-contain"
+                                   autoplay muted playsinline>
+                            </video>
+                            <div id="capture-overlay" class="hidden absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-400 text-4xl"></i>
+                                <span class="text-white text-sm font-medium">Frame captured</span>
+                            </div>
+                        </div>
+
+                        <div id="capture-error" class="hidden text-xs text-red-600 mb-3">
+                            <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                            <span id="capture-error-text"></span>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button id="btn-capture-snap" disabled
+                                    class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#940B26] hover:bg-[#7a0920] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition-colors">
+                                <i class="fa-solid fa-camera"></i> Capture Snapshot
+                            </button>
+                            <button id="btn-capture-cancel" class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-medium text-sm transition-colors">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -296,18 +271,13 @@
     </div>
 </section>
 
-<!-- js-config MUST be inside block content — block script is NOT returned by AJAX loadContent -->
 <div id="js-config"
      data-get-slots-url="{% url 'settings:api_get_slots' %}"
-     data-add-slot-url="{% url 'settings:api_add_slot' %}"
      data-bulk-save-url="{% url 'settings:api_bulk_save_slots' %}"
-     data-update-slot-url-template="/settings/api/slots/__ID__/update/"
-     data-delete-slot-url-template="/settings/api/slots/__ID__/delete/"
-     data-get-cameras-url="{% url 'settings:api_get_cameras' %}"
-     data-add-camera-url="{% url 'settings:api_add_camera' %}"
+     data-get-camera-url="{% url 'settings:api_get_camera' %}"
      data-edit-camera-url-template="/settings/api/cameras/__ID__/edit/"
-     data-delete-camera-url-template="/settings/api/cameras/__ID__/delete/"
      data-upload-snapshot-url-template="/settings/api/cameras/__ID__/upload-snapshot/"
+     data-capture-snapshot-url-template="/settings/api/cameras/__ID__/capture-snapshot/"
      data-csrf-token="{{ csrf_token }}"
      style="display:none;">
 </div>

@@ -1,4 +1,5 @@
 import json, os
+import urllib.request
 from django.db import transaction
 from django.shortcuts import render
 from django.conf import settings as django_settings
@@ -57,13 +58,11 @@ def vehicle_management(request, pk):
     return render(request, 'settings/vehicle-management.html', context)
 
 @group_required('Admin')
-def parking_slot_management(request, pk):
+def parking_slot_management(request):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-    cameras = Camera.objects.filter(is_active=True)
 
     context = {
-        'is_partial': is_ajax,
-        'cameras': cameras
+        'is_partial': is_ajax
     }
     return render(request, 'settings/parking-slot-management.html', context)
 
@@ -226,7 +225,6 @@ def api_get_slots(request):
         'success': True,
         'slots': [slot.to_dict() for slot in slots]
     })
-
 
 @group_required('Admin')
 @require_http_methods(['POST'])
@@ -399,38 +397,15 @@ def api_bulk_save_slots(request):
 
 @group_required('Admin')
 @require_http_methods(['GET'])
-def api_get_cameras(request):
-    cameras = Camera.objects.filter(is_active=True).order_by('name')
-
-    return JsonResponse({'success': True,   'cameras': [c.to_dict() for c in cameras]})
-
-
-@group_required('Admin')
-@require_http_methods(['POST'])
-def api_add_camera(request):
+def api_get_camera(request):
+    """Returns the single active camera record."""
     try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
-
-    name     = data.get('name', '').strip()
-    location = data.get('location', '').strip()
-
-    if not name:
-        return JsonResponse({'success': False, 'error': 'Camera name is required.'}, status=400)
-
-    if Camera.objects.filter(name=name, is_active=True).exists():
-        return JsonResponse({'success': False, 'error': f'A camera named "{name}" already exists.'}, status=400)
-
-    camera = Camera.objects.create(
-        name=name,
-        location=location,
-        stream_url='',
-        is_active=True,
-    )
-
-    return JsonResponse({'success': True, 'message': f'Camera "{name}" added successfully.', 'camera': camera.to_dict()}, status=201)
-
+        camera = Camera.objects.filter(is_active=True).first()
+        if not camera:
+            return JsonResponse({'success': False, 'error': 'No camera found. Run migrations to seed the default camera.'}, status=404)
+        return JsonResponse({'success': True, 'camera': camera.to_dict()})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @group_required('Admin')
 @require_http_methods(['POST'])
@@ -445,42 +420,26 @@ def api_edit_camera(request, pk):
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
 
-    name     = data.get('name', '').strip()
-    location = data.get('location', '').strip()
+    name       = data.get('name', '').strip()
+    location   = data.get('location', '').strip()
+    stream_url = data.get('stream_url', '').strip()   # ← NEW
 
     if not name:
         return JsonResponse({'success': False, 'error': 'Camera name is required.'}, status=400)
 
-    # Check for duplicate name — exclude current camera from the check
     if Camera.objects.filter(name=name, is_active=True).exclude(id=pk).exists():
         return JsonResponse({'success': False, 'error': f'A camera named "{name}" already exists.'}, status=400)
 
-    camera.name     = name
-    camera.location = location
+    camera.name       = name
+    camera.location   = location
+    camera.stream_url = stream_url   # ← NEW
     camera.save()
 
     return JsonResponse({
-        'success': True, 'message': f'Camera updated successfully.', 'camera': camera.to_dict()})
-
-
-@group_required('Admin')
-@require_http_methods(['POST'])
-def api_delete_camera(request, pk):
-    try:
-        camera = Camera.objects.get(id=pk, is_active=True)
-    except Camera.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
-
-    camera_name = camera.name
-
-    with transaction.atomic():
-        # Soft-delete all slots belonging to this camera first
-        ParkingSlot.objects.filter(camera=camera).update(is_active=False)
-        camera.is_active = False
-        camera.save()
-
-    return JsonResponse({'success': True, 'message': f'Camera "{camera_name}" deleted successfully.'})
-
+        'success': True,
+        'message': 'Camera updated successfully.',
+        'camera':  camera.to_dict(),
+    })
 
 @group_required('Admin')
 @require_http_methods(['POST'])
@@ -497,24 +456,107 @@ def api_upload_snapshot(request, pk):
 
     allowed_types = ['image/jpeg', 'image/png', 'image/webp']
     if snapshot_file.content_type not in allowed_types:
-        return JsonResponse({'success': False,'error': 'Invalid file type. Please upload a JPEG, PNG, or WEBP image.'}, status=400)
+        return JsonResponse(
+            {'success': False, 'error': 'Invalid file type. Please upload a JPEG, PNG, or WEBP image.'},
+            status=400,
+        )
 
     max_size = 10 * 1024 * 1024
     if snapshot_file.size > max_size:
-        return JsonResponse({'success': False, 'error': 'File too large. Maximum size is 10MB.'}, status=400)
+        return JsonResponse({'success': False, 'error': 'File too large. Maximum size is 10 MB.'}, status=400)
 
-    ext         = os.path.splitext(snapshot_file.name)[1].lower() or '.jpg'
-    filename    = f'snapshot_camera_{pk}{ext}'
-    save_dir    = os.path.join(django_settings.MEDIA_ROOT, 'snapshots')
+    ext       = os.path.splitext(snapshot_file.name)[1].lower() or '.jpg'
+    filename  = f'snapshot_camera_{pk}{ext}'
+    save_dir  = os.path.join(django_settings.MEDIA_ROOT, 'snapshots')
     os.makedirs(save_dir, exist_ok=True)
-    save_path   = os.path.join(save_dir, filename)
+    save_path = os.path.join(save_dir, filename)
 
     with open(save_path, 'wb') as f:
         for chunk in snapshot_file.chunks():
             f.write(chunk)
 
-    media_url = f'{django_settings.MEDIA_URL}snapshots/{filename}'
-    camera.stream_url = media_url
+    media_url            = f'{django_settings.MEDIA_URL}snapshots/{filename}'
+    camera.snapshot_url  = media_url          # ← store in snapshot_url, NOT stream_url
     camera.save()
 
-    return JsonResponse({'success': True,   'message': 'Snapshot uploaded successfully.', 'snapshot_url': media_url, 'camera': camera.to_dict()})
+    return JsonResponse({
+        'success':      True,
+        'message':      'Snapshot uploaded successfully.',
+        'snapshot_url': media_url,
+        'camera':       camera.to_dict(),
+    })
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_capture_snapshot(request, pk):
+    """
+    Captures a current frame from the camera's HLS stream using ffmpeg.
+    Uses -sseof -3 to seek to near the live edge before grabbing the frame,
+    ensuring we get a recent frame rather than the first (oldest) segment.
+    """
+    import subprocess, time
+
+    try:
+        camera = Camera.objects.get(id=pk, is_active=True)
+    except Camera.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
+
+    stream_url = camera.stream_url
+    if not stream_url:
+        return JsonResponse(
+            {'success': False, 'error': 'No stream URL configured for this camera.'},
+            status=400,
+        )
+
+    filename  = f'snapshot_camera_{pk}.jpg'
+    save_dir  = os.path.join(django_settings.MEDIA_ROOT, 'snapshots')
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, filename)
+
+    # Make relative URLs absolute so ffmpeg can reach them over HTTP
+    if stream_url.startswith('/'):
+        host       = request.build_absolute_uri('/').rstrip('/')
+        stream_url = host + stream_url
+
+    try:
+        result = subprocess.run(
+            [
+                'ffmpeg',
+                '-y',                   # overwrite output file
+                '-sseof', '-3',         # seek to 3 seconds before end → live edge
+                '-i', stream_url,       # HLS playlist URL
+                '-frames:v', '1',       # grab exactly one video frame
+                '-q:v', '2',            # JPEG quality (2 = high)
+                '-vf', 'scale=iw:ih',   # no rescaling, keep original resolution
+                save_path,
+            ],
+            timeout=30,
+            capture_output=True,
+        )
+        if result.returncode != 0:
+            error_msg = result.stderr.decode('utf-8', errors='replace')[-500:]
+            return JsonResponse(
+                {'success': False, 'error': f'ffmpeg failed: {error_msg}'},
+                status=502,
+            )
+    except FileNotFoundError:
+        return JsonResponse(
+            {'success': False, 'error': 'ffmpeg is not installed. Run: sudo apt install ffmpeg'},
+            status=500,
+        )
+    except subprocess.TimeoutExpired:
+        return JsonResponse(
+            {'success': False, 'error': 'Timed out waiting for a frame from the stream. Is the Pi streaming?'},
+            status=502,
+        )
+
+    media_url           = f'{django_settings.MEDIA_URL}snapshots/{filename}?v={int(time.time())}'
+    camera.snapshot_url = media_url
+    camera.save()
+
+    return JsonResponse({
+        'success':      True,
+        'message':      'Snapshot captured successfully.',
+        'snapshot_url': media_url,
+        'camera':       camera.to_dict(),
+    })

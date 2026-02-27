@@ -1,16 +1,16 @@
-import cv2
-import config
 import json
 import logging
-import numpy as np
 import os
 import signal
 import subprocess
 import sys
 import tempfile
 import time
+import cv2
+import numpy as np
 from shapely.geometry import Point
 from ultralytics import YOLO
+import config
 from slot_fetcher import SlotFetcher
 
 # Logging
@@ -21,49 +21,55 @@ logging.basicConfig(
 )
 logger = logging.getLogger("main")
 
-#  Ensure output directories exist 
 config.VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 config.SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
-def open_video_source():
-    """
-    Return an OpenCV VideoCapture for either the Pi camera or a test file.
+def open_video_source():    
+    # Return an OpenCV VideoCapture from one of three sources:
+    # USE_USB_CAMERA = True   → USB webcam via /dev/video<USB_CAMERA_INDEX>
+    # USE_PI_CAMERA  = True   → Pi Camera Module via GStreamer/libcamera
+    # Both False              → test video file at VIDEO_FILE (loops)  
 
-    When USE_PI_CAMERA = True:
-        Uses picamera2 via the OpenCV GStreamer backend.
-        Install with: pip install picamera2
-    When USE_PI_CAMERA = False:
-        Opens the file at config.VIDEO_FILE and loops it to simulate a
-        continuous live feed.
-    """
-    if config.USE_PI_CAMERA:
-        # GStreamer pipeline for Pi Camera Module 3 (adjust sensor-id for
-        # your specific camera module if needed).
+    if config.USE_USB_CAMERA:
+        # USB camera — works out of the box on Linux, no extra drivers needed.
+        # Set USB_CAMERA_INDEX = 0 for the first USB camera (default),
+        # 1 for the second, etc. Run `ls /dev/video*` to check.
+        cap = cv2.VideoCapture(config.USB_CAMERA_INDEX)
+        source = f"USB camera (index {config.USB_CAMERA_INDEX})"
+
+    elif config.USE_PI_CAMERA:
+        # Pi Camera Module via GStreamer + libcamera (Pi OS Bullseye and later)
         gst_pipeline = (
             "libcamerasrc ! "
             "video/x-raw,width={w},height={h},framerate={fps}/1 ! "
             "videoconvert ! appsink"
         ).format(w=config.OUTPUT_WIDTH, h=config.OUTPUT_HEIGHT, fps=config.OUTPUT_FPS)
         cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
+        source = "Pi Camera Module (libcamera)"
+
     else:
+        # Test video file — loops indefinitely to simulate a live feed
         cap = cv2.VideoCapture(str(config.VIDEO_FILE))
+        source = str(config.VIDEO_FILE)
 
     if not cap.isOpened():
-        source = "Pi camera" if config.USE_PI_CAMERA else str(config.VIDEO_FILE)
         logger.error("Cannot open video source: %s", source)
         sys.exit(1)
 
+    logger.info("Video source opened: %s", source)
     return cap
 
 def start_ffmpeg():
-    """Start the FFmpeg HLS streaming subprocess and return the Popen handle."""
+    # Start the FFmpeg HLS streaming subprocess and return the Popen handle.
     logger.info("Starting FFmpeg …")
     proc = subprocess.Popen(config.FFMPEG_CMD, stdin=subprocess.PIPE)
     logger.info("FFmpeg started (PID %d)", proc.pid)
     return proc
 
-# Detection helpers
-def get_centroids(yolo_results) -> list:
+def get_centroids(yolo_results) -> list:  
+    # Extract (cx, cy) centroids from YOLO detection boxes.
+    # Filters out boxes smaller than MIN_BOX_PIXELS to ignore noise.
+    
     centroids = []
 
     if not (hasattr(yolo_results, "boxes") and len(yolo_results.boxes) > 0):
@@ -83,8 +89,10 @@ def get_centroids(yolo_results) -> list:
 
     return centroids
 
-
-def update_occupancy(slots: list, centroids: list):
+def update_occupancy(slots: list, centroids: list):    
+    # For each slot, check whether any centroid falls inside its polygon,
+    # append the result to its rolling history, and update is_occupied.
+    
     for slot in slots:
         present = any(slot["poly"].contains(Point(cx, cy)) for cx, cy in centroids)
         slot["history"].append(1 if present else 0)
@@ -105,8 +113,11 @@ def draw_overlays(frame: np.ndarray, slots: list) -> np.ndarray:
 
     return frame
 
-
 def write_status_json(slots: list):
+    # Atomically write status.json to VIDEO_DIR.
+    # Uses a temp file + os.replace so the Django poller never reads a
+    # half-written file.    
+
     status = {
         "timestamp": int(time.time()),
         "occupied":  sum(1 for s in slots if s["is_occupied"]),
@@ -152,7 +163,6 @@ def save_snapshot(frame: np.ndarray, slots: list, now: float):
         old.unlink(missing_ok=True)
         old.with_suffix(".json").unlink(missing_ok=True)
 
-
 def main():
     fetcher = SlotFetcher()
     fetcher.start()
@@ -163,6 +173,7 @@ def main():
     cap     = open_video_source()
     ffmpeg  = start_ffmpeg()
 
+    # Graceful shutdown 
     def shutdown(sig=None, frame=None):
         logger.info("Shutting down …")
         fetcher.stop()
@@ -180,7 +191,7 @@ def main():
     signal.signal(signal.SIGINT,  shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    #  Loop state 
+    # Loop state
     frame_interval    = 1.0 / config.OUTPUT_FPS
     last_frame_time   = 0.0
     last_snapshot_time = 0.0
@@ -200,12 +211,13 @@ def main():
             # Read frame 
             ret, frame = cap.read()
             if not ret:
-                if config.USE_PI_CAMERA:
+                if config.USE_USB_CAMERA or config.USE_PI_CAMERA:
+                    # Camera read failed — could be a momentary glitch, retry
                     logger.warning("Camera read failed — retrying …")
                     time.sleep(0.1)
                     continue
                 else:
-                    # Loop test video
+                    # End of test video file — loop back to the beginning
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     continue
 
@@ -223,17 +235,14 @@ def main():
 
             frame = draw_overlays(frame, slots)
 
-            #  Periodic status.json write 
             frame_count += 1
             if frame_count % config.WRITE_STATUS_EVERY == 0:
                 write_status_json(slots)
 
-            #  Periodic snapshot ─
             if now - last_snapshot_time >= config.SNAPSHOT_INTERVAL:
                 save_snapshot(frame, slots, now)
                 last_snapshot_time = now
 
-            #  Pipe frame to FFmpeg 
             try:
                 ffmpeg.stdin.write(frame.tobytes())
             except BrokenPipeError:

@@ -2,7 +2,7 @@ from pathlib import Path
 
 # Base URL of your Django server, reachable from the Pi's network.
 # Development (same machine):  "http://localhost:8000"
-DJANGO_BASE_URL = "http://localhost:8000"
+DJANGO_BASE_URL = "http://192.168.0.227:8000"
 
 # The camera ID assigned to this Pi in the ParkTrack admin.
 # Find it in Settings → Parking Slot Management → Manage Cameras.
@@ -16,17 +16,22 @@ REQUEST_TIMEOUT = 5
 
 # Set to True when the physical Pi camera (picamera2) is connected.
 # Set to False to use a local test video file instead.
-USE_PI_CAMERA = False
+# USE_PI_CAMERA = True   → Pi Camera Module (CSI ribbon cable)
+# USE_PI_CAMERA = False  → test video file (VIDEO_FILE below)
+# USE_USB_CAMERA = True  → USB webcam plugged into the Pi
+USE_PI_CAMERA  = False
+USE_USB_CAMERA = False
 
-# Path to the test video file. Only used when USE_PI_CAMERA = False.
+USB_CAMERA_INDEX = 0
+
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-VIDEO_FILE   = PROJECT_DIR / "media" / "video_stream" / "input.mp4"
+VIDEO_FILE   = PROJECT_DIR / "parktrack" / "media" / "video_stream" / "input.mp4"
 
 OUTPUT_WIDTH  = 1280
 OUTPUT_HEIGHT = 720
 OUTPUT_FPS    = 5
 
-MEDIA_ROOT      = PROJECT_DIR / "media"
+MEDIA_ROOT      = PROJECT_DIR / "parktrack" / "media"
 VIDEO_DIR       = MEDIA_ROOT / "video_stream"
 SNAPSHOT_DIR    = VIDEO_DIR / "snapshots"
 
@@ -40,20 +45,13 @@ YOLO_MODEL_PATH = PROJECT_DIR / "weights" / "best.pt"
 YOLO_CONFIDENCE = 0.35
 MIN_BOX_PIXELS  = 10     # ignore detections smaller than this in px
 
-# Occupancy smoothing 
-# Decisions are smoothed over a rolling window to avoid single-frame flicker.
-# A slot is marked occupied only when the majority of recent frames agree.
-
 HISTORY_LEN      = max(3, OUTPUT_FPS)
 SMOOTH_THRESHOLD = max(1, HISTORY_LEN // 2 + 1)
-
-# Misc 
 
 WRITE_STATUS_EVERY = 3
 
 FFMPEG_CMD = [
     "ffmpeg",
-    "-re",
     "-f",        "rawvideo",
     "-pix_fmt",  "bgr24",
     "-s",        f"{OUTPUT_WIDTH}x{OUTPUT_HEIGHT}",
@@ -63,10 +61,11 @@ FFMPEG_CMD = [
     "-preset",   "veryfast",
     "-tune",     "zerolatency",
     "-pix_fmt",  "yuv420p",
-    "-g",        str(OUTPUT_FPS * 2),
-    "-hls_time",              "2",
-    "-hls_list_size",         "6",
-    "-hls_flags",             "delete_segments+append_list",
+    "-g",        str(OUTPUT_FPS),        # 1 keyframe per second
+    "-sc_threshold", "0",               # disable scene-cut keyframes for stable segments
+    "-hls_time",          "1",          # 1-second segments = faster start
+    "-hls_list_size",     "10",         # keep 10 segments in playlist
+    "-hls_flags",         "append_list",
     "-hls_segment_filename",  SEGMENT_PATTERN,
     OUTPUT_PLAYLIST,
 ]

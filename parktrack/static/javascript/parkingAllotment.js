@@ -41,7 +41,7 @@ export function initializeParkingAllotment() {
 
     showSection('car');
 
-    const VIDEO_SRC = '/media/video_stream/stream.m3u8';
+    const VIDEO_SRC = '/stream/stream.m3u8';
 
     function startStream() {
         const video = document.getElementById('video');
