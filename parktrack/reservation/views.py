@@ -1,3 +1,4 @@
+from users.models import Vehicle
 import json
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
@@ -19,8 +20,11 @@ def reservation(request):
     """
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
+    user_vehicles = Vehicle.objects.filter(owner__user=request.user).values_list('plate_number', flat=True)
+
     context = {
         'is_partial': is_ajax,
+        'user_vehicles': user_vehicles,
     }
 
     return render(request, 'reservation/index.html', context)
