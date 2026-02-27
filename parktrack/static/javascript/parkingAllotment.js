@@ -1,102 +1,156 @@
-let hls;
+let hls = null;
 
 export function initializeParkingAllotment() {
-    const carToggle = document.getElementById('car-toggle');
-    const liveToggle = document.getElementById('live-toggle');
-    
-    const carSection = document.getElementById('car-section');
-    const liveSection = document.getElementById('live-section');
-    
-    const carStatus = document.getElementById('car-status');
-    const statusContainer = document.getElementById('status-container');
-    const toggleContainer = document.getElementById('toggle-container');
-    
+    const carToggle      = document.getElementById('car-toggle');
+    const liveToggle     = document.getElementById('live-toggle');
+    const carSection     = document.getElementById('car-section');
+    const liveSection    = document.getElementById('live-section');
+    const carStatus      = document.getElementById('car-status');
+    const statusContainer  = document.getElementById('status-container');
+    const toggleContainer  = document.getElementById('toggle-container');
+
+    let currentSection = null;
+
     function showSection(section) {
-        document.querySelectorAll('.section-content').forEach(sec => {
-            sec.classList.add('hidden');
-        });
-    
-        
+        document.querySelectorAll('.section-content').forEach(sec => sec.classList.add('hidden'));
+
         if (section === 'car') {
             carSection.classList.remove('hidden');
             statusContainer.classList.remove('hidden');
             toggleContainer.classList.remove('hidden');
             carStatus.classList.remove('hidden');
+            
+            if (currentSection === 'live') stopStream();
+
         } else if (section === 'live') {
             liveSection.classList.remove('hidden');
             statusContainer.classList.add('hidden');
             toggleContainer.classList.add('hidden');
+            
+            if (currentSection !== 'live') startStream();
         }
+
+        currentSection = section;
     }
 
     document.getElementById('content').addEventListener('click', (event) => {
-        if (event.target.closest('#car-toggle')) {
-            showSection('car');
-        } 
-        if (event.target.closest('#live-toggle')) {
-            showSection('live');
-        } 
-        if (event.target.closest('#back-to-car')) {
-            showSection('car');
-        }
+        if (event.target.closest('#car-toggle'))   showSection('car');
+        if (event.target.closest('#live-toggle'))  showSection('live');
+        if (event.target.closest('#back-to-car'))  showSection('car');
     });
 
     showSection('car');
 
-    /* ================= RESERVATION MODAL LOGIC (NEW FEATURE) ================= */
+    const VIDEO_SRC = '/media/video_stream/stream.m3u8';
 
-    const reserveBtn = document.getElementById("reserve-toggle");
-    const modal = document.getElementById("reservation-modal");
-    const closeModal = document.getElementById("close-reservation");
-    const confirmReservation = document.getElementById("confirm-reservation");
+    function startStream() {
+        const video = document.getElementById('video');
+        if (!video) return;
+
+        // Destroy any existing instance cleanly first
+        if (hls) {
+            hls.destroy();
+            hls = null;
+        }
+
+        if (typeof Hls === 'undefined') {
+            console.error('hls.js not loaded — check your base template includes the hls.js script tag');
+            return;
+        }
+
+        if (Hls.isSupported()) {
+            hls = new Hls({
+                liveSyncDurationCount:       3,
+                liveMaxLatencyDurationCount: 6,
+                maxBufferLength:             10,
+                maxMaxBufferLength:          10,
+                lowLatencyMode:              false,
+                startFragPrefetch:           true,
+            });
+
+            hls.loadSource(VIDEO_SRC);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                video.play().catch(() => {});
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (!data.fatal) return;
+                if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                    setTimeout(() => hls && hls.startLoad(), 3000);
+                } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                    hls.recoverMediaError();
+                } else {
+                    setTimeout(startStream, 5000);
+                }
+            });
+
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Native HLS — Safari / iOS
+            video.src = VIDEO_SRC;
+            video.play().catch(() => {});
+        }
+    }
+
+    function stopStream() {
+        if (hls) {
+            hls.destroy();
+            hls = null;
+        }
+        const video = document.getElementById('video');
+        if (video) {
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        }
+    }
+
+    // ── Reservation modal ─────────────────────────────────────────────────────
+
+    const reserveBtn          = document.getElementById('reserve-toggle');
+    const modal               = document.getElementById('reservation-modal');
+    const closeModal          = document.getElementById('close-reservation');
+    const confirmReservation  = document.getElementById('confirm-reservation');
 
     if (reserveBtn && modal) {
-
-        reserveBtn.addEventListener("click", () => {
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
+        reserveBtn.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         });
 
-        closeModal.addEventListener("click", () => {
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
+        closeModal.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         });
 
-        confirmReservation.addEventListener("click", async () => {
-
-            const plate = document.getElementById("plate-number").value.trim();
-            const arrival = document.getElementById("arrival-time").value;
-            const duration = document.getElementById("duration").value;
+        confirmReservation.addEventListener('click', async () => {
+            const plate    = document.getElementById('plate-number').value.trim();
+            const arrival  = document.getElementById('arrival-time').value;
+            const duration = document.getElementById('duration').value;
 
             if (!plate || !arrival || !duration) {
-                alert("Please complete all fields.");
+                alert('Please complete all fields.');
                 return;
             }
 
             try {
-                // 🔴 This will connect to Django later
                 await fetch('/parking-allotment/api/reserve-slot/', {
-                    method: 'POST',
+                    method:  'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': getCSRFToken()
+                        'X-CSRFToken':  getCSRFToken(),
                     },
-                    body: JSON.stringify({
-                        plate_number: plate,
-                        arrival_time: arrival,
-                        duration: duration
-                    })
+                    body: JSON.stringify({ plate_number: plate, arrival_time: arrival, duration }),
                 });
-
-                alert("Reservation Successful!");
-
+                alert('Reservation Successful!');
             } catch (error) {
-                console.error("Reservation failed:", error);
-                alert("Reservation failed. Try again.");
+                console.error('Reservation failed:', error);
+                alert('Reservation failed. Try again.');
             }
 
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         });
     }
 
@@ -104,189 +158,89 @@ export function initializeParkingAllotment() {
         return document.querySelector('[name=csrfmiddlewaretoken]')?.value;
     }
 
-    const video = document.getElementById('video');
-    const videoSrc = '/media/video_stream/stream.m3u8';
+    // ── Mobile parking map (pan + zoom) ───────────────────────────────────────
 
-    if (!video) return;
-
-    if (Hls.isSupported()) {
-
-        if(!hls) {
-            hls = new Hls({
-                liveSyncDuration: 2,
-                liveMaxLatencyDuration: 8, // buffer
-            });
-    
-            hls.loadSource(videoSrc);
-        }
-        
-        hls.attachMedia(video);
-
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.muted = true;
-            video.play();
-        });
-
-        hls.on(Hls.Events.FRAG_LOADED, () => {
-            if (video.paused) {
-                video.play();
-            }
-        });
-
-        hls.on(Hls.Events.ERROR, (event, data) => {
-            if (data.fatal) {
-                switch (data.type) {
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                        hls.startLoad();
-                        break;
-
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                        hls.recoverMediaError();
-                        break;
-
-                    default:
-                        hls.destroy();
-                        break;
-                }
-            }
-        });
-        
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = videoSrc;
-        video.muted = true,
-        video.play();
-    }
-
-    // Mobile interactive parking map functionality
     const parkingContainer = document.getElementById('parking-container');
-    const parkingImage = document.getElementById('parking-image');
-    const zoomInBtn = document.getElementById('zoom-in');
-    const zoomOutBtn = document.getElementById('zoom-out');
-    const resetViewBtn = document.getElementById('reset-view');
-    
+    const parkingImage     = document.getElementById('parking-image');
+    const zoomInBtn        = document.getElementById('zoom-in');
+    const zoomOutBtn       = document.getElementById('zoom-out');
+    const resetViewBtn     = document.getElementById('reset-view');
+
     if (parkingContainer && parkingImage) {
-        let scale = 1;
-        let posX = 0;
-        let posY = 0;
-        let isDragging = false;
-        let startX, startY;
-        
-        
+        let scale = 1, posX = 0, posY = 0;
+        let isDragging = false, startX, startY;
         const isMobile = window.innerWidth < 768;
-        
-        // mobile interactive features
+
+        function updateTransform() {
+            parkingImage.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
+
+        function getDistance(t1, t2) {
+            return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        }
+
         if (isMobile) {
-            
+            let initialDistance = 0;
+
             parkingContainer.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) {
                     isDragging = true;
                     startX = e.touches[0].clientX - posX;
                     startY = e.touches[0].clientY - posY;
-                    parkingContainer.style.cursor = 'grabbing';
+                } else if (e.touches.length === 2) {
+                    initialDistance = getDistance(e.touches[0], e.touches[1]);
                 }
             });
-            
+
             parkingContainer.addEventListener('touchmove', (e) => {
-                if (!isDragging) return;
-                if (e.touches.length === 1) {
-                    e.preventDefault();
+                e.preventDefault();
+                if (e.touches.length === 1 && isDragging) {
                     posX = e.touches[0].clientX - startX;
                     posY = e.touches[0].clientY - startY;
-                    updateTransform();
+                } else if (e.touches.length === 2) {
+                    const dist   = getDistance(e.touches[0], e.touches[1]);
+                    const factor = dist / initialDistance;
+                    if (Math.abs(factor - 1) > 0.1) {
+                        scale = Math.min(3, Math.max(1, scale * factor));
+                        initialDistance = dist;
+                    }
                 }
-            });
-            
-            parkingContainer.addEventListener('touchend', () => {
-                isDragging = false;
-                parkingContainer.style.cursor = 'grab';
-            });
-            
-           
+                updateTransform();
+            }, { passive: false });
+
+            parkingContainer.addEventListener('touchend', () => { isDragging = false; });
+
             parkingContainer.addEventListener('mousedown', (e) => {
-                if (e.button === 0) { 
-                    isDragging = true;
-                    startX = e.clientX - posX;
-                    startY = e.clientY - posY;
-                    parkingContainer.style.cursor = 'grabbing';
-                }
+                if (e.button !== 0) return;
+                isDragging = true;
+                startX = e.clientX - posX;
+                startY = e.clientY - posY;
+                parkingContainer.style.cursor = 'grabbing';
             });
-            
             document.addEventListener('mousemove', (e) => {
                 if (!isDragging) return;
                 posX = e.clientX - startX;
                 posY = e.clientY - startY;
                 updateTransform();
             });
-            
             document.addEventListener('mouseup', () => {
                 isDragging = false;
                 parkingContainer.style.cursor = 'grab';
             });
-            
-            // zoom
-            zoomInBtn.addEventListener('click', () => {
-                scale = Math.min(scale + 0.2, 3); // Max
-                updateTransform();
-            });
-            
-            zoomOutBtn.addEventListener('click', () => {
-                scale = Math.max(scale - 0.2, 1); // Min 
-                updateTransform();
-            });
-            
-            resetViewBtn.addEventListener('click', () => {
-                scale = 1;
-                posX = 0;
-                posY = 0;
-                updateTransform();
-            });
-            
-            // Pinch to zoom 
-            let initialDistance = 0;
-            
-            parkingContainer.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    initialDistance = getDistance(e.touches[0], e.touches[1]);
-                }
-            });
-            
-            parkingContainer.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2) {
-                    e.preventDefault();
-                    const currentDistance = getDistance(e.touches[0], e.touches[1]);
-                    const zoomFactor = currentDistance / initialDistance;
-                    
-                    if (zoomFactor > 1.1 || zoomFactor < 0.9) {
-                        scale *= zoomFactor;
-                        scale = Math.max(1, Math.min(scale, 3)); 
-                        initialDistance = currentDistance;
-                        updateTransform();
-                    }
-                }
-            });
-            
-            function getDistance(touch1, touch2) {
-                const dx = touch1.clientX - touch2.clientX;
-                const dy = touch1.clientY - touch2.clientY;
-                return Math.sqrt(dx * dx + dy * dy);
-            }
-            
-            function updateTransform() {
-                parkingImage.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-            }
+
+            zoomInBtn?.addEventListener('click',    () => { scale = Math.min(scale + 0.2, 3); updateTransform(); });
+            zoomOutBtn?.addEventListener('click',   () => { scale = Math.max(scale - 0.2, 1); updateTransform(); });
+            resetViewBtn?.addEventListener('click', () => { scale = 1; posX = 0; posY = 0; updateTransform(); });
         }
     }
-    
-    // Live video counter
-    const statusUrl = '/parking-allotment/api/parking-status/';
 
     async function fetchStatus() {
         try {
-            const response = await fetch(statusUrl, { cache: 'no-store' });
+            const response = await fetch('/parking-allotment/api/parking-status/', { cache: 'no-store' });
             if (!response.ok) throw new Error('HTTP ' + response.status);
             const data = await response.json();
             document.getElementById('occupied-count').innerText = data.occupied;
-            document.getElementById('vacant-count').innerText = data.vacant;
+            document.getElementById('vacant-count').innerText   = data.vacant;
         } catch (error) {
             console.error('Failed to fetch parking status', error);
         }
@@ -294,11 +248,10 @@ export function initializeParkingAllotment() {
     fetchStatus();
     setInterval(fetchStatus, 2000);
 
-    // Snapshot and counter
-    const snapshotImage = document.getElementById('parking-snapshot');
-    const dashboardTimer = document.getElementById('dashboard-snapshot-timer');
-    const SNAPSHOT_INTERVAL_MS = 60 * 1000;
-    let dashNextUpdateAt = null;
+    const snapshotImage   = document.getElementById('parking-snapshot');
+    const dashboardTimer  = document.getElementById('dashboard-snapshot-timer');
+    const SNAPSHOT_MS     = 60 * 1000;
+    let dashNextUpdateAt  = null;
 
     function updateDashTimerDisplay() {
         if (!dashNextUpdateAt) return;
@@ -313,20 +266,15 @@ export function initializeParkingAllotment() {
             const response = await fetch('/parking-allotment/api/latest-snapshot/', { cache: 'no-store' });
             if (!response.ok) throw new Error(response.status);
             const data = await response.json();
-            if (data.url) {
-                snapshotImage.src = data.url + '?t=' + new Date().getTime();
-            }
-            // Snapshot counter updates ONLY here, in sync with the image
+            if (data.url) snapshotImage.src = data.url + '?t=' + Date.now();
             const availableEl = document.getElementById('available-parking');
             if (availableEl) availableEl.innerText = data.vacant ?? '--';
-            // Sync timer to actual file write time
-            if (data.last_modified) {
-                dashNextUpdateAt = data.last_modified + SNAPSHOT_INTERVAL_MS;
-            }
+            if (data.last_modified) dashNextUpdateAt = data.last_modified + SNAPSHOT_MS;
         } catch (error) {
             console.error('Failed to fetch snapshot.', error);
         }
     }
+
     fetchSnapshot();
     setInterval(fetchSnapshot, 15 * 1000);
     setInterval(updateDashTimerDisplay, 1000);
