@@ -8,5 +8,7 @@ urlpatterns = [
     path('upload-video/', views.upload_video, name='upload-video'),
     path('api/parking-status/', views.parking_status, name='api-parking-status'),
     path('api/latest-snapshot/', views.latest_snapshot, name='api-latest-snapshot'),
-    path('api/vacant-slots/', views.vacant_slots_status, name='api-vacant-slots')
+    path('api/vacant-slots/', views.vacant_slots_status, name='api-vacant-slots'),
+    path('api/upload-snapshot/', views.upload_snapshot, name='upload_snapshot'),
+    path('api/upload-status/',   views.upload_status,   name='upload_status'),
 ]
