@@ -285,7 +285,6 @@ def admin_get_all_reservations(request):
         qs = qs.filter(
             Q(plate_number__icontains=search)
             | Q(slot__slot_label__icontains=search)
-            | Q(user__username__icontains=search)
             | Q(user__first_name__icontains=search)
             | Q(user__last_name__icontains=search)
         )
