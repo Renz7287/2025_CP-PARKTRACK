@@ -4,6 +4,7 @@ import { initializeParkingUsage } from "./parkingUsage.js";
 import { initializePersonalInformation } from "./settings/personalInformation.js";
 import { initializeVehicleManagement } from "./settings/vehicleManagement.js";
 import { initializeReservation } from "./reservation.js";
+import { initializeParkingSlotManagement } from "./settings/parkingSlotManagement.js";
 
 openSubmenu();
 
@@ -12,7 +13,8 @@ function initializePageScripts() {
     if (document.querySelector('.parking-usage'))        initializeParkingUsage();
     if (document.querySelector('.profile-information'))  initializePersonalInformation();
     if (document.querySelector('.vehicle-management'))   initializeVehicleManagement();
-    if (document.querySelector('.reservations-section')) initializeReservation();
+    if (document.querySelector('.reservations-section')) initializeReservation(); 
+    if (document.querySelector('.parking-slot-management')) initializeParkingSlotManagement();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
