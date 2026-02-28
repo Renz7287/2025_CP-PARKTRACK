@@ -22,24 +22,42 @@ const contentArea = document.getElementById('content');
 export async function loadContent(url, addToHistory = true) {
     try {
         const response = await fetch(url, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
         if (!response.ok) throw new Error(`Error loading ${url}`);
-
         const data = await response.text();
         contentArea.innerHTML = data;
 
-        if (addToHistory) {
-            history.pushState(null, '', url);
+        // forEach is not async — use for...of so we await each script execution
+        const scripts = Array.from(contentArea.querySelectorAll('script'));
+        for (const oldScript of scripts) {
+            await new Promise(resolve => {
+                const newScript = document.createElement('script');
+                Array.from(oldScript.attributes).forEach(attr =>
+                    newScript.setAttribute(attr.name, attr.value)
+                );
+                newScript.textContent = oldScript.textContent;
+                // Inline scripts (no src) execute synchronously on append,
+                // so resolve immediately after replacing
+                if (!newScript.src) {
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                    resolve();
+                } else {
+                    newScript.onload  = resolve;
+                    newScript.onerror = resolve;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                }
+            });
         }
 
+        // After the for...of loop, before the history.pushState
+        console.log('Scripts executed. PARK_TRACK:', window.PARK_TRACK);
+        console.log('Found scripts:', scripts.length, scripts.map(s => s.textContent.substring(0, 50)));
+
+        if (addToHistory) history.pushState(null, '', url);
         return true;
     } catch (error) {
-        contentArea.innerHTML = '<p class="text-center text-red-500">Error loading page.</p>'
-
+        contentArea.innerHTML = '<p class="text-center text-red-500">Error loading page.</p>';
         return false;
     }
 }

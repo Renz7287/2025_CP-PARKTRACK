@@ -5,45 +5,71 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-
-from settings.models import ParkingSlot       # ← single source of truth
+from settings.models import ParkingSlot, Camera
 from .models import Reservation
+
 
 @login_required
 def reservation(request):
     """
     Renders the Reservations tab.
-    Handles both full-page loads and AJAX partial loads
-    (same pattern used across the rest of the project).
+
+    KEY DESIGN DECISION: All API URLs are resolved in Python here and passed
+    as context strings. This means any bad URL name causes an obvious 500 error
+    at page load rather than silently crashing the <script> block and leaving
+    window.PARK_TRACK = undefined (which produced the /undefined 404s).
     """
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
-    user_vehicles = Vehicle.objects.filter(owner__user=request.user).values_list('plate_number', flat=True)
+    user_vehicles = Vehicle.objects.filter(
+        owner__user=request.user
+    ).values_list('plate_number', flat=True)
+
+    camera = Camera.objects.filter(is_active=True).first()
+
+    # Snapshot URL: try reservation-local proxy first, fall back to parkingAllotment.
+    try:
+        snapshot_url = reverse('parking_allotment:api-latest-snapshot')
+    except Exception:
+        snapshot_url = ''
+
+    # cancelBase + id + cancelSuffix is assembled in JS.
+    # We derive the base from the cancel URL pattern itself so it stays in sync.
+    cancel_base = '/reservation/'
+    cancel_suffix = '/cancel/'
+
+    js_config = {
+        'isAdmin':   'true' if getattr(request.user, 'is_admin', False) else 'false',
+        'cameraId':  camera.id if camera else None,
+        'urls': {
+            'snapshot':       snapshot_url,
+            'slots':          reverse('reservation:reservation_slots'),
+            'myReservations': reverse('reservation:my_reservations'),
+            'create':         reverse('reservation:create_reservation'),
+            'adminAll':       reverse('reservation:admin_all_reservations'),
+            'cancelBase':     cancel_base,
+            'cancelSuffix':   cancel_suffix,
+        }
+    }
 
     context = {
-        'is_partial': is_ajax,
+        'is_partial':    is_ajax,
         'user_vehicles': user_vehicles,
+        'camera':        camera,
+        'js_config':     js_config,
     }
 
     return render(request, 'reservation/index.html', context)
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
 
 def _expire_stale_reservations():
-    """
-    Expire all active reservations whose expiry_time has passed and free their slots.
-
-    In production replace this with a Celery periodic task running every minute:
-
-        @shared_task
-        def expire_reservations():
-            from reservations.views import _expire_stale_reservations
-            _expire_stale_reservations()
-    """
     stale = Reservation.objects.filter(
         status='active',
         expiry_time__lt=timezone.now(),
@@ -58,43 +84,40 @@ def _expire_stale_reservations():
 
 
 def _parse_arrival_time(arrival_time_str):
-    """
-    Parse arrival_time from the request body.
-    Accepts "HH:MM" (assumed today) or any ISO datetime string.
-    Returns a timezone-aware datetime, or raises ValueError.
-    """
     from django.utils.dateparse import parse_datetime, parse_time
 
     arrival_time_str = arrival_time_str.strip()
 
-    if len(arrival_time_str) <= 5:          # "HH:MM" shorthand
+    if len(arrival_time_str) <= 5:
         t = parse_time(arrival_time_str)
         if not t:
             raise ValueError(f"Cannot parse time: {arrival_time_str!r}")
-        now = timezone.localtime(timezone.now())
-        naive_dt = timezone.datetime(now.year, now.month, now.day, t.hour, t.minute)
-        return timezone.make_aware(naive_dt)
+        # Use localtime so the comparison against timezone.now() is correct
+        now_local = timezone.localtime(timezone.now())
+        naive_dt  = timezone.datetime(
+            now_local.year, now_local.month, now_local.day,
+            t.hour, t.minute
+        )
+        aware_dt = timezone.make_aware(naive_dt, timezone.get_current_timezone())
+
+        # If the time has already passed today, assume they mean tomorrow
+        if aware_dt <= timezone.now():
+            aware_dt += timezone.timedelta(days=1)
+
+        return aware_dt
 
     dt = parse_datetime(arrival_time_str)
     if dt is None:
         raise ValueError(f"Cannot parse datetime: {arrival_time_str!r}")
     return dt if not timezone.is_naive(dt) else timezone.make_aware(dt)
 
-
 # ---------------------------------------------------------------------------
-# Slot availability  (used by the visual slot picker)
+# Slot availability
 # ---------------------------------------------------------------------------
 
 @login_required
 @require_http_methods(["GET"])
 def get_available_slots(request):
-    """
-    GET /reservations/slots/?camera_id=<id>
-
-    Returns all active ParkingSlots for a camera, including polygon_points
-    so the frontend can draw clickable overlays on the parking snapshot.
-    Expires stale reservations first so statuses are accurate.
-    """
     _expire_stale_reservations()
 
     qs = ParkingSlot.objects.filter(is_active=True).select_related('camera')
@@ -103,7 +126,6 @@ def get_available_slots(request):
     if camera_id:
         qs = qs.filter(camera_id=camera_id)
 
-    # Collect slot ids that have an active reservation so we can surface that
     reserved_slot_ids = set(
         Reservation.objects.filter(status='active').values_list('slot_id', flat=True)
     )
@@ -111,7 +133,6 @@ def get_available_slots(request):
     slots = []
     for slot in qs:
         d = slot.to_dict()
-        # Add a convenience flag for the frontend
         d['is_reservable'] = (
             slot.is_active
             and slot.status == 'available'
@@ -129,10 +150,6 @@ def get_available_slots(request):
 @login_required
 @require_http_methods(["GET"])
 def get_my_reservations(request):
-    """
-    GET /reservations/my/
-    Returns the logged-in user's active reservations.
-    """
     _expire_stale_reservations()
 
     reservations = (
@@ -148,16 +165,6 @@ def get_my_reservations(request):
 @login_required
 @require_http_methods(["POST"])
 def create_reservation(request):
-    """
-    POST /reservations/create/
-    Body JSON:
-        { "slot_id": <int>, "plate_number": "ABC-123", "arrival_time": "HH:MM" }
-
-    Rules:
-    - Slot must be active and currently 'available'
-    - Arrival time must be in the future and within 24 hours
-    - User can only have 1 active reservation at a time
-    """
     try:
         body = json.loads(request.body)
     except (json.JSONDecodeError, ValueError):
@@ -167,7 +174,6 @@ def create_reservation(request):
     plate_number     = body.get('plate_number', '').strip().upper()
     arrival_time_str = body.get('arrival_time', '').strip()
 
-    # ── Basic presence check ──────────────────────────────────────────────
     if not slot_id:
         return JsonResponse({'error': 'slot_id is required.'}, status=400)
     if not plate_number:
@@ -175,7 +181,6 @@ def create_reservation(request):
     if not arrival_time_str:
         return JsonResponse({'error': 'arrival_time is required.'}, status=400)
 
-    # ── Parse + validate arrival time ────────────────────────────────────
     try:
         arrival_dt = _parse_arrival_time(arrival_time_str)
     except ValueError as e:
@@ -193,10 +198,8 @@ def create_reservation(request):
             status=400,
         )
 
-    # ── Expire stale reservations before availability check ───────────────
     _expire_stale_reservations()
 
-    # ── Slot check ───────────────────────────────────────────────────────
     try:
         slot = ParkingSlot.objects.get(id=slot_id, is_active=True)
     except ParkingSlot.DoesNotExist:
@@ -208,29 +211,20 @@ def create_reservation(request):
             status=409,
         )
 
-    # Double-check there is no active reservation already on this slot
-    # (handles race conditions the UniqueConstraint will catch at DB level too)
     if Reservation.objects.filter(slot=slot, status='active').exists():
         return JsonResponse(
             {'error': f'Slot {slot.slot_label} was just reserved by another user.'},
             status=409,
         )
 
-    # ── One active reservation per user ──────────────────────────────────
     existing = Reservation.objects.filter(user=request.user, status='active').first()
     if existing:
         return JsonResponse(
-            {
-                'error': (
-                    f'You already have an active reservation for slot '
-                    f'{existing.slot.slot_label}. Please cancel it first.'
-                )
-            },
+            {'error': f'You already have an active reservation for slot {existing.slot.slot_label}. Please cancel it first.'},
             status=409,
         )
 
-    # ── Create reservation + mark slot as reserved ────────────────────────
-    reservation = Reservation.objects.create(
+    reservation_obj = Reservation.objects.create(
         user=request.user,
         slot=slot,
         plate_number=plate_number,
@@ -239,34 +233,30 @@ def create_reservation(request):
     slot.status = 'reserved'
     slot.save(update_fields=['status', 'updated_at'])
 
-    return JsonResponse({'success': True, 'reservation': reservation.to_dict()}, status=201)
+    return JsonResponse({'success': True, 'reservation': reservation_obj.to_dict()}, status=201)
 
 
 @login_required
 @require_http_methods(["POST"])
 def cancel_reservation(request, reservation_id):
-    """
-    POST /reservations/<id>/cancel/
-    Users can cancel their own; admins can cancel any.
-    """
     try:
         if getattr(request.user, 'is_admin', False) or request.user.is_staff:
-            reservation = Reservation.objects.select_related('slot').get(id=reservation_id)
+            reservation_obj = Reservation.objects.select_related('slot').get(id=reservation_id)
         else:
-            reservation = Reservation.objects.select_related('slot').get(
+            reservation_obj = Reservation.objects.select_related('slot').get(
                 id=reservation_id, user=request.user
             )
     except Reservation.DoesNotExist:
         return JsonResponse({'error': 'Reservation not found.'}, status=404)
 
-    if reservation.status != 'active':
+    if reservation_obj.status != 'active':
         return JsonResponse(
-            {'error': f'Cannot cancel a reservation with status "{reservation.status}".'},
+            {'error': f'Cannot cancel a reservation with status "{reservation_obj.status}".'},
             status=400,
         )
 
     is_admin_action = getattr(request.user, 'is_admin', False) or request.user.is_staff
-    reservation.cancel(by_admin=is_admin_action)
+    reservation_obj.cancel(by_admin=is_admin_action)
 
     return JsonResponse({'success': True, 'message': 'Reservation cancelled successfully.'})
 
@@ -278,10 +268,6 @@ def cancel_reservation(request, reservation_id):
 @login_required
 @require_http_methods(["GET"])
 def admin_get_all_reservations(request):
-    """
-    GET /reservations/admin/all/?status=all|active|expired|cancelled&search=<term>
-    Admin-only: returns all reservations with optional filtering.
-    """
     if not (getattr(request.user, 'is_admin', False) or request.user.is_staff):
         return JsonResponse({'error': 'Forbidden — admin access required.'}, status=403)
 
@@ -304,7 +290,6 @@ def admin_get_all_reservations(request):
             | Q(user__last_name__icontains=search)
         )
 
-    # Summary always counts across ALL reservations (ignoring current filter)
     all_res = Reservation.objects.all()
     summary = {
         'total':     all_res.count(),

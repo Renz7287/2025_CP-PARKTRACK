@@ -21,23 +21,28 @@
         <div>
             <h2 class="text-xl font-bold text-gray-700 mb-3">Select a Parking Slot</h2>
             <p class="text-sm text-gray-500 mb-4">
-                Click an available (green) slot on the map below to reserve it.
-                Red slots are occupied, yellow are already reserved.
+                Click an available <span class="text-green-600 font-semibold">green</span> slot on the map to reserve it.
+                <span class="text-red-500 font-semibold">Red</span> = occupied,
+                <span class="text-yellow-500 font-semibold">yellow</span> = already reserved.
             </p>
 
-            <!-- Snapshot container with clickable overlays -->
+            <!-- Snapshot container with SVG polygon overlays -->
             <div class="relative rounded-[20px] overflow-hidden shadow-xl border-2 border-white/30 bg-gray-200">
+
+                <!-- Loading skeleton shown until image loads -->
+                <div id="snapshot-skeleton" class="w-full h-[340px] md:h-[420px] bg-gray-200 animate-pulse flex items-center justify-center">
+                    <i class="fa-solid fa-image text-gray-400 text-4xl"></i>
+                </div>
+
                 <img
                     id="res-parking-snapshot"
                     src=""
                     alt="Parking Layout"
-                    class="w-full h-[340px] md:h-[420px] object-cover"
+                    class="hidden w-full h-[340px] md:h-[420px] object-cover"
                 >
 
-                <!-- Slot overlay buttons — positioned via inline style from JS -->
-                <div id="slot-overlay-container" class="absolute inset-0">
-                    <!-- Populated dynamically by reservationTab.js -->
-                </div>
+                <!-- SVG polygon overlay (injected by JS) -->
+                <div id="slot-overlay-container" class="absolute inset-0 pointer-events-none"></div>
 
                 <!-- Legend -->
                 <div class="absolute bottom-3 left-3 flex flex-col gap-1.5 bg-black/50 rounded-xl px-3 py-2">
@@ -55,19 +60,33 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-gray-400"></div>
-                        <span class="text-xs text-white font-semibold">Maintenance</span>
+                        <span class="text-xs text-white font-semibold">Disabled</span>
                     </div>
+                </div>
+
+                <!-- Snapshot error state -->
+                <div id="snapshot-error" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400">
+                    <i class="fa-solid fa-triangle-exclamation text-4xl mb-2"></i>
+                    <p class="text-sm font-semibold">Could not load parking image</p>
+                    <button id="retry-snapshot" class="mt-2 text-xs text-[#7cd1f9] underline">Retry</button>
                 </div>
             </div>
 
-            <!-- Slot grid list (alternative to clicking on image) -->
+            <!-- No slots configured warning -->
+            <div id="no-slots-warning" class="hidden mt-3 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-sm text-yellow-700">
+                <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                No parking slots are configured yet. Please contact the administrator.
+            </div>
+
+            <!-- Slot grid list -->
             <div class="mt-4">
                 <p class="text-sm text-gray-500 mb-2 font-medium">Or select from the list:</p>
                 <div id="slot-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    <!-- Populated by JS -->
-                    <div class="animate-pulse bg-gray-200 rounded-lg h-12"></div>
-                    <div class="animate-pulse bg-gray-200 rounded-lg h-12"></div>
-                    <div class="animate-pulse bg-gray-200 rounded-lg h-12"></div>
+                    <!-- Skeleton loaders -->
+                    <div class="slot-skeleton animate-pulse bg-gray-200 rounded-lg h-14"></div>
+                    <div class="slot-skeleton animate-pulse bg-gray-200 rounded-lg h-14"></div>
+                    <div class="slot-skeleton animate-pulse bg-gray-200 rounded-lg h-14"></div>
+                    <div class="slot-skeleton animate-pulse bg-gray-200 rounded-lg h-14"></div>
                 </div>
             </div>
         </div>
@@ -75,12 +94,12 @@
         <!-- RIGHT: Reservation form + My Reservations -->
         <div class="flex flex-col gap-6">
 
-            <!-- Reservation Form (shown after slot selected) -->
+            <!-- Reservation Form card -->
             <div id="reservation-form-card" class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
                 <h2 class="text-xl font-bold text-gray-700 mb-1">Reserve a Slot</h2>
-                <p id="selected-slot-info" class="text-sm text-gray-400 mb-4">No slot selected yet.</p>
+                <p id="selected-slot-info" class="text-sm text-gray-400 mb-4">No slot selected yet. Click a green slot above.</p>
 
-                <!-- Selected slot badge -->
+                <!-- Selected slot badge (hidden until slot chosen) -->
                 <div id="selected-slot-badge" class="hidden mb-4 flex items-center gap-3 bg-[#e8f7fe] rounded-xl px-4 py-3 border border-[#7cd1f9]">
                     <i class="fa-solid fa-square-parking text-2xl text-[#7cd1f9]"></i>
                     <div>
@@ -92,23 +111,28 @@
                     </button>
                 </div>
 
-                <form id="reservation-form" class="space-y-4">
-                    {% csrf_token %}
+                <div class="space-y-4">
                     <input type="hidden" id="selected-slot-id" value="">
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-600 mb-1">Vehicle Plate Number</label>
                         <select
                             id="res-plate-number"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9] uppercase bg-white"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9] bg-white"
                         >
                             <option value="" disabled selected>Select your plate number</option>
                             {% for plate in user_vehicles %}
                                 <option value="{{ plate }}">{{ plate }}</option>
                             {% empty %}
-                                <option value="" disabled>⚠ No vehicles registered under your account</option>
+                                <option value="" disabled>⚠ No vehicles registered — add one in Settings</option>
                             {% endfor %}
                         </select>
+                        {% if not user_vehicles %}
+                        <p class="text-xs text-amber-600 mt-1">
+                            <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                            You have no registered vehicles. <a href="#" class="underline">Add one in Settings</a> first.
+                        </p>
+                        {% endif %}
                     </div>
 
                     <div>
@@ -133,7 +157,7 @@
                         <i class="fa-solid fa-calendar-check mr-2"></i>
                         Reserve Slot
                     </button>
-                </form>
+                </div>
             </div>
 
             <!-- My Active Reservations -->
@@ -145,7 +169,7 @@
                     </button>
                 </div>
                 <div id="my-reservations-container">
-                    <p class="text-gray-400 text-sm text-center py-6" id="no-reservations-msg">
+                    <p class="text-gray-400 text-sm text-center py-6">
                         <i class="fa-solid fa-calendar-times text-3xl block mb-2"></i>
                         You have no active reservations.
                     </p>
@@ -158,7 +182,7 @@
     <!-- ===================== ADMIN VIEW ===================== -->
     {% if user.is_admin %}
     <div>
-        <!-- Header bar with stats -->
+        <!-- Stats cards -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
                 <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -192,17 +216,17 @@
         <!-- Filters -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
             <div class="flex flex-col md:flex-row gap-3">
-                <!-- Search bar -->
                 <div class="relative flex-1">
                     <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input type="text" id="admin-search" placeholder="Search by plate, slot, or user name..." class="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]">
-                </div>
-                <!-- Select + Button: inline on both mobile and desktop -->
-                <div class="flex flex-row gap-3">
-                    <select
-                        id="admin-filter-status"
-                        class="flex-1 md:flex-none px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]"
+                    <input
+                        type="text"
+                        id="admin-search"
+                        placeholder="Search by plate, slot, or user name..."
+                        class="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]"
                     >
+                </div>
+                <div class="flex flex-row gap-3">
+                    <select id="admin-filter-status" class="flex-1 md:flex-none px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]">
                         <option value="all">All Reservations</option>
                         <option value="active">Active Only</option>
                         <option value="expired">Expired Only</option>
@@ -285,23 +309,21 @@
     </div>
 </div>
 
-{% endblock %}
-
-{% block script %}
 <script>
-    // Pass Django template variables to JS
-    const PARK_TRACK = {
-        isAdmin: {{ user.is_admin|yesno:"true,false" }},
+    window.PARK_TRACK = {
+        isAdmin:   {{ js_config.isAdmin }},
         csrfToken: '{{ csrf_token }}',
+        cameraId:  {{ js_config.cameraId|default:"null" }},
         urls: {
-            slots:        '{% url "reservation_slots" %}',
-            myReservations: '{% url "my_reservations" %}',
-            create:       '{% url "create_reservation" %}',
-            adminAll:     '{% url "admin_all_reservations" %}',
-            cancelBase:   '/reservations/',   // + id + /cancel/
-            snapshot:     '{% url "get_parking_snapshot" %}',  // reuse your existing snapshot URL
+            snapshot:       '{{ js_config.urls.snapshot }}',
+            slots:          '{{ js_config.urls.slots }}',
+            myReservations: '{{ js_config.urls.myReservations }}',
+            create:         '{{ js_config.urls.create }}',
+            adminAll:       '{{ js_config.urls.adminAll }}',
+            cancelBase:     '{{ js_config.urls.cancelBase }}',
+            cancelSuffix:   '{{ js_config.urls.cancelSuffix }}',
         }
     };
 </script>
-<script type="module" src="{% static 'javascript/reservationTab.js' %}"></script>
-{% endblock script %}
+
+{% endblock %}
