@@ -156,10 +156,8 @@ function drawOverlay() {
     const img       = document.getElementById('res-parking-snapshot');
     if (!container || !img) return;
 
-    // If image isn't visible/loaded yet, wait for it
     if (img.classList.contains('hidden') || !img.clientWidth || !img.clientHeight) {
         if (img.complete && img.naturalWidth) {
-            // Image is loaded but not yet visible — try again next frame
             requestAnimationFrame(drawOverlay);
         }
         return;
@@ -168,9 +166,6 @@ function drawOverlay() {
     const rw = img.clientWidth  || img.offsetWidth;
     const rh = img.clientHeight || img.offsetHeight;
     if (!rw || !rh) return;
-
-    const sx = snapshotNatural.w ? rw / snapshotNatural.w : 1;
-    const sy = snapshotNatural.h ? rh / snapshotNatural.h : 1;
 
     const NS  = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(NS, 'svg');
@@ -192,9 +187,11 @@ function drawOverlay() {
         if (!Array.isArray(pts) || pts.length < 3) return;
         hasPolygons = true;
 
-        const c    = palette[slot.status] ?? palette.disabled;
-        const sel  = slot.id === selectedSlotId;
-        const ptStr = pts.map(([x, y]) => `${(x*sx).toFixed(1)},${(y*sy).toFixed(1)}`).join(' ');
+        const c   = palette[slot.status] ?? palette.disabled;
+        const sel = slot.id === selectedSlotId;
+
+        // Coords are normalized (0-1), multiply by rendered image size
+        const ptStr = pts.map(([x, y]) => `${(x*rw).toFixed(1)},${(y*rh).toFixed(1)}`).join(' ');
 
         const poly = document.createElementNS(NS, 'polygon');
         poly.setAttribute('points',       ptStr);
@@ -215,19 +212,22 @@ function drawOverlay() {
         tip.textContent = `Slot ${slot.slot_label} — ${slot.status}`;
         poly.appendChild(tip);
 
-        const cx = (pts.reduce((s,[x])=>s+x*sx,0)/pts.length).toFixed(1);
-        const cy = (pts.reduce((s,[,y])=>s+y*sy,0)/pts.length).toFixed(1);
+        // Centroid — also use rw/rh, not sx/sy
+        const cx = (pts.reduce((s, [x]) => s + x * rw, 0) / pts.length).toFixed(1);
+        const cy = (pts.reduce((s, [, y]) => s + y * rh, 0) / pts.length).toFixed(1);
+
         const lbl = document.createElementNS(NS, 'text');
-        lbl.setAttribute('x', cx); lbl.setAttribute('y', cy);
-        lbl.setAttribute('text-anchor', 'middle');
+        lbl.setAttribute('x', cx);
+        lbl.setAttribute('y', cy);
+        lbl.setAttribute('text-anchor',       'middle');
         lbl.setAttribute('dominant-baseline', 'middle');
-        lbl.setAttribute('fill',         sel ? '#0c4a6e' : '#fff');
-        lbl.setAttribute('font-size',    '11');
-        lbl.setAttribute('font-weight',  'bold');
-        lbl.setAttribute('stroke',       'rgba(0,0,0,0.6)');
-        lbl.setAttribute('stroke-width', '3');
-        lbl.setAttribute('paint-order',  'stroke fill');
-        lbl.setAttribute('pointer-events', 'none');
+        lbl.setAttribute('fill',              sel ? '#0c4a6e' : '#fff');
+        lbl.setAttribute('font-size',         '11');
+        lbl.setAttribute('font-weight',       'bold');
+        lbl.setAttribute('stroke',            'rgba(0,0,0,0.6)');
+        lbl.setAttribute('stroke-width',      '3');
+        lbl.setAttribute('paint-order',       'stroke fill');
+        lbl.setAttribute('pointer-events',    'none');
         lbl.textContent = slot.slot_label;
 
         svg.appendChild(poly);
@@ -236,7 +236,13 @@ function drawOverlay() {
 
     container.innerHTML = '';
     container.appendChild(svg);
-    container.style.pointerEvents = hasPolygons ? 'auto' : 'none';
+
+    if (hasPolygons) {
+        container.classList.remove('pointer-events-none');
+        container.style.pointerEvents = 'auto';
+    } else {
+        container.style.pointerEvents = 'none';
+    }
 
     if (!resizeObserver) {
         resizeObserver = new ResizeObserver(() => { if (allSlots.length) drawOverlay(); });

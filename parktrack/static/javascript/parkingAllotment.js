@@ -34,9 +34,9 @@ export function initializeParkingAllotment() {
     }
 
     document.getElementById('content').addEventListener('click', (event) => {
-        if (event.target.closest('#snapshot-toggle'))   showSection('snapshot');
-        if (event.target.closest('#live-toggle'))       showSection('live');
-        if (event.target.closest('#back-to-snapshot'))  showSection('snapshot');
+        if (event.target.closest('#snapshot-toggle'))            showSection('snapshot');
+        if (event.target.closest('#live-toggle'))                showSection('live');
+        if (event.target.closest('#allotment-back-to-snapshot')) showSection('snapshot');
         if (event.target.closest('#reserve-toggle')) {
             const modal = document.getElementById('reservation-modal');
             if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
@@ -236,7 +236,7 @@ export function initializeParkingAllotment() {
 
     // ── Snapshot with countdown timer ─────────────────────────────────────────
 
-    const snapshotImage  = document.getElementById('parking-snapshot');
+    const snapshotImage  = document.getElementById('allotment-snapshot');
     const snapshotTimer  = document.getElementById('snapshot-timer');
     const SNAPSHOT_MS    = 60 * 1000;
     let nextSnapshotAt   = null;

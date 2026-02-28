@@ -45,7 +45,7 @@
         </div>
     </div>
 
-	<!--     
+    <!--
        SNAPSHOT SECTION
        Shows the latest auto-captured snapshot from the Pi camera with an
        occupancy overlay and a countdown timer until the next update.
@@ -53,7 +53,7 @@
     <div id="snapshot-section" class="section-content px-5">
         <div class="rounded-[35px] overflow-hidden shadow-2xl border-4 border-white/20 relative">
             <img
-                id="parking-snapshot"
+                id="allotment-snapshot"
                 src=""
                 alt="Latest Parking Snapshot"
                 class="w-full h-[50vh] md:h-[80vh] object-cover transition-transform duration-300"
@@ -77,12 +77,12 @@
         </div>
     </div>
 
-    
-	<!-- 
-		LIVE SECTION
-		Shows the real-time HLS video stream from the Pi with occupancy counts.
-		Admin only — controlled by the Live Feed toggle button. 
-	-->
+
+    <!--
+        LIVE SECTION
+        Shows the real-time HLS video stream from the Pi with occupancy counts.
+        Admin only — controlled by the Live Feed toggle button.
+    -->
     <div id="live-section" class="section-content hidden">
         <div class="container mx-auto px-4 py-6">
             <div class="flex justify-end mb-6">
@@ -110,7 +110,7 @@
             </video>
 
             <div class="flex justify-start">
-                <button id="back-to-snapshot"
+                <button id="allotment-back-to-snapshot"
                         class="flex items-center gap-3 px-6 py-4 rounded-xl bg-[#7cd1f9] text-white font-semibold shadow-md">
                     <i class="fa-solid fa-arrow-left"></i>
                     Back to Snapshot View
@@ -159,7 +159,7 @@
                 <i class="fa-solid fa-times text-2xl"></i>
             </button>
         </div>
-        
+
         <!-- Modal Body -->
         <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 180px);">
             <!-- Filters and Search -->
@@ -167,9 +167,9 @@
                 <div class="md:col-span-2">
                     <div class="relative">
                         <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" 
-                               id="admin-search-reservations" 
-                               placeholder="Search by plate number, slot, or user name..." 
+                        <input type="text"
+                               id="admin-search-reservations"
+                               placeholder="Search by plate number, slot, or user name..."
                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
@@ -184,7 +184,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <!-- Reservations Table -->
             <div class="bg-white rounded-lg border overflow-hidden">
                 <div class="overflow-x-auto">
@@ -205,7 +205,7 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- No Reservations Message -->
                 <div id="admin-no-reservations" class="hidden p-8 text-center text-gray-500">
                     <i class="fa-solid fa-calendar-times text-4xl mb-3"></i>
@@ -213,7 +213,7 @@
                     <p class="text-sm">Try adjusting your filters or search criteria</p>
                 </div>
             </div>
-            
+
             <!-- Summary Stats -->
             <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-blue-50 p-4 rounded-lg">
@@ -248,7 +248,3 @@
     </div>
 </div>
 {% endblock %}
-
-{% block script %}
-    <script type="module" src="{% static 'javascript/parkingAllotment.js' %}"></script>
-{% endblock script %}
