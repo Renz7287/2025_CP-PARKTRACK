@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'settings',
     'parking_usage',
     'notification',
-
+    'reservation',
     'django_extensions',
 ]
 
@@ -121,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'
 
 USE_I18N = True
 

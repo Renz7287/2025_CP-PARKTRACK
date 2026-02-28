@@ -49,6 +49,7 @@ urlpatterns = [
     path('settings/', include('settings.urls', namespace='settings')),
     path('parking-usage/', include('parking_usage.urls', namespace='parking-usage')),
     path('notification/', include('notification.urls', namespace='notification')),
+    path('reservation/', include('reservation.urls', namespace='reservation')),
     re_path(r'^stream/(?P<filename>[^/]+\.(m3u8|ts))$', stream_proxy, name='stream_proxy'),
 ]
 

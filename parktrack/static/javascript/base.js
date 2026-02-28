@@ -3,35 +3,23 @@ import { initializeParkingAllotment } from "./parkingAllotment.js";
 import { initializeParkingUsage } from "./parkingUsage.js";
 import { initializePersonalInformation } from "./settings/personalInformation.js";
 import { initializeVehicleManagement } from "./settings/vehicleManagement.js";
+import { initializeReservation } from "./reservation.js";
 import { initializeParkingSlotManagement } from "./settings/parkingSlotManagement.js";
 
 openSubmenu();
 
 function initializePageScripts() {
-    if (document.querySelector('.parking-allotment')) {
-        initializeParkingAllotment();
-    }    
-    
-    if (document.querySelector('.parking-usage')) {
-        initializeParkingUsage();
-    }
-    
-    if (document.querySelector('.profile-information')) {
-        initializePersonalInformation();
-    }
-
-    if (document.querySelector('.vehicle-management')) {
-        initializeVehicleManagement();
-    }
-
-    if (document.querySelector('.parking-slot-management')) {
-        initializeParkingSlotManagement();
-    }
+    if (document.querySelector('.parking-allotment'))    initializeParkingAllotment();
+    if (document.querySelector('.parking-usage'))        initializeParkingUsage();
+    if (document.querySelector('.profile-information'))  initializePersonalInformation();
+    if (document.querySelector('.vehicle-management'))   initializeVehicleManagement();
+    if (document.querySelector('.reservations-section')) initializeReservation(); 
+    if (document.querySelector('.parking-slot-management')) initializeParkingSlotManagement();
 }
 
-initializePageScripts();
-
 document.addEventListener('DOMContentLoaded', () => {
+    // ← moved here so all inline scripts have already executed
+    initializePageScripts();
 
     document.getElementById('open-submenu')?.addEventListener('click', () => openSubmenu());
     document.getElementById('open-sidebar')?.addEventListener('click', () => openCloseSidebar());
@@ -39,11 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.body.addEventListener('click', (event) => {
         const link = event.target.closest('a.js-link');
-
         if (link) {
             event.preventDefault();
-            const url = link.getAttribute('href');
-            loadContent(url).then(() => {
+            loadContent(link.getAttribute('href')).then(() => {
                 initializePageScripts();
                 highlightActiveLink();
                 showLogoutConfirmation();

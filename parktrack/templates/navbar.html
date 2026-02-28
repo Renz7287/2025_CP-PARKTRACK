@@ -43,6 +43,14 @@
 					</a>
 				</li>
 			{% endif %}
+			<li>        
+				<a href="{% url 'reservation:reservation' %}" class="js-link flex items-center font-semibold text-white
+					text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
+					transition-colors
+					"
+				>
+				<i class="fa-solid fa-book"></i>
+					Reservation
 		<li>        
 			<div class="flex items-center font-semibold text-white
 				text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
@@ -75,9 +83,42 @@
 					<i class="fa-solid fa-location-dot"></i>
 						Parking Slot Management
 				</a>
-			{% endif %}
-			</div>
-		</li>
+			</li>
+			<li>        
+				<div class="flex items-center font-semibold text-white
+					text-lg p-2.5 gap-2 rounded-md hover:bg-[#b62c2c] hover:text-white
+					transition-colors cursor-pointer
+					"
+					id="open-submenu"
+				>
+				<i class="fa-solid fa-gear"></i>
+				<div class="flex justify-between w-full items-center">
+					<span>Settings</span>
+					<span class="text-sm rotate-180" id="arrow">
+						<i class="fa-solid fa-chevron-down"></i>
+					</span>
+				</div>          
+				</div>
+
+				<div class="text-left text-sm text-white font-thin mt-2 w-4/5 mx-auto" id="submenu">
+					<a href="{% url 'settings:personal-information' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
+						<i class="fa-solid fa-circle-user"></i>
+							Profile Information
+					</a>
+				{% if not user.is_admin %}
+					<a href="{% url 'settings:vehicle-management' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
+						<i class="fa-solid fa-car"></i>
+							Vehicle Management
+					</a>
+				{% endif %}
+				{% if user.is_admin %}
+					<a href="{% url 'settings:parking-slot-management' user.id %}" class="js-link flex items-center gap-2 cursor-pointer p-2 hover:bg-[#b62c2c] rounded-md mt-1">
+						<i class="fa-solid fa-location-dot"></i>
+							Parking Slot Management
+					</a>
+				{% endif %}
+				</div>
+			</li>
 		</ul>  
 	</nav>
   
