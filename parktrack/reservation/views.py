@@ -282,12 +282,27 @@ def admin_get_all_reservations(request):
         qs = qs.filter(status=status_filter)
 
     if search:
-        qs = qs.filter(
-            Q(plate_number__icontains=search)
-            | Q(slot__slot_label__icontains=search)
-            | Q(user__first_name__icontains=search)
-            | Q(user__last_name__icontains=search)
-        )
+        search_terms = search.split()
+
+        if len(search_terms) > 1:
+            q = Q()
+            for term in search_terms:
+                q &= (
+                    Q(plate_number__icontains=term)
+                    | Q(slot__slot_label__icontains=term)
+                    | Q(user__first_name__icontains=term)
+                    | Q(user__last_name__icontains=term)
+                )
+        else:
+            # Single word — search across all fields
+            q = (
+                Q(plate_number__icontains=search)
+                | Q(slot__slot_label__icontains=search)
+                | Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+            )
+
+        qs = qs.filter(q).distinct()
 
     all_res = Reservation.objects.all()
     summary = {
