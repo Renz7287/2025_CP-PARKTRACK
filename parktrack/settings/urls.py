@@ -15,10 +15,12 @@ urlpatterns = [
     path('api/slots/', views.api_get_slots, name='api_get_slots'),
     path('api/slots/add/', views.api_add_slot, name='api_add_slot'),
     path('api/slots/bulk-save/', views.api_bulk_save_slots, name='api_bulk_save_slots'),
-    path('api/slots/<int:pk>/update/',views.api_update_slot, name='api_update_slot'),
+    path('api/slots/<int:pk>/update/', views.api_update_slot, name='api_update_slot'),
     path('api/slots/<int:pk>/delete/', views.api_delete_slot, name='api_delete_slot'),
     path('api/cameras/', views.api_get_camera, name='api_get_camera'),
     path('api/cameras/<int:pk>/edit/', views.api_edit_camera, name='api_edit_camera'),
     path('api/cameras/<int:pk>/upload-snapshot/', views.api_upload_snapshot, name='api_upload_snapshot'),
     path('api/cameras/<int:pk>/capture-snapshot/', views.api_capture_snapshot, name='api_capture_snapshot'),
+    # Persists the URL chosen via "Use This Snapshot" into camera.snapshot_url
+    path('api/cameras/<int:pk>/set-snapshot-url/', views.api_set_snapshot_url, name='api_set_snapshot_url'),
 ]

@@ -10,10 +10,8 @@ from django.views.decorators.http import require_http_methods
 from users.models import City, VehicleBrand, User, DriverProfile, Vehicle
 from users.forms import UserEditForm, DriverProfileEditForm, VehicleModalForm, ChangePasswordForm
 from utils.decorators import group_required
-from utils.decorators import group_required
 from .models import Camera, ParkingSlot
 
-# Create your views here.
 
 @group_required('Admin', 'Driver')
 def personal_information(request, pk):
@@ -38,6 +36,7 @@ def personal_information(request, pk):
     }
     return render(request, 'settings/index.html', context)
 
+
 @group_required('Driver')
 def vehicle_management(request, pk):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
@@ -57,6 +56,7 @@ def vehicle_management(request, pk):
     }
     return render(request, 'settings/vehicle-management.html', context)
 
+
 @group_required('Admin')
 def parking_slot_management(request):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
@@ -66,16 +66,16 @@ def parking_slot_management(request):
     }
     return render(request, 'settings/parking-slot-management.html', context)
 
+
 @group_required('Admin', 'Driver')
 def edit_user(request, pk):
     user = User.objects.get(id=pk)
 
     if request.method == 'POST':
         user_form = UserEditForm(request.POST, request.FILES, instance=user)
-        driver_profile_form = DriverProfileEditForm(request.POST,  instance=user.driver_profile)
+        driver_profile_form = DriverProfileEditForm(request.POST, instance=user.driver_profile)
 
         if user_form.is_valid() and driver_profile_form.is_valid():
-            
             with transaction.atomic():
                 user_form.save()
                 driver_profile_form.save()
@@ -91,17 +91,16 @@ def edit_user(request, pk):
             ).content.decode('utf-8')
 
             return JsonResponse({'success': True, 'html': html, 'message': 'Personal information updated successfully!'})
-        
+
         errors = {}
-
         for form in [user_form, driver_profile_form]:
-
             for field, field_errors in form.errors.items():
                 errors[field] = field_errors
 
         return JsonResponse({'success': False, 'errors': errors})
 
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid Request']}})
+
 
 @group_required('Admin', 'Driver')
 def change_password(request, pk):
@@ -112,19 +111,15 @@ def change_password(request, pk):
 
         if form.is_valid():
             form.save()
-
             update_session_auth_hash(request, user)
 
             html = render(request, 'components/change-password.html',
-                {
-                    'change_password_form': form
-                }
+                {'change_password_form': form}
             ).content.decode('utf-8')
 
             return JsonResponse({'success': True, 'html': html, 'message': 'Password updated successfully!'})
 
         errors = {}
-
         for field, field_errors in form.errors.items():
             errors[field] = field_errors
 
@@ -132,10 +127,11 @@ def change_password(request, pk):
 
     return JsonResponse({'success': False, 'erros': {'__all__': ['Invalid request']}})
 
+
 @group_required('Driver')
 def add_vehicle(request):
     user = request.user
-    
+
     if request.method == 'POST':
         form = VehicleModalForm(request.POST, request.FILES)
 
@@ -152,17 +148,17 @@ def add_vehicle(request):
                     'brands': list(VehicleBrand.objects.all().values('id', 'brand_name'))
                 }
             ).content.decode('utf-8')
-            
-            return JsonResponse({'success': True, 'html': html, 'message': 'Vehicle added successfully!'})
-        
-        errors = {}
 
+            return JsonResponse({'success': True, 'html': html, 'message': 'Vehicle added successfully!'})
+
+        errors = {}
         for field, field_errors in form.errors.items():
             errors[field] = field_errors
 
         return JsonResponse({'success': False, 'errors': errors})
-    
+
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid request']}})
+
 
 @group_required('Driver')
 def edit_vehicle(request, pk):
@@ -173,7 +169,7 @@ def edit_vehicle(request, pk):
 
         if form.is_valid():
             form.save()
-            
+
             html = render(request, 'components/vehicles-table.html',
                 {
                     'owner': DriverProfile.objects.get(user=request.user),
@@ -182,17 +178,17 @@ def edit_vehicle(request, pk):
                     'brands': list(VehicleBrand.objects.all().values('id', 'brand_name'))
                 }
             ).content.decode('utf-8')
-            
-            return JsonResponse({'success': True, 'html': html, 'message': 'Vehicle information updated successfully!'})
-        
-        errors = {}
 
+            return JsonResponse({'success': True, 'html': html, 'message': 'Vehicle information updated successfully!'})
+
+        errors = {}
         for field, field_errors in form.errors.items():
             errors[field] = field_errors
 
         return JsonResponse({'success': False, 'errors': errors})
-    
+
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid Request']}})
+
 
 @group_required('Driver')
 def delete_vehicle(request, pk):
@@ -200,12 +196,12 @@ def delete_vehicle(request, pk):
         try:
             vehicle = Vehicle.objects.get(id=pk)
             vehicle.delete()
-
             return JsonResponse({'success': True})
         except Vehicle.DoesNotExist:
             return JsonResponse({'success': False, 'errors': 'Vehicle not found'})
-    
+
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid Request']}})
+
 
 @require_http_methods(['GET'])
 def api_get_slots(request):
@@ -226,6 +222,7 @@ def api_get_slots(request):
         'slots': [slot.to_dict() for slot in slots]
     })
 
+
 @group_required('Admin')
 @require_http_methods(['POST'])
 def api_add_slot(request):
@@ -238,7 +235,6 @@ def api_add_slot(request):
     slot_label     = data.get('slot_label', '').strip()
     polygon_points = data.get('polygon_points', [])
 
-    # Validation────────────────
     if not camera_id:
         return JsonResponse({'success': False, 'error': 'camera_id is required.'}, status=400)
 
@@ -271,6 +267,7 @@ def api_add_slot(request):
 
     return JsonResponse({'success': True, 'message': f'Slot {slot_label} added successfully.', 'slot': slot.to_dict()}, status=201)
 
+
 @group_required('Admin')
 @require_http_methods(['POST'])
 def api_update_slot(request, pk):
@@ -284,14 +281,12 @@ def api_update_slot(request, pk):
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON body.'}, status=400)
 
-    # Optional field: slot_label
     new_label = data.get('slot_label', '').strip()
     if new_label and new_label != slot.slot_label:
         if ParkingSlot.objects.filter(camera=slot.camera, slot_label=new_label).exclude(id=pk).exists():
             return JsonResponse({'success': False, 'error': f'Slot label "{new_label}" already exists for this camera.'}, status=400)
         slot.slot_label = new_label
 
-    # Optional field: polygon_points
     polygon_points = data.get('polygon_points')
     if polygon_points is not None:
         if not isinstance(polygon_points, list) or len(polygon_points) < 3:
@@ -325,6 +320,7 @@ def api_delete_slot(request, pk):
 
     return JsonResponse({'success': True, 'message': f'Slot {slot_label} deleted successfully.'})
 
+
 @group_required('Admin')
 @require_http_methods(['POST'])
 def api_bulk_save_slots(request):
@@ -333,7 +329,7 @@ def api_bulk_save_slots(request):
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON body.'}, status=400)
 
-    camera_id = data.get('camera_id')
+    camera_id  = data.get('camera_id')
     slots_data = data.get('slots', [])
 
     if not camera_id:
@@ -347,7 +343,6 @@ def api_bulk_save_slots(request):
     except Camera.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
 
-    # Validate all slots before touching the DB
     seen_labels = set()
     for i, slot_data in enumerate(slots_data):
         label  = slot_data.get('slot_label', '').strip()
@@ -371,9 +366,7 @@ def api_bulk_save_slots(request):
             if not (0.0 <= x <= 1.0 and 0.0 <= y <= 1.0):
                 return JsonResponse({'success': False, 'error': f'Slot "{label}" has coordinates outside the 0.0–1.0 range.'}, status=400)
 
-    # Wipe old slots, insert new ones
     with transaction.atomic():
-        # Soft-delete all existing slots for this camera
         ParkingSlot.objects.filter(camera=camera).update(is_active=False)
 
         saved_slots = []
@@ -381,7 +374,6 @@ def api_bulk_save_slots(request):
             label  = slot_data['slot_label'].strip()
             points = slot_data['polygon_points']
 
-            # Reactivate if a slot with this label existed before, else create new
             slot, created = ParkingSlot.objects.update_or_create(
                 camera=camera,
                 slot_label=label,
@@ -395,10 +387,10 @@ def api_bulk_save_slots(request):
 
     return JsonResponse({'success': True, 'message': f'{len(saved_slots)} slot(s) saved successfully.', 'slots': saved_slots})
 
+
 @group_required('Admin')
 @require_http_methods(['GET'])
 def api_get_camera(request):
-    """Returns the single active camera record."""
     try:
         camera = Camera.objects.filter(is_active=True).first()
         if not camera:
@@ -406,6 +398,7 @@ def api_get_camera(request):
         return JsonResponse({'success': True, 'camera': camera.to_dict()})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 
 @group_required('Admin')
 @require_http_methods(['POST'])
@@ -422,7 +415,7 @@ def api_edit_camera(request, pk):
 
     name       = data.get('name', '').strip()
     location   = data.get('location', '').strip()
-    stream_url = data.get('stream_url', '').strip()   # ← NEW
+    stream_url = data.get('stream_url', '').strip()
 
     if not name:
         return JsonResponse({'success': False, 'error': 'Camera name is required.'}, status=400)
@@ -432,7 +425,7 @@ def api_edit_camera(request, pk):
 
     camera.name       = name
     camera.location   = location
-    camera.stream_url = stream_url   # ← NEW
+    camera.stream_url = stream_url
     camera.save()
 
     return JsonResponse({
@@ -441,9 +434,14 @@ def api_edit_camera(request, pk):
         'camera':  camera.to_dict(),
     })
 
+
 @group_required('Admin')
 @require_http_methods(['POST'])
 def api_upload_snapshot(request, pk):
+    """
+    Handles manual snapshot upload from the admin UI (Upload File tab).
+    Saves the file and updates camera.snapshot_url.
+    """
     try:
         camera = Camera.objects.get(id=pk, is_active=True)
     except Camera.DoesNotExist:
@@ -475,8 +473,8 @@ def api_upload_snapshot(request, pk):
         for chunk in snapshot_file.chunks():
             f.write(chunk)
 
-    media_url            = f'{django_settings.MEDIA_URL}snapshots/{filename}'
-    camera.snapshot_url  = media_url          # ← store in snapshot_url, NOT stream_url
+    media_url           = f'{django_settings.MEDIA_URL}snapshots/{filename}'
+    camera.snapshot_url = media_url
     camera.save()
 
     return JsonResponse({
@@ -486,77 +484,83 @@ def api_upload_snapshot(request, pk):
         'camera':       camera.to_dict(),
     })
 
+
 @group_required('Admin')
 @require_http_methods(['POST'])
 def api_capture_snapshot(request, pk):
     """
-    Captures a current frame from the camera's HLS stream using ffmpeg.
-    Uses -sseof -3 to seek to near the live edge before grabbing the frame,
-    ensuring we get a recent frame rather than the first (oldest) segment.
+    Returns the latest CLEAN snapshot for preview in the layout editor modal.
+    Does NOT update camera.snapshot_url — use api_set_snapshot_url for that.
     """
-    import subprocess, time
+    import time
 
     try:
         camera = Camera.objects.get(id=pk, is_active=True)
     except Camera.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
 
-    stream_url = camera.stream_url
-    if not stream_url:
+    clean_dir = os.path.join(django_settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
+
+    if not os.path.exists(clean_dir):
         return JsonResponse(
-            {'success': False, 'error': 'No stream URL configured for this camera.'},
-            status=400,
+            {'success': False, 'error': 'No clean snapshots found. Is the Pi running?'},
+            status=404,
         )
 
-    filename  = f'snapshot_camera_{pk}.jpg'
-    save_dir  = os.path.join(django_settings.MEDIA_ROOT, 'snapshots')
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, filename)
+    snapshots = [f for f in os.listdir(clean_dir) if f.endswith('.jpg')]
+    if not snapshots:
+        return JsonResponse(
+            {'success': False, 'error': 'No clean snapshots yet. The Pi uploads one every 60 seconds.'},
+            status=404,
+        )
 
-    # Make relative URLs absolute so ffmpeg can reach them over HTTP
-    if stream_url.startswith('/'):
-        host       = request.build_absolute_uri('/').rstrip('/')
-        stream_url = host + stream_url
+    latest    = max(snapshots, key=lambda f: os.path.getmtime(os.path.join(clean_dir, f)))
+    media_url = f'{django_settings.MEDIA_URL}video_stream/clean_snapshots/{latest}?v={int(time.time())}'
+
+    return JsonResponse({
+        'success':      True,
+        'message':      'Clean snapshot loaded successfully.',
+        'snapshot_url': media_url,
+    })
+
+
+@group_required('Admin')
+@require_http_methods(['POST'])
+def api_set_snapshot_url(request, pk):
+    """
+    Persists a snapshot URL (chosen via "Use This Snapshot" in the layout editor)
+    into camera.snapshot_url so it survives page navigation.
+
+    Called by the JS btn-capture-use handler after the admin selects a clean
+    snapshot from the Pi feed as the editor background.
+
+    Body (JSON):
+        { "snapshot_url": "/media/video_stream/clean_snapshots/clean_123.jpg?v=..." }
+    """
+    try:
+        camera = Camera.objects.get(id=pk, is_active=True)
+    except Camera.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
 
     try:
-        result = subprocess.run(
-            [
-                'ffmpeg',
-                '-y',                   # overwrite output file
-                '-sseof', '-3',         # seek to 3 seconds before end → live edge
-                '-i', stream_url,       # HLS playlist URL
-                '-frames:v', '1',       # grab exactly one video frame
-                '-q:v', '2',            # JPEG quality (2 = high)
-                '-vf', 'scale=iw:ih',   # no rescaling, keep original resolution
-                save_path,
-            ],
-            timeout=30,
-            capture_output=True,
-        )
-        if result.returncode != 0:
-            error_msg = result.stderr.decode('utf-8', errors='replace')[-500:]
-            return JsonResponse(
-                {'success': False, 'error': f'ffmpeg failed: {error_msg}'},
-                status=502,
-            )
-    except FileNotFoundError:
-        return JsonResponse(
-            {'success': False, 'error': 'ffmpeg is not installed. Run: sudo apt install ffmpeg'},
-            status=500,
-        )
-    except subprocess.TimeoutExpired:
-        return JsonResponse(
-            {'success': False, 'error': 'Timed out waiting for a frame from the stream. Is the Pi streaming?'},
-            status=502,
-        )
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
 
-    media_url           = f'{django_settings.MEDIA_URL}snapshots/{filename}?v={int(time.time())}'
-    camera.snapshot_url = media_url
+    snapshot_url = data.get('snapshot_url', '').strip()
+    if not snapshot_url:
+        return JsonResponse({'success': False, 'error': 'snapshot_url is required.'}, status=400)
+
+    # Basic sanity check — must be a relative media path, not an external URL
+    if not snapshot_url.startswith('/'):
+        return JsonResponse({'success': False, 'error': 'snapshot_url must be a relative path.'}, status=400)
+
+    camera.snapshot_url = snapshot_url
     camera.save()
 
     return JsonResponse({
         'success':      True,
-        'message':      'Snapshot captured successfully.',
-        'snapshot_url': media_url,
+        'message':      'Snapshot URL saved.',
+        'snapshot_url': snapshot_url,
         'camera':       camera.to_dict(),
     })

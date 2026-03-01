@@ -45,9 +45,11 @@ export function initializeParkingAllotment() {
 
     showSection('snapshot');
 
-    // HLS Stream
-
-    const VIDEO_SRC = '/stream/stream.m3u8';
+    // ── HLS Stream ────────────────────────────────────────────────────────────
+    // Uses the dedicated serve_hls Django view which sets correct MIME types.
+    // Django's dev server does not set the right Content-Type for .m3u8/.ts
+    // files when serving them via MEDIA_URL, causing hls.js to fail.
+    const VIDEO_SRC = '/parking-allotment/stream/stream.m3u8';
 
     function startStream() {
         const video = document.getElementById('live-video');
@@ -62,12 +64,18 @@ export function initializeParkingAllotment() {
 
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveSyncDurationCount:       3,
-                liveMaxLatencyDurationCount: 6,
-                maxBufferLength:             10,
-                maxMaxBufferLength:          10,
+                liveSyncDurationCount:       2,
+                liveMaxLatencyDurationCount: 5,
+                maxBufferLength:             30,   // was 10 — too small for live streams
+                maxMaxBufferLength:          60,
                 lowLatencyMode:              false,
                 startFragPrefetch:           true,
+                manifestLoadingTimeOut:      10000,
+                manifestLoadingMaxRetry:     6,
+                levelLoadingTimeOut:         10000,
+                levelLoadingMaxRetry:        6,
+                fragLoadingTimeOut:          20000,
+                fragLoadingMaxRetry:         6,
             });
 
             hls.loadSource(VIDEO_SRC);
@@ -92,6 +100,9 @@ export function initializeParkingAllotment() {
             video.src = VIDEO_SRC;
             video.play().catch(() => {});
         }
+
+        // Start drawing the polygon overlay once the stream starts
+        startLiveOverlay();
     }
 
     function stopStream() {
@@ -102,6 +113,98 @@ export function initializeParkingAllotment() {
             video.removeAttribute('src');
             video.load();
         }
+        stopLiveOverlay();
+    }
+
+    // ── Live polygon overlay on video ─────────────────────────────────────────
+    // Draws slot polygons + occupancy status on a canvas layered over the video.
+    // Fetches slot data from the same status API the Pi pushes to, so it always
+    // reflects the latest layout and detection results without restarting the Pi.
+
+    let liveOverlayInterval = null;
+    let liveSlots           = [];
+
+    function startLiveOverlay() {
+        // Fetch slots immediately then poll every 5 seconds
+        fetchLiveSlots();
+        if (liveOverlayInterval) clearInterval(liveOverlayInterval);
+        liveOverlayInterval = setInterval(fetchLiveSlots, 5000);
+    }
+
+    function stopLiveOverlay() {
+        if (liveOverlayInterval) { clearInterval(liveOverlayInterval); liveOverlayInterval = null; }
+        const canvas = document.getElementById('live-overlay-canvas');
+        if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    }
+
+    async function fetchLiveSlots() {
+        try {
+            // Get current slot layout from settings API
+            const slotResp = await fetch('/settings/api/slots/?camera_id=1', { cache: 'no-store' });
+            const slotData = await slotResp.json();
+            if (!slotData.success) return;
+
+            // Get current occupancy status from the Pi's push endpoint
+            const statusResp = await fetch('/parking-allotment/api/parking-status/', { cache: 'no-store' });
+            const statusData = await statusResp.json();
+
+            // Merge occupancy into slots
+            const occupiedLabels = new Set(
+                (statusData.slots || []).filter(s => s.occupied).map(s => s.slot_label)
+            );
+
+            liveSlots = slotData.slots.map(slot => ({
+                ...slot,
+                is_occupied: occupiedLabels.has(slot.slot_label),
+            }));
+
+            drawLiveOverlay();
+        } catch (e) {
+            console.error('fetchLiveSlots failed:', e);
+        }
+    }
+
+    function drawLiveOverlay() {
+        const canvas = document.getElementById('live-overlay-canvas');
+        const video  = document.getElementById('live-video');
+        if (!canvas || !video) return;
+
+        // Keep canvas dimensions in sync with the displayed video size
+        const rect = video.getBoundingClientRect();
+        canvas.width  = rect.width;
+        canvas.height = rect.height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        liveSlots.forEach(slot => {
+            const pts = slot.polygon_points;
+            if (!pts || pts.length < 3) return;
+
+            const color  = slot.is_occupied ? '#ef4444' : '#22c55e';
+            const fill   = slot.is_occupied ? 'rgba(239,68,68,0.20)' : 'rgba(34,197,94,0.15)';
+            const label  = slot.is_occupied ? 'Occupied' : 'Vacant';
+
+            // polygon_points are normalized [0–1], scale to canvas pixels
+            ctx.beginPath();
+            ctx.moveTo(pts[0][0] * canvas.width, pts[0][1] * canvas.height);
+            pts.slice(1).forEach(p => ctx.lineTo(p[0] * canvas.width, p[1] * canvas.height));
+            ctx.closePath();
+            ctx.fillStyle = fill;
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth   = 2;
+            ctx.stroke();
+
+            // Label at centroid
+            const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length * canvas.width;
+            const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length * canvas.height;
+            ctx.fillStyle    = color;
+            ctx.font         = 'bold 13px monospace';
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${slot.slot_label} ${label}`, cx, cy);
+        });
     }
 
     // Mobile parking map (pan + zoom)
@@ -181,8 +284,10 @@ export function initializeParkingAllotment() {
             const response = await fetch('/parking-allotment/api/parking-status/', { cache: 'no-store' });
             if (!response.ok) throw new Error('HTTP ' + response.status);
             const data = await response.json();
-            document.getElementById('occupied-count').innerText = data.occupied;
-            document.getElementById('vacant-count').innerText   = data.vacant;
+            const occupiedEl = document.getElementById('occupied-count');
+            const vacantEl   = document.getElementById('vacant-count');
+            if (occupiedEl) occupiedEl.innerText = data.occupied;
+            if (vacantEl)   vacantEl.innerText   = data.vacant;
         } catch (error) {
             console.error('Failed to fetch parking status', error);
         }
@@ -210,7 +315,7 @@ export function initializeParkingAllotment() {
             const response = await fetch('/parking-allotment/api/latest-snapshot/', { cache: 'no-store' });
             if (!response.ok) throw new Error(response.status);
             const data = await response.json();
-            if (data.url) snapshotImage.src = data.url + '?t=' + Date.now();
+            if (data.url && snapshotImage) snapshotImage.src = data.url + '?t=' + Date.now();
             const availableEl = document.getElementById('available-parking');
             if (availableEl) availableEl.innerText = data.vacant ?? '--';
             if (data.last_modified) nextSnapshotAt = data.last_modified + SNAPSHOT_MS;

@@ -1,65 +1,82 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}
-Parking Usage
-{% endblock title %}
+{% block title %}Parking Usage{% endblock title %}
 
 {% block header %}
 <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center text-white font-bold text-4xl">Parking Usage Dashboard</h1>
 {% endblock header %}
 
 {% block content %}
-<section class="parking-usage h-screen w-full">
+<section class="parking-usage w-full">
     <div class="p-6 space-y-6">
 
+        <!-- Summary Stat Cards -->
+        <div id="summary-stats" class="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-[1600px] mx-auto">
+            <!-- Populated by JS -->
+            <div class="col-span-2 lg:col-span-4 h-20 bg-white rounded-xl shadow-sm animate-pulse"></div>
+        </div>
+
+        <!-- Daily Bar Chart -->
         <section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
-            <h2 class="text-2xl font-bold">Daily Average Occupancy</h2>
-            <hr class="mb-6 border-gray-300">
-            <div class="h-[500px]">
+            <h2 class="text-2xl font-bold text-gray-800">Weekly Vehicle Activity</h2>
+            <p class="text-sm text-gray-400 mt-1 mb-4">Click a day bar to view its hourly breakdown</p>
+            <hr class="mb-6 border-gray-200">
+            <div class="h-[400px]">
                 <canvas id="peak-occupancy-chart"></canvas>
             </div>
         </section>
 
-        <section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto hourly-occupancy-section" style="display: none;" id="hourly-section">
-            <h2 class="text-2xl font-bold">Click a day above to view hourly occupancy</h2>
-            <hr class="mb-6 border-gray-300">
-            <div class="h-[400px]">
+        <!-- Hourly Line Chart (hidden until a day is clicked) -->
+        <section
+            class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto"
+            style="display: none;"
+            id="hourly-section"
+        >
+            <h2 id="hourly-title" class="text-2xl font-bold text-gray-800">Hourly Occupancy</h2>
+            <p class="text-sm text-gray-400 mt-1 mb-4">Vehicle detections per hour for the selected day</p>
+            <hr class="mb-6 border-gray-200">
+            <div class="h-[360px]">
                 <canvas id="hourly-occupancy-chart"></canvas>
             </div>
-            <div class="mt-4 p-4 bg-gray-50 rounded-lg">
-                <p class="text-sm text-gray-600">
+            <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+                </svg>
+                <p class="text-sm text-amber-700">
                     <strong>Campus Hours:</strong> Entry from 6:00 AM, Exit by 5:00 PM
                 </p>
             </div>
         </section>
 
+        <!-- Daily Entries Table -->
         <section class="bg-white rounded-xl shadow-md p-8 max-w-[1600px] mx-auto">
-            <h2 class="text-2xl font-bold">Daily Vehicle Entries</h2>
-            <hr class="mb-6 border-gray-300">
-
+            <h2 class="text-2xl font-bold text-gray-800">Daily Vehicle Entries</h2>
+            <p class="text-sm text-gray-400 mt-1 mb-4">Current week totals</p>
+            <hr class="mb-6 border-gray-200">
             <div class="overflow-x-auto">
-                <table class="min-w-full border-separate border-spacing-y-2">
+                <table class="min-w-full">
                     <thead>
-                        <tr class="bg-gray-100 text-gray-700 uppercase text-xs">
-                            <th class="px-4 py-2 text-left font-bold">Day</th>
-                            <th class="px-4 py-2 text-left font-bold">In</th>
-                            <th class="px-4 py-2 text-left font-bold">Out</th>
+                        <tr class="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
+                            <th class="px-4 py-3 text-left font-semibold">Day</th>
+                            <th class="px-4 py-3 text-left font-semibold">In</th>
+                            <th class="px-4 py-3 text-left font-semibold">Out</th>
+                            <th class="px-4 py-3 text-left font-semibold">Net</th>
                         </tr>
                     </thead>
-                    <tbody id="vehicle-entries-body" class="text-gray-800">
-                        <tr class="border-t border-gray-300">
-                            <td colspan="3" class="px-4 py-4 text-center text-gray-500">Loading entry data...</td>
+                    <tbody id="vehicle-entries-body" class="divide-y divide-gray-100 text-gray-800">
+                        <tr>
+                            <td colspan="4" class="px-4 py-4 text-center text-gray-400 animate-pulse">Loading entry data...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+
     </div>
 </section>
 {% endblock content %}
 
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script type="module" src="{% static 'javascript/parkingUsage.js' %}"></script>
+<script src="{% static 'javascript/parkingUsage.js' %}"></script>
 {% endblock script %}

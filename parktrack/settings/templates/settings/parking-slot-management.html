@@ -230,22 +230,19 @@
                         </div>
                     </div>
 
-                    <!-- PANEL: Capture from live feed -->
+                    <!-- PANEL: Capture from live feed — shows latest clean snapshot from Pi -->
                     <div id="panel-capture" class="hidden">
                         <div class="relative w-full bg-gray-900 rounded-xl overflow-hidden mb-3" style="aspect-ratio:16/9;">
-                            <div id="capture-no-stream" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 text-sm">
-                                <i class="fa-solid fa-video-slash text-3xl mb-2 opacity-40"></i>
-                                <span>No stream URL configured.</span>
-                                <span class="text-xs mt-1 text-gray-400">Set it in Camera Settings first.</span>
+                            <div id="capture-idle" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
+                                <i class="fa-solid fa-image text-3xl opacity-40"></i>
+                                <span>Click below to load the latest snapshot from the Pi.</span>
                             </div>
-                            <video id="capture-stream-video"
-                                   class="hidden w-full h-full object-contain"
-                                   autoplay muted playsinline>
-                            </video>
-                            <div id="capture-overlay" class="hidden absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center gap-2">
-                                <i class="fa-solid fa-circle-check text-emerald-400 text-4xl"></i>
-                                <span class="text-white text-sm font-medium">Frame captured</span>
+                            <div id="capture-loading" class="hidden absolute inset-0 flex items-center justify-center text-gray-400">
+                                <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
                             </div>
+                            <img id="capture-preview-img"
+                                class="hidden w-full h-full object-contain"
+                                alt="Latest snapshot from Pi">
                         </div>
 
                         <div id="capture-error" class="hidden text-xs text-red-600 mb-3">
@@ -254,18 +251,22 @@
                         </div>
 
                         <div class="flex gap-3">
-                            <button id="btn-capture-snap" disabled
-                                    class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#940B26] hover:bg-[#7a0920] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition-colors">
-                                <i class="fa-solid fa-camera"></i> Capture Snapshot
+                            <button id="btn-capture-snap"
+                                    class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#940B26] hover:bg-[#7a0920] text-white rounded-lg font-medium text-sm transition-colors">
+                                <i class="fa-solid fa-rotate"></i> Load Latest Snapshot
+                            </button>
+                            <button id="btn-capture-use"
+                                    disabled
+                                    class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition-colors">
+                                <i class="fa-solid fa-check"></i> Use This Snapshot
                             </button>
                             <button id="btn-capture-cancel" class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-medium text-sm transition-colors">
                                 Cancel
                             </button>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
-            </div>
 
         </div>
     </div>
@@ -278,9 +279,8 @@
      data-edit-camera-url-template="/settings/api/cameras/__ID__/edit/"
      data-upload-snapshot-url-template="/settings/api/cameras/__ID__/upload-snapshot/"
      data-capture-snapshot-url-template="/settings/api/cameras/__ID__/capture-snapshot/"
+     data-set-snapshot-url-template="/settings/api/cameras/__ID__/set-snapshot-url/"
      data-csrf-token="{{ csrf_token }}"
      style="display:none;">
 </div>
-
 {% endblock content %}
-{% block script %}{% endblock script %}

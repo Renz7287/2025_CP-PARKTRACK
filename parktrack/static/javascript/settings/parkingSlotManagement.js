@@ -2,8 +2,6 @@ export function initializeParkingSlotManagement() {
 
     if (!document.getElementById('js-config')) return;
 
-    // ── Config ────────────────────────────────────────────────────────────────
-
     const cfg  = document.getElementById('js-config').dataset;
     const URLS = {
         getSlots:        cfg.getSlotsUrl,
@@ -12,10 +10,10 @@ export function initializeParkingSlotManagement() {
         editCamera:      (id) => cfg.editCameraUrlTemplate.replace('__ID__', id),
         uploadSnapshot:  (id) => cfg.uploadSnapshotUrlTemplate.replace('__ID__', id),
         captureSnapshot: (id) => cfg.captureSnapshotUrlTemplate.replace('__ID__', id),
+        // New: persists the chosen snapshot URL into camera.snapshot_url in the DB
+        setSnapshotUrl:  (id) => cfg.setSnapshotUrlTemplate.replace('__ID__', id),
     };
     const CSRF = cfg.csrfToken;
-
-    // ── DOM refs ──────────────────────────────────────────────────────────────
 
     const canvas          = document.getElementById('polygon-canvas');
     const ctx             = canvas.getContext('2d');
@@ -32,9 +30,7 @@ export function initializeParkingSlotManagement() {
     const labelConfirm    = document.getElementById('label-confirm');
     const labelDiscard    = document.getElementById('label-discard');
 
-    // ── State ─────────────────────────────────────────────────────────────────
-
-    let camera            = null;   // the single camera object from API
+    let camera            = null;
     let slots             = [];
     let originalSlots     = [];
     let currentMode       = 'view';
@@ -52,13 +48,9 @@ export function initializeParkingSlotManagement() {
     const DBL_MS          = 300;
     const DBL_PX          = 10;
 
-    // ── Resize ────────────────────────────────────────────────────────────────
-
     if (window._psmResizeHandler) window.removeEventListener('resize', window._psmResizeHandler);
     window._psmResizeHandler = debounce(syncCanvasSize, 120);
     window.addEventListener('resize', window._psmResizeHandler);
-
-    // ── Canvas events ─────────────────────────────────────────────────────────
 
     if (canvas._psmHandlers) {
         const h = canvas._psmHandlers;
@@ -88,8 +80,6 @@ export function initializeParkingSlotManagement() {
     canvas.addEventListener('touchmove',  _handlers.touchmove,  { passive: false });
     canvas.addEventListener('touchend',   _handlers.touchend,   { passive: false });
 
-    // ── Rebind helper ─────────────────────────────────────────────────────────
-
     function rebind(id, fn) {
         const el = document.getElementById(id);
         if (!el) return;
@@ -107,8 +97,6 @@ export function initializeParkingSlotManagement() {
     rebind('btn-upload-snapshot', () => openSnapshotModal());
     rebind('btn-edit-camera',     () => openEditCameraModal());
 
-    // ── Canvas helpers ────────────────────────────────────────────────────────
-
     function toNorm(px, py) {
         return [Math.min(1, Math.max(0, px / canvas.width)),
                 Math.min(1, Math.max(0, py / canvas.height))];
@@ -125,8 +113,6 @@ export function initializeParkingSlotManagement() {
         canvas.height = r.height;
         redraw();
     }
-
-    // ── Drawing ───────────────────────────────────────────────────────────────
 
     const COLORS = {
         default:  { stroke: '#22c55e', fill: 'rgba(34,197,94,0.15)',  label: '#22c55e' },
@@ -185,8 +171,6 @@ export function initializeParkingSlotManagement() {
         }
     }
 
-    // ── Hit testing ───────────────────────────────────────────────────────────
-
     function isNearFirst(nx, ny) {
         if (currentPoints.length < 3) return false;
         const [fx, fy] = currentPoints[0];
@@ -215,8 +199,6 @@ export function initializeParkingSlotManagement() {
         }
         return inside;
     }
-
-    // ── Pointer events ────────────────────────────────────────────────────────
 
     function onPointerDown(e) {
         if (currentMode === 'view') return;
@@ -281,8 +263,6 @@ export function initializeParkingSlotManagement() {
         openLabelModal(captured);
     }
 
-    // ── Label modal ───────────────────────────────────────────────────────────
-
     function openLabelModal(points) {
         labelInput.value = ''; labelError.classList.add('hidden');
         labelModal.classList.remove('hidden'); labelInput.focus();
@@ -312,8 +292,6 @@ export function initializeParkingSlotManagement() {
     function showLabelErr(msg) { labelErrorText.textContent = msg; labelError.classList.remove('hidden'); }
     function closeLabelModal()  { labelModal.classList.add('hidden'); }
 
-    // ── Slots footer ──────────────────────────────────────────────────────────
-
     function refreshFooter() {
         if (slots.length === 0) { slotsFooter.classList.add('hidden'); return; }
         slotsFooter.classList.remove('hidden');
@@ -330,8 +308,6 @@ export function initializeParkingSlotManagement() {
             slotsTableBody.appendChild(tag);
         });
     }
-
-    // ── API ───────────────────────────────────────────────────────────────────
 
     async function loadCamera() {
         try {
@@ -393,8 +369,6 @@ export function initializeParkingSlotManagement() {
             }
         });
     }
-
-    // ── Edit mode ─────────────────────────────────────────────────────────────
 
     function enterEditingMode() {
         originalSlots = clone(slots); hasUnsavedChanges = false;
@@ -485,7 +459,7 @@ export function initializeParkingSlotManagement() {
         b.classList.add('hidden'); b.classList.remove('flex');
     }
 
-    // ── Edit Camera modal ─────────────────────────────────────────────────────
+    // Edit Camera modal
 
     function openEditCameraModal() {
         if (!camera) return;
@@ -527,7 +501,6 @@ export function initializeParkingSlotManagement() {
             });
             const d = await r.json();
             if (d.success) {
-                // Update local camera state immediately — no need to re-fetch
                 camera.name       = d.camera.name;
                 camera.location   = d.camera.location;
                 camera.stream_url = d.camera.stream_url;
@@ -546,51 +519,12 @@ export function initializeParkingSlotManagement() {
         }
     });
 
-    // ── Snapshot modal ────────────────────────────────────────────────────────
+    // Snapshot modal
 
     const tabUpload    = document.getElementById('tab-upload');
     const tabCapture   = document.getElementById('tab-capture');
     const panelUpload  = document.getElementById('panel-upload');
     const panelCapture = document.getElementById('panel-capture');
-    let captureHls     = null;
-
-    function startCaptureStream(streamUrl) {
-        const video    = document.getElementById('capture-stream-video');
-        const noStream = document.getElementById('capture-no-stream');
-        if (captureHls) { captureHls.destroy(); captureHls = null; }
-        if (!streamUrl) {
-            noStream.classList.remove('hidden');
-            video.classList.add('hidden');
-            document.getElementById('btn-capture-snap').disabled = true;
-            return;
-        }
-        noStream.classList.add('hidden');
-        video.classList.remove('hidden');
-        document.getElementById('btn-capture-snap').disabled = false;
-        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-            captureHls = new Hls({
-                liveSyncDurationCount: 3, liveMaxLatencyDurationCount: 6,
-                maxBufferLength: 10, lowLatencyMode: false,
-            });
-            captureHls.loadSource(streamUrl);
-            captureHls.attachMedia(video);
-            captureHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = streamUrl;
-            video.play().catch(() => {});
-        }
-    }
-
-    function stopCaptureStream() {
-        if (captureHls) { captureHls.destroy(); captureHls = null; }
-        const video = document.getElementById('capture-stream-video');
-        if (video) {
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
-            video.classList.add('hidden');
-        }
-    }
 
     function activateTab(tab) {
         const isUpload = tab === 'upload';
@@ -605,11 +539,11 @@ export function initializeParkingSlotManagement() {
         panelUpload.classList.toggle('hidden',  !isUpload);
         panelCapture.classList.toggle('hidden',  isUpload);
         if (!isUpload) {
-            document.getElementById('capture-overlay').classList.add('hidden');
+            document.getElementById('capture-idle').classList.remove('hidden');
+            document.getElementById('capture-loading').classList.add('hidden');
+            document.getElementById('capture-preview-img').classList.add('hidden');
             document.getElementById('capture-error').classList.add('hidden');
-            startCaptureStream(document.getElementById('snapshot-stream-url').value);
-        } else {
-            stopCaptureStream();
+            document.getElementById('btn-capture-use').disabled = true;
         }
     }
 
@@ -621,21 +555,20 @@ export function initializeParkingSlotManagement() {
         document.getElementById('snapshot-camera-id').value         = camera.id;
         document.getElementById('snapshot-camera-name').textContent = camera.name;
         document.getElementById('snapshot-stream-url').value        = camera.stream_url || '';
-        // Reset upload panel
-        document.getElementById('snapshot-file-input').value = '';
+        document.getElementById('snapshot-file-input').value        = '';
         document.getElementById('snapshot-preview-wrapper').classList.add('hidden');
         document.getElementById('snapshot-error').classList.add('hidden');
         document.getElementById('btn-snapshot-upload').disabled = true;
-        // Reset capture panel
-        stopCaptureStream();
-        document.getElementById('capture-overlay').classList.add('hidden');
+        document.getElementById('capture-idle').classList.remove('hidden');
+        document.getElementById('capture-loading').classList.add('hidden');
+        document.getElementById('capture-preview-img').classList.add('hidden');
         document.getElementById('capture-error').classList.add('hidden');
+        document.getElementById('btn-capture-use').disabled = true;
         activateTab('upload');
         document.getElementById('snapshot-modal').classList.remove('hidden');
     }
 
     function closeSnapshotModal() {
-        stopCaptureStream();
         document.getElementById('snapshot-modal').classList.add('hidden');
     }
 
@@ -645,7 +578,6 @@ export function initializeParkingSlotManagement() {
         if (e.target === this) closeSnapshotModal();
     });
 
-    // File input preview
     document.getElementById('snapshot-file-input').addEventListener('change', function() {
         const file   = this.files[0];
         const errDiv = document.getElementById('snapshot-error');
@@ -671,7 +603,6 @@ export function initializeParkingSlotManagement() {
         document.getElementById('btn-snapshot-upload').disabled = false;
     });
 
-    // Upload submit
     rebind('btn-snapshot-upload', async () => {
         const camId = document.getElementById('snapshot-camera-id').value;
         const file  = document.getElementById('snapshot-file-input').files[0];
@@ -704,48 +635,85 @@ export function initializeParkingSlotManagement() {
         }
     });
 
-    // Capture submit
+    // Load latest clean snapshot from Pi for preview (no polygon overlays)
     rebind('btn-capture-snap', async () => {
         const camId = document.getElementById('snapshot-camera-id').value;
         if (!camId) return;
-        const btn = document.getElementById('btn-capture-snap');
-        btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Capturing…';
+
+        document.getElementById('capture-idle').classList.add('hidden');
+        document.getElementById('capture-loading').classList.remove('hidden');
+        document.getElementById('capture-preview-img').classList.add('hidden');
         document.getElementById('capture-error').classList.add('hidden');
+        document.getElementById('btn-capture-use').disabled = true;
+
         try {
             const r = await fetch(URLS.captureSnapshot(camId), {
                 method: 'POST', headers: {'X-CSRFToken': CSRF},
             });
             const d = await r.json();
+            document.getElementById('capture-loading').classList.add('hidden');
+            if (d.success) {
+                const img = document.getElementById('capture-preview-img');
+                img.src = d.snapshot_url;
+                img.classList.remove('hidden');
+                img.dataset.snapshotUrl = d.snapshot_url;
+                document.getElementById('btn-capture-use').disabled = false;
+            } else {
+                document.getElementById('capture-error-text').textContent = d.error || 'Failed to load snapshot.';
+                document.getElementById('capture-error').classList.remove('hidden');
+                document.getElementById('capture-idle').classList.remove('hidden');
+            }
+        } catch {
+            document.getElementById('capture-loading').classList.add('hidden');
+            document.getElementById('capture-error-text').textContent = 'Server error. Please try again.';
+            document.getElementById('capture-error').classList.remove('hidden');
+            document.getElementById('capture-idle').classList.remove('hidden');
+        }
+    });
+
+    // Confirm and persist the chosen clean snapshot as the editor background
+    rebind('btn-capture-use', async () => {
+        const img = document.getElementById('capture-preview-img');
+        const snapshotUrl = img.dataset.snapshotUrl;
+        if (!snapshotUrl || !camera) return;
+
+        const btn = document.getElementById('btn-capture-use');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+
+        try {
+            // Persist the URL to the DB so it survives page navigation
+            const r = await fetch(URLS.setSnapshotUrl(camera.id), {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+                body: JSON.stringify({snapshot_url: snapshotUrl}),
+            });
+            const d = await r.json();
             if (d.success) {
                 camera.snapshot_url = d.snapshot_url;
-                stopCaptureStream();
-                document.getElementById('capture-overlay').classList.remove('hidden');
+                closeSnapshotModal();
                 await loadSnapshotAsync(d.snapshot_url);
                 syncCanvasSize(); redraw();
-                setTimeout(() => {
-                    closeSnapshotModal();
-                    swal('Captured!', 'Snapshot captured from live feed.', 'success');
-                }, 1000);
+                swal('Done!', 'Snapshot set successfully.', 'success');
             } else {
-                document.getElementById('capture-error-text').textContent = d.error||'Capture failed.';
+                document.getElementById('capture-error-text').textContent = d.error || 'Failed to save snapshot.';
                 document.getElementById('capture-error').classList.remove('hidden');
             }
         } catch {
             document.getElementById('capture-error-text').textContent = 'Server error. Please try again.';
             document.getElementById('capture-error').classList.remove('hidden');
         } finally {
-            const b = document.getElementById('btn-capture-snap');
-            if (b) { b.disabled=false; b.innerHTML='<i class="fa-solid fa-camera mr-1"></i> Capture Snapshot'; }
+            const b = document.getElementById('btn-capture-use');
+            if (b) {
+                b.disabled = false;
+                b.innerHTML = '<i class="fa-solid fa-check"></i> Use This Snapshot';
+            }
         }
     });
-
-    // ── Utilities ─────────────────────────────────────────────────────────────
 
     function clone(obj)       { return JSON.parse(JSON.stringify(obj)); }
     function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; }
     function esc(s)           { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-    // ── Boot ──────────────────────────────────────────────────────────────────
 
     loadCamera();
 }

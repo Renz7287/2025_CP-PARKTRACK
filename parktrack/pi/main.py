@@ -120,7 +120,11 @@ def push_status(slots: list):
 
 
 def push_snapshot(frame: np.ndarray, slots: list, now: float):
-    """Encode frame as JPEG and POST it to Django. No files written to Pi disk."""
+    """
+    Encode the OVERLAID frame (with polygon + detection drawn on it) and POST
+    it to Django's upload-snapshot endpoint. This is what the Parking Allotment
+    snapshot section displays to users.
+    """
     filename = f"snapshot_{int(now)}.jpg"
     occupied = sum(1 for s in slots if s["is_occupied"])
     vacant   = sum(1 for s in slots if not s["is_occupied"])
@@ -138,9 +142,34 @@ def push_snapshot(frame: np.ndarray, slots: list, now: float):
             headers={"X-API-KEY": config.UPLOAD_API_KEY},
             timeout=config.REQUEST_TIMEOUT,
         )
-        logger.info("Snapshot pushed to Django: %s", filename)
+        logger.info("Overlaid snapshot pushed to Django: %s", filename)
     except Exception as exc:
         logger.warning("push_snapshot failed: %s", exc)
+
+
+def push_clean_snapshot(frame: np.ndarray, now: float):
+    """
+    Encode the CLEAN frame (no polygon overlays) and POST it to Django's
+    upload-clean-snapshot endpoint. This is exclusively used by the Parking
+    Layout Editor so the admin can see a clean image when drawing polygon slots.
+    """
+    filename = f"clean_{int(now)}.jpg"
+
+    success, buf = cv2.imencode(".jpg", frame)
+    if not success:
+        logger.warning("push_clean_snapshot: cv2.imencode failed")
+        return
+
+    try:
+        requests.post(
+            f"{config.DJANGO_BASE_URL}/parking-allotment/api/upload-clean-snapshot/",
+            files={"snapshot": (filename, buf.tobytes(), "image/jpeg")},
+            headers={"X-API-KEY": config.UPLOAD_API_KEY},
+            timeout=config.REQUEST_TIMEOUT,
+        )
+        logger.info("Clean snapshot pushed to Django: %s", filename)
+    except Exception as exc:
+        logger.warning("push_clean_snapshot failed: %s", exc)
 
 
 def main():
@@ -198,6 +227,11 @@ def main():
             centroids = get_centroids(results)
 
             update_occupancy(slots, centroids)
+
+            # Save the clean frame BEFORE drawing overlays — used by layout editor
+            clean_frame = frame.copy()
+
+            # Draw detection overlays onto the main frame — used by parking allotment display
             frame = draw_overlays(frame, slots)
 
             frame_count += 1
@@ -205,7 +239,10 @@ def main():
                 push_status(slots)
 
             if now - last_snapshot_time >= config.SNAPSHOT_INTERVAL:
+                # Push the overlaid frame for the parking allotment snapshot section
                 push_snapshot(frame, slots, now)
+                # Push the clean frame separately for the layout editor
+                push_clean_snapshot(clean_frame, now)
                 last_snapshot_time = now
 
             try:

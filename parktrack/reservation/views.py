@@ -14,14 +14,6 @@ from .models import Reservation
 
 @login_required
 def reservation(request):
-    """
-    Renders the Reservations tab.
-
-    KEY DESIGN DECISION: All API URLs are resolved in Python here and passed
-    as context strings. This means any bad URL name causes an obvious 500 error
-    at page load rather than silently crashing the <script> block and leaving
-    window.PARK_TRACK = undefined (which produced the /undefined 404s).
-    """
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     user_vehicles = Vehicle.objects.filter(
@@ -30,15 +22,16 @@ def reservation(request):
 
     camera = Camera.objects.filter(is_active=True).first()
 
-    # Snapshot URL: try reservation-local proxy first, fall back to parkingAllotment.
+    # Use the CLEAN snapshot (no burned-in polygon overlays) as the reservation
+    # map background. The reservation page draws its own SVG polygon overlays
+    # in JavaScript, so the image must be clean. The overlaid snapshot is only
+    # for the Parking Allotment display page.
     try:
-        snapshot_url = reverse('parking_allotment:api-latest-snapshot')
+        snapshot_url = reverse('parking_allotment:api-clean-snapshot')
     except Exception:
         snapshot_url = ''
 
-    # cancelBase + id + cancelSuffix is assembled in JS.
-    # We derive the base from the cancel URL pattern itself so it stays in sync.
-    cancel_base = '/reservation/'
+    cancel_base   = '/reservation/'
     cancel_suffix = '/cancel/'
 
     js_config = {
@@ -92,7 +85,6 @@ def _parse_arrival_time(arrival_time_str):
         t = parse_time(arrival_time_str)
         if not t:
             raise ValueError(f"Cannot parse time: {arrival_time_str!r}")
-        # Use localtime so the comparison against timezone.now() is correct
         now_local = timezone.localtime(timezone.now())
         naive_dt  = timezone.datetime(
             now_local.year, now_local.month, now_local.day,
@@ -100,7 +92,6 @@ def _parse_arrival_time(arrival_time_str):
         )
         aware_dt = timezone.make_aware(naive_dt, timezone.get_current_timezone())
 
-        # If the time has already passed today, assume they mean tomorrow
         if aware_dt <= timezone.now():
             aware_dt += timezone.timedelta(days=1)
 
@@ -110,6 +101,7 @@ def _parse_arrival_time(arrival_time_str):
     if dt is None:
         raise ValueError(f"Cannot parse datetime: {arrival_time_str!r}")
     return dt if not timezone.is_naive(dt) else timezone.make_aware(dt)
+
 
 # ---------------------------------------------------------------------------
 # Slot availability
@@ -294,7 +286,6 @@ def admin_get_all_reservations(request):
                     | Q(user__last_name__icontains=term)
                 )
         else:
-            # Single word — search across all fields
             q = (
                 Q(plate_number__icontains=search)
                 | Q(slot__slot_label__icontains=search)

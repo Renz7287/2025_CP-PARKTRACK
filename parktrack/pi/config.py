@@ -1,7 +1,8 @@
 from pathlib import Path
 
 # Django server
-DJANGO_BASE_URL = "http://10.246.146.103:8000"
+# DJANGO_BASE_URL = "http://10.246.146.103:8000" LAN
+DJANGO_BASE_URL = "http://localhost:8000"
 CAMERA_ID = 1
 SLOT_POLL_INTERVAL = 30
 REQUEST_TIMEOUT = 5
@@ -14,19 +15,22 @@ UPLOAD_API_KEY = "parktrack@2025"
 # USE_PI_CAMERA  = True  -> Pi Camera Module (CSI)
 # Both False             -> test video file
 USE_PI_CAMERA  = False
-USE_USB_CAMERA = True
+USE_USB_CAMERA = False
 USB_CAMERA_INDEX = 0
 
-PROJECT_DIR = Path('/home/parktrack')
-VIDEO_FILE  = PROJECT_DIR / "parktrack" / "media" / "video_stream" / "input.mp4"
+# PROJECT_DIR = Path('/home/parktrack')
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.mp4"
 
 # Output
 OUTPUT_WIDTH  = 1280
 OUTPUT_HEIGHT = 720
 OUTPUT_FPS    = 5
 
-VIDEO_DIR    = Path('/home/parktrack/stream')
-SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
+# VIDEO_DIR    = Path('/home/parktrack/stream')
+VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
+# SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
+SNAPSHOT_DIR = PROJECT_DIR / "media" / "snapshots"
 
 SEGMENT_PATTERN = str(VIDEO_DIR / "segment_%03d.ts")
 OUTPUT_PLAYLIST = str(VIDEO_DIR / "stream.m3u8")
@@ -59,9 +63,10 @@ FFMPEG_CMD = [
     "-pix_fmt",  "yuv420p",
     "-g",        str(OUTPUT_FPS),
     "-sc_threshold", "0",
-    "-hls_time",          "1",
-    "-hls_list_size",     "10",
-    "-hls_flags",         "append_list",
+    '-hls_time', '2',       # 2-second segments — short enough to stay live
+    '-hls_list_size',   '10',      # keep 10 segments in the playlist (= 20s window)
+    '-hls_flags',       'delete_segments+append_list',
+    '-hls_segment_type','mpegts',
     "-hls_segment_filename", SEGMENT_PATTERN,
     OUTPUT_PLAYLIST,
 ]
