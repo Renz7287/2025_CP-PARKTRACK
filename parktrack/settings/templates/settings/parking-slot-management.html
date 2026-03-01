@@ -12,12 +12,10 @@
     <div class="p-5 bg-[#dcdbdb] min-h-screen">
         <div class="w-full mx-auto">
 
-            <!-- Main Editor Card -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden mb-5">
 
                 <div class="border-b border-gray-200 px-6 py-4">
 
-                    <!-- View-mode toolbar -->
                     <div id="toolbar-view" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <h2 class="text-xl font-bold text-gray-800">Parking Layout Editor</h2>
@@ -45,7 +43,6 @@
                         </div>
                     </div>
 
-                    <!-- Edit-mode toolbar -->
                     <div id="toolbar-edit" class="hidden flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <h2 class="text-xl font-bold text-gray-800">Editing Mode</h2>
@@ -81,7 +78,6 @@
                     </div>
                 </div>
 
-                <!-- Instructions strip -->
                 <div id="instructions-bar" class="hidden bg-blue-50 border-b border-blue-100 px-6 py-3">
                     <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-blue-700">
                         <span><i class="fa-solid fa-plus text-emerald-600 mr-1"></i><strong>Add:</strong> Click points to build a polygon, double-click to close</span>
@@ -90,7 +86,6 @@
                     </div>
                 </div>
 
-                <!-- Canvas -->
                 <div class="relative bg-gray-900" id="canvas-wrapper">
                     <div id="empty-state" class="flex flex-col items-center justify-center py-32 text-gray-400">
                         <i class="fa-solid fa-spinner fa-spin text-4xl mb-4 opacity-50"></i>
@@ -105,7 +100,6 @@
                     </div>
                 </div>
 
-                <!-- Slots footer -->
                 <div id="slots-footer" class="hidden border-t border-gray-200 px-6 py-4">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-gray-700 text-sm">
@@ -117,8 +111,8 @@
                 </div>
             </div>
 
-            <!-- MODAL: Label a new polygon slot -->
-            <div id="label-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <!-- MODAL: Label new slot -->
+            <div id="label-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(100,116,139,0.45);">
                 <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-1">Name this slot</h3>
                     <p class="text-sm text-gray-500 mb-4">Give this parking slot a unique label (e.g. A1, B3).</p>
@@ -136,7 +130,7 @@
             </div>
 
             <!-- MODAL: Camera Settings -->
-            <div id="edit-camera-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div id="edit-camera-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" style="background:rgba(100,116,139,0.45);">
                 <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4">
                         <i class="fa-solid fa-sliders text-[#940B26] mr-2"></i>Camera Settings
@@ -173,7 +167,7 @@
             </div>
 
             <!-- MODAL: Update Snapshot -->
-            <div id="snapshot-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div id="snapshot-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" style="background:rgba(100,116,139,0.45);">
                 <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
 
                     <div class="mb-4">
@@ -188,7 +182,6 @@
                     <input type="hidden" id="snapshot-camera-id">
                     <input type="hidden" id="snapshot-stream-url">
 
-                    <!-- Tab bar -->
                     <div class="flex rounded-lg border border-gray-200 p-1 bg-gray-50 mb-5 gap-1">
                         <button id="tab-upload"
                                 class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-white shadow-sm text-gray-800">
@@ -200,7 +193,7 @@
                         </button>
                     </div>
 
-                    <!-- PANEL: Upload -->
+                    <!-- Upload panel -->
                     <div id="panel-upload">
                         <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors mb-3">
                             <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
@@ -230,7 +223,7 @@
                         </div>
                     </div>
 
-                    <!-- PANEL: Capture from live feed — shows latest clean snapshot from Pi -->
+                    <!-- Capture panel: loads latest clean snapshot pushed by the Pi -->
                     <div id="panel-capture" class="hidden">
                         <div class="relative w-full bg-gray-900 rounded-xl overflow-hidden mb-3" style="aspect-ratio:16/9;">
                             <div id="capture-idle" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
@@ -240,9 +233,7 @@
                             <div id="capture-loading" class="hidden absolute inset-0 flex items-center justify-center text-gray-400">
                                 <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
                             </div>
-                            <img id="capture-preview-img"
-                                class="hidden w-full h-full object-contain"
-                                alt="Latest snapshot from Pi">
+                            <img id="capture-preview-img" class="hidden w-full h-full object-contain" alt="Latest snapshot from Pi">
                         </div>
 
                         <div id="capture-error" class="hidden text-xs text-red-600 mb-3">
@@ -255,8 +246,7 @@
                                     class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#940B26] hover:bg-[#7a0920] text-white rounded-lg font-medium text-sm transition-colors">
                                 <i class="fa-solid fa-rotate"></i> Load Latest Snapshot
                             </button>
-                            <button id="btn-capture-use"
-                                    disabled
+                            <button id="btn-capture-use" disabled
                                     class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition-colors">
                                 <i class="fa-solid fa-check"></i> Use This Snapshot
                             </button>
@@ -264,9 +254,10 @@
                                 Cancel
                             </button>
                         </div>
-
                     </div>
+
                 </div>
+            </div>
 
         </div>
     </div>
@@ -283,4 +274,5 @@
      data-csrf-token="{{ csrf_token }}"
      style="display:none;">
 </div>
+
 {% endblock content %}
