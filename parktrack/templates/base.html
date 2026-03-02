@@ -7,7 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
     {% block title %}
-
     {% endblock title %}
     </title>
     <link rel="icon" type="image/png" href="{% static 'images/parktrack-logo-favicon.png' %}"/>
@@ -18,53 +17,60 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/2.3.3/js/dataTables.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body class="flex bg-[#dcdbdb]">
-
-  	{% include 'navbar.html' %}
-
-  	<main id="content" class="h-screen w-full overflow-auto">
+    {% include 'navbar.html' %}
+    <main id="content" class="h-screen w-full overflow-auto">
 {% endif %}
-    
-    <header class="top-0 sticky bg-[#940B26] shadow-xl h-20 z-[5] pt-[0.5px] pb-3">
-		{% block header %}
 
-		{% endblock header %}
+    <header class="top-0 sticky bg-[#940B26] shadow-xl h-20 z-[5] pt-[0.5px] pb-3 flex items-center justify-between pr-6">
+        <div class="flex-1">
+            {% block header %}
+            {% endblock header %}
+        </div>
+        <a href="{% url 'notification:notification' %}"
+           class="js-link relative text-white text-2xl hover:text-red-200 transition-colors mt-3"
+           title="Notifications"
+        >
+            <i class="fa-regular fa-bell"></i>
+            <span
+                id="notif-badge"
+                class="absolute -top-1.5 -right-1.5 bg-white text-[#940B26] text-[10px] font-bold
+                       w-4 h-4 flex items-center justify-center rounded-full hidden"
+            ></span>
+        </a>
     </header>
-    
+
     {% block content %}
-
     {% endblock %}
-    
+
 {% if not is_partial %}
-  	</main>
-  
-  	{% if messages %}
+    </main>
+
+    {% if messages %}
     <script>
-		{% for message in messages%}  
-			let icon = 'info';
+        {% for message in messages %}
+            let icon = 'info';
+            if ('{{ message.tags }}' === 'success') icon = 'success';
+            if ('{{ message.tags }}' === 'error') icon = 'error';
+            if ('{{ message.tags }}' === 'warning') icon = 'warning';
 
-			if ('{{ message.tags }}' === 'success') icon = 'success';
-			if ('{{ message.tags }}' === 'error') icon = 'error';
-			if ('{{ message.tags }}' === 'warning') icon = 'warning';
-		
-			Swal.fire({
-			icon: icon,
-			title: '{{ message|escapejs }}',
-			showConfirmButton: true,
-			customClass: {
-				confirmButton: 'px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] focus:outline-none'
-			},
-			buttonsStyling: false
-			});
-		{% endfor %}
+            Swal.fire({
+                icon: icon,
+                title: '{{ message|escapejs }}',
+                showConfirmButton: true,
+                customClass: {
+                    confirmButton: 'px-4 py-2 bg-[#7cd1f9] text-white rounded-md hover:bg-[#78cbf2] focus:outline-none'
+                },
+                buttonsStyling: false
+            });
+        {% endfor %}
     </script>
-	{% endif %}
-	<script type="module" src="{% static 'javascript/base.js' %}"></script>
-	{% block script %}
-
-	{% endblock script %}
+    {% endif %}
+    <script type="module" src="{% static 'javascript/base.js' %}"></script>
+    {% block script %}
+    {% endblock script %}
 </body>
 </html>
 {{ redirect_to_login_immediately }}

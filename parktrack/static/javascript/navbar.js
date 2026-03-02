@@ -50,10 +50,6 @@ export async function loadContent(url, addToHistory = true) {
             });
         }
 
-        // After the for...of loop, before the history.pushState
-        console.log('Scripts executed. PARK_TRACK:', window.PARK_TRACK);
-        console.log('Found scripts:', scripts.length, scripts.map(s => s.textContent.substring(0, 50)));
-
         if (addToHistory) history.pushState(null, '', url);
         return true;
     } catch (error) {

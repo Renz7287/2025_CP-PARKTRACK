@@ -1,65 +1,92 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
     Notifications
 {% endblock title %}
 
 {% block header %}
-<h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center text-white font-bold text-4xl">Notifications</h1>
+    <h1 class="mt-4 md:ml-5 pb-2 md:text-left text-center text-white font-bold text-4xl">Notifications</h1>
 {% endblock header %}
 
 {% block content %}
-<main class="flex-1 p-4 md:p-6">
-    <div class="w-full bg-white rounded-xl shadow-lg p-4 md:p-6 h-full max-h-[80vh] overflow-y-auto space-y-4 md:space-y-6">
+<section class="notifications-section px-4 md:px-10 py-6 space-y-6">
 
-        <!-- Notification 1 -->
-        <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm w-full flex items-start">
-            <span class="text-yellow-500 text-2xl md:text-3xl mr-3 md:mr-4">⚠️</span>
-            <p class="text-gray-800 text-base md:text-lg leading-relaxed">
-                Alert: Vehicle with plate number <span class="font-semibold">JWT 123</span> is not properly parked in the designated 4-wheel parking area.
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-sm text-gray-500">
+                {% if unread_count > 0 %}
+                    You have <span class="font-semibold text-[#940B26]">{{ unread_count }} unread</span> notification{{ unread_count|pluralize }}
+                {% else %}
+                    You're all caught up
+                {% endif %}
             </p>
         </div>
-
-        <!-- Notification 2 -->
-        <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm w-full flex items-start">
-            <span class="text-yellow-500 text-2xl md:text-3xl mr-3 md:mr-4">⚠️</span>
-            <p class="text-gray-800 text-base md:text-lg leading-relaxed">
-                Alert: Vehicle with plate number <span class="font-semibold">GAP 123</span> is not properly parked in the designated motorcycle parking area.
-            </p>
-        </div>
-
-        <!-- Notification 3 -->
-        <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm w-full">
-            <p class="text-gray-800 text-base md:text-lg leading-relaxed">Notification 3…</p>
-        </div>
-
-        <!-- Notification 4 -->
-        <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm w-full">
-            <p class="text-gray-800 text-base md:text-lg leading-relaxed">Notification 4…</p>
-        </div>
-
-        <!-- Notification 5 -->
-        <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm w-full">
-            <p class="text-gray-800 text-base md:text-lg leading-relaxed">Notification 5…</p>
-        </div>
-
-        <!-- Extra Notifications for scroll -->
-        <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm w-full">
-            <p class="text-gray-800 text-base md:text-lg leading-relaxed">Notification 6…</p>
-        </div>
-        <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm w-full">
-            <p class="text-gray-800 text-base md:text-lg leading-relaxed">Notification 7…</p>
-        </div>
-        <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm w-full">
-            <p class="text-gray-800 text-base md:text-lg leading-relaxed">Notification 8…</p>
-        </div>
-
-        <!-- Loading indicator -->
-        <div class="flex justify-center p-3 text-gray-500 text-base md:text-lg">...</div>
+        {% if notifications %}
+        <button
+            id="mark-all-read-btn"
+            class="text-sm font-medium text-[#940B26] border border-[#940B26] px-4 py-2 rounded-lg
+                   hover:bg-[#940B26] hover:text-white transition-colors cursor-pointer"
+        >
+            Mark all as read
+        </button>
+        {% endif %}
     </div>
-</main>
-{% endblock content %}
+
+    {% if notifications %}
+    <div class="space-y-3" id="notifications-list">
+        {% for notif in notifications %}
+        <div
+            data-id="{{ notif.pk }}"
+            class="notif-item flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border-l-4 transition-all
+                   {% if not notif.is_read %}border-[#940B26]{% else %}border-transparent opacity-60{% endif %}"
+        >
+            <div class="flex-shrink-0 mt-0.5">
+                {% if notif.notif_type == 'expiring_soon' %}
+                <span class="w-9 h-9 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                    <i class="fa-solid fa-clock text-sm"></i>
+                </span>
+                {% elif notif.notif_type == 'expired' %}
+                <span class="w-9 h-9 flex items-center justify-center rounded-full bg-red-100 text-red-500">
+                    <i class="fa-solid fa-circle-xmark text-sm"></i>
+                </span>
+                {% elif notif.notif_type == 'cancelled' %}
+                <span class="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                    <i class="fa-solid fa-ban text-sm"></i>
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="flex-1 min-w-0">
+                <p class="text-sm text-gray-800 {% if not notif.is_read %}font-semibold{% endif %}">
+                    {{ notif.message }}
+                </p>
+                <p class="text-xs text-gray-400 mt-1">{{ notif.created_at|timesince }} ago</p>
+            </div>
+
+            {% if not notif.is_read %}
+            <button
+                class="mark-one-read flex-shrink-0 text-xs text-[#940B26] hover:underline cursor-pointer mt-0.5"
+                data-id="{{ notif.pk }}"
+            >
+                Dismiss
+            </button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-28 text-gray-400">
+        <i class="fa-regular fa-bell-slash text-5xl mb-4"></i>
+        <p class="text-lg font-medium">No notifications yet</p>
+        <p class="text-sm mt-1">Reservation updates will appear here</p>
+    </div>
+    {% endif %}
+
+</section>
+{% endblock %}
 
 {% block script %}
-
+<script type="module" src="{% static 'javascript/notification.js' %}"></script>
 {% endblock script %}
