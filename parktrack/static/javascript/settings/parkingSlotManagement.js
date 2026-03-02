@@ -4,14 +4,13 @@ export function initializeParkingSlotManagement() {
 
     const cfg  = document.getElementById('js-config').dataset;
     const URLS = {
-        getSlots:        cfg.getSlotsUrl,
-        bulkSave:        cfg.bulkSaveUrl,
-        getCamera:       cfg.getCameraUrl,
-        editCamera:      (id) => cfg.editCameraUrlTemplate.replace('__ID__', id),
-        uploadSnapshot:  (id) => cfg.uploadSnapshotUrlTemplate.replace('__ID__', id),
-        captureSnapshot: (id) => cfg.captureSnapshotUrlTemplate.replace('__ID__', id),
-        // New: persists the chosen snapshot URL into camera.snapshot_url in the DB
-        setSnapshotUrl:  (id) => cfg.setSnapshotUrlTemplate.replace('__ID__', id),
+        getSlots:       cfg.getSlotsUrl,
+        bulkSave:       cfg.bulkSaveUrl,
+        getCamera:      cfg.getCameraUrl,
+        editCamera:     (id) => cfg.editCameraUrlTemplate.replace('__ID__', id),
+        uploadSnapshot: (id) => cfg.uploadSnapshotUrlTemplate.replace('__ID__', id),
+        cleanStream:    (id) => cfg.cleanStreamUrlTemplate.replace('__ID__', id),
+        captureSnapshot:(id) => cfg.captureSnapshotUrlTemplate.replace('__ID__', id),
     };
     const CSRF = cfg.csrfToken;
 
@@ -526,24 +525,35 @@ export function initializeParkingSlotManagement() {
     const panelUpload  = document.getElementById('panel-upload');
     const panelCapture = document.getElementById('panel-capture');
 
+    let _hlsInstance = null;
+
+    function stopCleanStream() {
+        const video = document.getElementById('capture-video');
+        if (_hlsInstance) { _hlsInstance.destroy(); _hlsInstance = null; }
+        if (video) { video.pause(); video.src = ''; video.classList.add('hidden'); }
+    }
+
     function activateTab(tab) {
         const isUpload = tab === 'upload';
-        tabUpload.classList.toggle('bg-white',       isUpload);
-        tabUpload.classList.toggle('shadow-sm',      isUpload);
-        tabUpload.classList.toggle('text-gray-800',  isUpload);
-        tabUpload.classList.toggle('text-gray-500',  !isUpload);
-        tabCapture.classList.toggle('bg-white',      !isUpload);
-        tabCapture.classList.toggle('shadow-sm',     !isUpload);
-        tabCapture.classList.toggle('text-gray-800', !isUpload);
-        tabCapture.classList.toggle('text-gray-500',  isUpload);
+        tabUpload.classList.toggle('bg-white',      isUpload);
+        tabUpload.classList.toggle('shadow-sm',     isUpload);
+        tabUpload.classList.toggle('text-gray-800', isUpload);
+        tabUpload.classList.toggle('text-gray-500', !isUpload);
+        tabCapture.classList.toggle('bg-white',     !isUpload);
+        tabCapture.classList.toggle('shadow-sm',    !isUpload);
+        tabCapture.classList.toggle('text-gray-800',!isUpload);
+        tabCapture.classList.toggle('text-gray-500', isUpload);
         panelUpload.classList.toggle('hidden',  !isUpload);
         panelCapture.classList.toggle('hidden',  isUpload);
         if (!isUpload) {
+            stopCleanStream();
             document.getElementById('capture-idle').classList.remove('hidden');
             document.getElementById('capture-loading').classList.add('hidden');
+            document.getElementById('capture-video').classList.add('hidden');
             document.getElementById('capture-preview-img').classList.add('hidden');
             document.getElementById('capture-error').classList.add('hidden');
             document.getElementById('btn-capture-use').disabled = true;
+            document.getElementById('btn-capture-snap').innerHTML = '<i class="fa-solid fa-play"></i> Start Live Preview';
         }
     }
 
@@ -569,6 +579,7 @@ export function initializeParkingSlotManagement() {
     }
 
     function closeSnapshotModal() {
+        stopCleanStream();
         document.getElementById('snapshot-modal').classList.add('hidden');
     }
 
@@ -635,80 +646,121 @@ export function initializeParkingSlotManagement() {
         }
     });
 
-    // Load latest clean snapshot from Pi for preview (no polygon overlays)
+    // Start/stop the live clean HLS stream inside the modal
     rebind('btn-capture-snap', async () => {
         const camId = document.getElementById('snapshot-camera-id').value;
         if (!camId) return;
 
-        document.getElementById('capture-idle').classList.add('hidden');
-        document.getElementById('capture-loading').classList.remove('hidden');
-        document.getElementById('capture-preview-img').classList.add('hidden');
-        document.getElementById('capture-error').classList.add('hidden');
-        document.getElementById('btn-capture-use').disabled = true;
+        const video      = document.getElementById('capture-video');
+        const btnSnap    = document.getElementById('btn-capture-snap');
+        const btnUse     = document.getElementById('btn-capture-use');
+        const idleEl     = document.getElementById('capture-idle');
+        const loadingEl  = document.getElementById('capture-loading');
+        const errorEl    = document.getElementById('capture-error');
+        const errorTxt   = document.getElementById('capture-error-text');
+        const previewImg = document.getElementById('capture-preview-img');
+
+        // If already streaming, stop it
+        if (!video.classList.contains('hidden')) {
+            stopCleanStream();
+            idleEl.classList.remove('hidden');
+            previewImg.classList.add('hidden');
+            btnUse.disabled = true;
+            btnSnap.innerHTML = '<i class="fa-solid fa-play"></i> Start Live Preview';
+            return;
+        }
+
+        idleEl.classList.add('hidden');
+        loadingEl.classList.remove('hidden');
+        errorEl.classList.add('hidden');
+        previewImg.classList.add('hidden');
+        btnSnap.disabled = true;
 
         try {
-            const r = await fetch(URLS.captureSnapshot(camId), {
-                method: 'POST', headers: {'X-CSRFToken': CSRF},
-            });
+            const r = await fetch(URLS.cleanStream(camId));
             const d = await r.json();
-            document.getElementById('capture-loading').classList.add('hidden');
-            if (d.success) {
-                const img = document.getElementById('capture-preview-img');
-                img.src = d.snapshot_url;
-                img.classList.remove('hidden');
-                img.dataset.snapshotUrl = d.snapshot_url;
-                document.getElementById('btn-capture-use').disabled = false;
+            loadingEl.classList.add('hidden');
+            btnSnap.disabled = false;
+
+            if (!d.success) {
+                errorTxt.textContent = d.error || 'Stream unavailable.';
+                errorEl.classList.remove('hidden');
+                idleEl.classList.remove('hidden');
+                return;
+            }
+
+            video.classList.remove('hidden');
+            btnUse.disabled = false;
+            btnSnap.innerHTML = '<i class="fa-solid fa-stop"></i> Stop Preview';
+
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                _hlsInstance = new Hls({ lowLatencyMode: true });
+                _hlsInstance.loadSource(d.stream_url);
+                _hlsInstance.attachMedia(video);
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Safari native HLS
+                video.src = d.stream_url;
             } else {
-                document.getElementById('capture-error-text').textContent = d.error || 'Failed to load snapshot.';
-                document.getElementById('capture-error').classList.remove('hidden');
-                document.getElementById('capture-idle').classList.remove('hidden');
+                errorTxt.textContent = 'HLS not supported in this browser.';
+                errorEl.classList.remove('hidden');
+                video.classList.add('hidden');
+                idleEl.classList.remove('hidden');
+                btnUse.disabled = true;
             }
         } catch {
-            document.getElementById('capture-loading').classList.add('hidden');
-            document.getElementById('capture-error-text').textContent = 'Server error. Please try again.';
-            document.getElementById('capture-error').classList.remove('hidden');
-            document.getElementById('capture-idle').classList.remove('hidden');
+            loadingEl.classList.add('hidden');
+            btnSnap.disabled = false;
+            errorTxt.textContent = 'Server error. Please try again.';
+            errorEl.classList.remove('hidden');
+            idleEl.classList.remove('hidden');
         }
     });
 
-    // Confirm and persist the chosen clean snapshot as the editor background
+    // Grab the current video frame via canvas and POST it as the new snapshot
     rebind('btn-capture-use', async () => {
-        const img = document.getElementById('capture-preview-img');
-        const snapshotUrl = img.dataset.snapshotUrl;
-        if (!snapshotUrl || !camera) return;
+        const video  = document.getElementById('capture-video');
+        const canvas = document.getElementById('capture-canvas');
+        if (!camera || video.classList.contains('hidden') || video.readyState < 2) return;
 
-        const btn = document.getElementById('btn-capture-use');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
 
-        try {
-            // Persist the URL to the DB so it survives page navigation
-            const r = await fetch(URLS.setSnapshotUrl(camera.id), {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
-                body: JSON.stringify({snapshot_url: snapshotUrl}),
-            });
-            const d = await r.json();
-            if (d.success) {
-                camera.snapshot_url = d.snapshot_url;
-                closeSnapshotModal();
-                await loadSnapshotAsync(d.snapshot_url);
-                syncCanvasSize(); redraw();
-                swal('Done!', 'Snapshot set successfully.', 'success');
-            } else {
-                document.getElementById('capture-error-text').textContent = d.error || 'Failed to save snapshot.';
-                document.getElementById('capture-error').classList.remove('hidden');
+        const btnUse    = document.getElementById('btn-capture-use');
+        const errorEl   = document.getElementById('capture-error');
+        const errorTxt  = document.getElementById('capture-error-text');
+        btnUse.disabled = true;
+        btnUse.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+        errorEl.classList.add('hidden');
+
+        canvas.toBlob(async (blob) => {
+            const form = new FormData();
+            form.append('snapshot', blob, `snapshot_camera_${camera.id}.jpg`);
+
+            try {
+                const r = await fetch(URLS.captureSnapshot(camera.id), {
+                    method: 'POST', headers: { 'X-CSRFToken': CSRF }, body: form,
+                });
+                const d = await r.json();
+                if (d.success) {
+                    camera.snapshot_url = d.snapshot_url;
+                    stopCleanStream();
+                    closeSnapshotModal();
+                    await loadSnapshotAsync(d.snapshot_url);
+                    syncCanvasSize(); redraw();
+                    swal('Done!', 'Snapshot set successfully.', 'success');
+                } else {
+                    errorTxt.textContent = d.error || 'Failed to save snapshot.';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch {
+                errorTxt.textContent = 'Server error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                const b = document.getElementById('btn-capture-use');
+                if (b) { b.disabled = false; b.innerHTML = '<i class="fa-solid fa-camera"></i> Capture & Use'; }
             }
-        } catch {
-            document.getElementById('capture-error-text').textContent = 'Server error. Please try again.';
-            document.getElementById('capture-error').classList.remove('hidden');
-        } finally {
-            const b = document.getElementById('btn-capture-use');
-            if (b) {
-                b.disabled = false;
-                b.innerHTML = '<i class="fa-solid fa-check"></i> Use This Snapshot';
-            }
-        }
+        }, 'image/jpeg', 0.92);
     });
 
     function clone(obj)       { return JSON.parse(JSON.stringify(obj)); }

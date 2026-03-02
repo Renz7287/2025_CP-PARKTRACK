@@ -32,8 +32,13 @@ VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
 # SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
 SNAPSHOT_DIR = PROJECT_DIR / "media" / "snapshots"
 
-SEGMENT_PATTERN = str(VIDEO_DIR / "segment_%03d.ts")
-OUTPUT_PLAYLIST = str(VIDEO_DIR / "stream.m3u8")
+SEGMENT_PATTERN       = str(VIDEO_DIR / "segment_%03d.ts")
+OUTPUT_PLAYLIST       = str(VIDEO_DIR / "stream.m3u8")
+CLEAN_SEGMENT_PATTERN = str(VIDEO_DIR / "clean_stream" / "segment_%03d.ts")
+CLEAN_OUTPUT_PLAYLIST = str(VIDEO_DIR / "clean_stream" / "stream.m3u8")
+
+# Ensure clean stream directory exists at import time
+(VIDEO_DIR / "clean_stream").mkdir(parents=True, exist_ok=True)
 
 # Snapshots
 SNAPSHOT_INTERVAL = 60
@@ -63,10 +68,33 @@ FFMPEG_CMD = [
     "-pix_fmt",  "yuv420p",
     "-g",        str(OUTPUT_FPS),
     "-sc_threshold", "0",
-    '-hls_time', '2',       # 2-second segments — short enough to stay live
-    '-hls_list_size',   '10',      # keep 10 segments in the playlist (= 20s window)
-    '-hls_flags',       'delete_segments+append_list',
-    '-hls_segment_type','mpegts',
+    "-hls_time",          "2",
+    "-hls_list_size",     "10",
+    "-hls_flags",         "delete_segments+append_list",
+    "-hls_segment_type",  "mpegts",
     "-hls_segment_filename", SEGMENT_PATTERN,
     OUTPUT_PLAYLIST,
+]
+
+# Second FFmpeg process — encodes clean frames (no polygon overlays).
+# Exclusively used by the layout editor live preview in the admin UI.
+FFMPEG_CLEAN_CMD = [
+    "ffmpeg",
+    "-f",        "rawvideo",
+    "-pix_fmt",  "bgr24",
+    "-s",        f"{OUTPUT_WIDTH}x{OUTPUT_HEIGHT}",
+    "-r",        str(OUTPUT_FPS),
+    "-i",        "-",
+    "-c:v",      "libx264",
+    "-preset",   "ultrafast",
+    "-tune",     "zerolatency",
+    "-pix_fmt",  "yuv420p",
+    "-g",        str(OUTPUT_FPS),
+    "-sc_threshold", "0",
+    "-hls_time",          "2",
+    "-hls_list_size",     "3",
+    "-hls_flags",         "delete_segments+omit_endlist",
+    "-hls_segment_type",  "mpegts",
+    "-hls_segment_filename", CLEAN_SEGMENT_PATTERN,
+    CLEAN_OUTPUT_PLAYLIST,
 ]

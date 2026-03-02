@@ -20,7 +20,6 @@ urlpatterns = [
     path('api/cameras/', views.api_get_camera, name='api_get_camera'),
     path('api/cameras/<int:pk>/edit/', views.api_edit_camera, name='api_edit_camera'),
     path('api/cameras/<int:pk>/upload-snapshot/', views.api_upload_snapshot, name='api_upload_snapshot'),
-    path('api/cameras/<int:pk>/capture-snapshot/', views.api_capture_snapshot, name='api_capture_snapshot'),
-    # Persists the URL chosen via "Use This Snapshot" into camera.snapshot_url
-    path('api/cameras/<int:pk>/set-snapshot-url/', views.api_set_snapshot_url, name='api_set_snapshot_url'),
+    path('api/cameras/<int:pk>/clean-stream/', views.api_get_clean_stream, name='api_get_clean_stream'),
+    path('api/cameras/<int:pk>/capture-snapshot/', views.api_capture_snapshot_from_frame, name='api_capture_snapshot'),
 ]
