@@ -71,16 +71,9 @@ class Reservation(models.Model):
         return timezone.now() > self.expiry_time
 
     def check_and_expire(self):
-        """
-        Transitions an overdue active reservation to 'expired' and frees the slot.
-        Call from a Celery beat task every minute, or inline before reads.
-        Returns True if the reservation was just expired.
-        """
         if self.status == 'active' and self.is_expired:
             self.status = 'expired'
-            self.save(update_fields=['status'])
-            # Only reset the slot if it's still marked reserved
-            # (YOLO may have already changed it to 'occupied')
+            self.save()  # full save so post_save signal fires
             if self.slot.status == 'reserved':
                 self.slot.status = 'available'
                 self.slot.save(update_fields=['status', 'updated_at'])
@@ -92,7 +85,7 @@ class Reservation(models.Model):
         self.status = 'cancelled'
         self.cancelled_at = timezone.now()
         self.cancelled_by_admin = by_admin
-        self.save(update_fields=['status', 'cancelled_at', 'cancelled_by_admin'])
+        self.save()  # full save so post_save signal fires
         if self.slot.status == 'reserved':
             self.slot.status = 'available'
             self.slot.save(update_fields=['status', 'updated_at'])
