@@ -22,29 +22,23 @@ def reservation(request):
 
     camera = Camera.objects.filter(is_active=True).first()
 
-    # Use the CLEAN snapshot (no burned-in polygon overlays) as the reservation
-    # map background. The reservation page draws its own SVG polygon overlays
-    # in JavaScript, so the image must be clean. The overlaid snapshot is only
-    # for the Parking Allotment display page.
     try:
         snapshot_url = reverse('parking_allotment:api-clean-snapshot')
     except Exception:
         snapshot_url = ''
 
-    cancel_base   = '/reservation/'
-    cancel_suffix = '/cancel/'
-
     js_config = {
         'isAdmin':   'true' if getattr(request.user, 'is_admin', False) else 'false',
         'cameraId':  camera.id if camera else None,
         'urls': {
-            'snapshot':       snapshot_url,
-            'slots':          reverse('reservation:reservation_slots'),
-            'myReservations': reverse('reservation:my_reservations'),
-            'create':         reverse('reservation:create_reservation'),
-            'adminAll':       reverse('reservation:admin_all_reservations'),
-            'cancelBase':     cancel_base,
-            'cancelSuffix':   cancel_suffix,
+            'snapshot':        snapshot_url,
+            'slots':           reverse('reservation:reservation_slots'),
+            'myReservations':  reverse('reservation:my_reservations'),
+            'create':          reverse('reservation:create_reservation'),
+            'adminAll':        reverse('reservation:admin_all_reservations'),
+            'adminSlotToggle': reverse('reservation:admin_toggle_slot'),
+            'cancelBase':      '/reservation/',
+            'cancelSuffix':    '/cancel/',
         }
     }
 
@@ -56,7 +50,6 @@ def reservation(request):
     }
 
     return render(request, 'reservation/index.html', context)
-
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -111,8 +104,12 @@ def _parse_arrival_time(arrival_time_str):
 @require_http_methods(["GET"])
 def get_available_slots(request):
     _expire_stale_reservations()
+    include_disabled = request.GET.get('include_disabled') == '1'
 
-    qs = ParkingSlot.objects.filter(is_active=True).select_related('camera')
+    if include_disabled and (getattr(request.user, 'is_admin', False) or request.user.is_staff):
+        qs = ParkingSlot.objects.all().select_related('camera')
+    else:
+        qs = ParkingSlot.objects.filter(is_active=True).select_related('camera')
 
     camera_id = request.GET.get('camera_id')
     if camera_id:
@@ -125,6 +122,10 @@ def get_available_slots(request):
     slots = []
     for slot in qs:
         d = slot.to_dict()
+        # If the slot has an active reservation, always show it as reserved
+        # regardless of what the detection pipeline may have written to slot.status
+        if slot.id in reserved_slot_ids:
+            d['status'] = 'reserved'
         d['is_reservable'] = (
             slot.is_active
             and slot.status == 'available'
@@ -306,4 +307,53 @@ def admin_get_all_reservations(request):
     return JsonResponse({
         'reservations': [r.to_dict() for r in qs],
         'summary':      summary,
+    })
+
+@login_required
+@require_http_methods(["POST"])
+def admin_toggle_slot(request):
+    """
+    POST /reservation/admin/slot/toggle/
+    Body: { slot_id: int, action: 'enable' | 'disable' }
+    Lets admins mark a slot as disabled (taken offline) or re-enable it.
+    """
+    if not (getattr(request.user, 'is_admin', False) or request.user.is_staff):
+        return JsonResponse({'error': 'Forbidden — admin access required.'}, status=403)
+
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON body.'}, status=400)
+
+    slot_id = body.get('slot_id')
+    action  = body.get('action', '').strip()
+
+    if not slot_id:
+        return JsonResponse({'error': 'slot_id is required.'}, status=400)
+    if action not in ('enable', 'disable'):
+        return JsonResponse({'error': 'action must be "enable" or "disable".'}, status=400)
+
+    try:
+        slot = ParkingSlot.objects.get(id=slot_id)
+    except ParkingSlot.DoesNotExist:
+        return JsonResponse({'error': 'Slot not found.'}, status=404)
+
+    if action == 'disable':
+        # Cancel any active reservation on this slot before disabling
+        active_res = Reservation.objects.filter(slot=slot, status='active').first()
+        if active_res:
+            active_res.cancel(by_admin=True)
+        slot.status    = 'disabled'
+        slot.is_active = False
+    else:
+        slot.status    = 'available'
+        slot.is_active = True
+
+    slot.save(update_fields=['status', 'is_active', 'updated_at'])
+
+    return JsonResponse({
+        'success': True,
+        'slot_id': slot.id,
+        'new_status': slot.status,
+        'is_active': slot.is_active,
     })
