@@ -38,11 +38,11 @@
                     id="res-parking-snapshot"
                     src=""
                     alt="Parking Layout"
-                    class="hidden w-full h-[340px] md:h-[420px] object-cover"
+                    class="hidden w-full h-[340px] md:h-[420px] object-contain bg-gray-900"
                 >
 
                 <!-- SVG polygon overlay (injected by JS) -->
-                <div id="slot-overlay-container" class="absolute inset-0 pointer-events-none"></div>
+                <div id="slot-overlay-container" class="absolute inset-0"></div>
 
                 <!-- Legend -->
                 <div class="absolute bottom-3 left-3 flex flex-col gap-1.5 bg-black/50 rounded-xl px-3 py-2">
@@ -179,9 +179,10 @@
     </div>
     {% endif %}
 
-    <!-- ===================== ADMIN VIEW ===================== -->
+<!-- ADMIN VIEW -->
     {% if user.is_admin %}
     <div>
+
         <!-- Stats cards -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
@@ -213,33 +214,97 @@
             </div>
         </div>
 
+        <!-- Map + Table layout -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+
+            <!-- Parking map -->
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-bold text-gray-700">Parking Map</h2>
+                    <p class="text-xs text-gray-400">Click a slot to enable or disable it.</p>
+                </div>
+
+                <div class="relative rounded-[20px] overflow-hidden shadow-xl border-2 border-white/30 bg-gray-200">
+                    <div id="admin-snapshot-skeleton" class="w-full h-[300px] md:h-[380px] bg-gray-200 animate-pulse flex items-center justify-center">
+                        <i class="fa-solid fa-image text-gray-400 text-4xl"></i>
+                    </div>
+
+                    <img
+                        id="admin-parking-snapshot"
+                        src=""
+                        alt="Parking Layout"
+                        class="hidden w-full h-[300px] md:h-[380px] object-contain bg-gray-900"
+                    >
+
+                    <div id="admin-slot-overlay-container" class="absolute inset-0"></div>
+
+                    <!-- Legend -->
+                    <div class="absolute bottom-3 left-3 flex flex-col gap-1.5 bg-black/50 rounded-xl px-3 py-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                            <span class="text-xs text-white font-semibold">Available</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <span class="text-xs text-white font-semibold">Occupied</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                            <span class="text-xs text-white font-semibold">Reserved</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-gray-400"></div>
+                            <span class="text-xs text-white font-semibold">Disabled</span>
+                        </div>
+                    </div>
+
+                    <div id="admin-snapshot-error" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400">
+                        <i class="fa-solid fa-triangle-exclamation text-4xl mb-2"></i>
+                        <p class="text-sm font-semibold">Could not load parking image</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters (stacked alongside map) -->
+            <div class="flex flex-col gap-4">
+                <!-- Quick slot status summary -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                    <h2 class="text-lg font-bold text-gray-700 mb-3">Slot Overview</h2>
+                    <p class="text-xs text-gray-500">Click any slot on the map to enable or disable it for reservations.</p>
+                    <div class="mt-3 grid grid-cols-2 gap-2" id="admin-slot-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Filters -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
             <div class="flex flex-col md:flex-row gap-3">
                 <div class="relative flex-1">
                     <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input
-                        type="text"
-                        id="admin-search"
+                    <input type="text" id="admin-search"
                         placeholder="Search by plate, slot, or user name..."
                         class="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]"
                     >
                 </div>
-                <div class="flex flex-row gap-3">
-                    <select id="admin-filter-status" class="flex-1 md:flex-none px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]">
+                <div class="flex gap-3">
+                    <select id="admin-filter-status"
+                        class="flex-1 md:flex-none px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7cd1f9]">
                         <option value="all">All Reservations</option>
                         <option value="active">Active Only</option>
                         <option value="expired">Expired Only</option>
                         <option value="cancelled">Cancelled Only</option>
                     </select>
-                    <button id="admin-refresh-btn" class="flex items-center gap-2 px-4 py-2.5 bg-[#7cd1f9] text-white rounded-lg text-sm font-semibold hover:bg-sky-400 transition-colors whitespace-nowrap">
+                    <button id="admin-refresh-btn"
+                        class="flex items-center gap-2 px-4 py-2.5 bg-[#7cd1f9] text-white rounded-lg text-sm font-semibold hover:bg-sky-400 transition-colors whitespace-nowrap">
                         <i class="fa-solid fa-rotate-right"></i> Refresh
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Table -->
+        <!-- Reservations table -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -255,7 +320,6 @@
                         </tr>
                     </thead>
                     <tbody id="admin-reservations-body" class="divide-y divide-gray-100">
-                        <!-- populated by JS -->
                     </tbody>
                 </table>
             </div>
@@ -265,6 +329,7 @@
                 <p class="text-sm">Try adjusting your filters or search criteria.</p>
             </div>
         </div>
+
     </div>
     {% endif %}
 
@@ -315,15 +380,15 @@
         csrfToken: '{{ csrf_token }}',
         cameraId:  {{ js_config.cameraId|default:"null" }},
         urls: {
-            snapshot:       '{{ js_config.urls.snapshot }}',
-            slots:          '{{ js_config.urls.slots }}',
-            myReservations: '{{ js_config.urls.myReservations }}',
-            create:         '{{ js_config.urls.create }}',
-            adminAll:       '{{ js_config.urls.adminAll }}',
-            cancelBase:     '{{ js_config.urls.cancelBase }}',
-            cancelSuffix:   '{{ js_config.urls.cancelSuffix }}',
+            snapshot:        '{{ js_config.urls.snapshot }}',
+            slots:           '{{ js_config.urls.slots }}',
+            myReservations:  '{{ js_config.urls.myReservations }}',
+            create:          '{{ js_config.urls.create }}',
+            adminAll:        '{{ js_config.urls.adminAll }}',
+            adminSlotToggle: '{{ js_config.urls.adminSlotToggle }}',
+            cancelBase:      '{{ js_config.urls.cancelBase }}',
+            cancelSuffix:    '{{ js_config.urls.cancelSuffix }}',
         }
     };
 </script>
-
 {% endblock %}

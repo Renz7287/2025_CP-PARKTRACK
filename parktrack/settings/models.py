@@ -55,16 +55,13 @@ class ParkingSlot(models.Model):
         return f"{self.camera.name} – Slot {self.slot_label}"
 
     def to_dict(self):
-        # Returns a clean dictionary representation.
-        # Used by views when building JsonResponse payloads
-        # and by the Raspberry Pi polling endpoint.
-
         return {
-            'id': self.id,
-            'camera_id': self.camera_id,
-            'slot_label': self.slot_label,
-            'polygon_points': self.polygon_points,
-            'status': self.status,
-            'is_active': self.is_active,
-            'updated_at': self.updated_at.isoformat(),
+            'id':              self.id,
+            'camera_id':       self.camera_id,
+            'slot_label':      self.slot_label,
+            'polygon_points':  self.polygon_points,
+            'status':          self.status,
+            'is_active':       self.is_active,
+            'is_reservable':   self.status == 'available' and self.is_active,
+            'updated_at':      self.updated_at.isoformat(),
         }

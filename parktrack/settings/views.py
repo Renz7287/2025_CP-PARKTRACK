@@ -215,7 +215,7 @@ def api_get_slots(request):
     except Camera.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
 
-    slots = ParkingSlot.objects.filter(camera=camera, is_active=True)
+    slots = ParkingSlot.objects.filter(camera=camera)
 
     return JsonResponse({
         'success': True,
