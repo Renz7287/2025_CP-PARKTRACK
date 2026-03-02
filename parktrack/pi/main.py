@@ -51,9 +51,18 @@ def open_video_source():
 
 
 def start_ffmpeg():
-    logger.info("Starting FFmpeg...")
+    logger.info("Starting FFmpeg (overlay stream)...")
     proc = subprocess.Popen(config.FFMPEG_CMD, stdin=subprocess.PIPE)
-    logger.info("FFmpeg started (PID %d)", proc.pid)
+    logger.info("FFmpeg overlay stream started (PID %d)", proc.pid)
+    return proc
+
+
+def start_ffmpeg_clean():
+    """Second FFmpeg process that encodes raw frames with no polygon overlays.
+    Used exclusively by the layout editor's live preview."""
+    logger.info("Starting FFmpeg (clean stream)...")
+    proc = subprocess.Popen(config.FFMPEG_CLEAN_CMD, stdin=subprocess.PIPE)
+    logger.info("FFmpeg clean stream started (PID %d)", proc.pid)
     return proc
 
 
@@ -120,11 +129,7 @@ def push_status(slots: list):
 
 
 def push_snapshot(frame: np.ndarray, slots: list, now: float):
-    """
-    Encode the OVERLAID frame (with polygon + detection drawn on it) and POST
-    it to Django's upload-snapshot endpoint. This is what the Parking Allotment
-    snapshot section displays to users.
-    """
+    """POST the overlaid frame to Django for the parking allotment display."""
     filename = f"snapshot_{int(now)}.jpg"
     occupied = sum(1 for s in slots if s["is_occupied"])
     vacant   = sum(1 for s in slots if not s["is_occupied"])
@@ -147,47 +152,24 @@ def push_snapshot(frame: np.ndarray, slots: list, now: float):
         logger.warning("push_snapshot failed: %s", exc)
 
 
-def push_clean_snapshot(frame: np.ndarray, now: float):
-    """
-    Encode the CLEAN frame (no polygon overlays) and POST it to Django's
-    upload-clean-snapshot endpoint. This is exclusively used by the Parking
-    Layout Editor so the admin can see a clean image when drawing polygon slots.
-    """
-    filename = f"clean_{int(now)}.jpg"
-
-    success, buf = cv2.imencode(".jpg", frame)
-    if not success:
-        logger.warning("push_clean_snapshot: cv2.imencode failed")
-        return
-
-    try:
-        requests.post(
-            f"{config.DJANGO_BASE_URL}/parking-allotment/api/upload-clean-snapshot/",
-            files={"snapshot": (filename, buf.tobytes(), "image/jpeg")},
-            headers={"X-API-KEY": config.UPLOAD_API_KEY},
-            timeout=config.REQUEST_TIMEOUT,
-        )
-        logger.info("Clean snapshot pushed to Django: %s", filename)
-    except Exception as exc:
-        logger.warning("push_clean_snapshot failed: %s", exc)
-
-
 def main():
     fetcher = SlotFetcher()
     fetcher.start()
 
     logger.info("Loading YOLO model: %s", config.YOLO_MODEL_PATH)
-    model  = YOLO(str(config.YOLO_MODEL_PATH))
-    cap    = open_video_source()
-    ffmpeg = start_ffmpeg()
+    model       = YOLO(str(config.YOLO_MODEL_PATH))
+    cap         = open_video_source()
+    ffmpeg      = start_ffmpeg()
+    ffmpeg_clean = start_ffmpeg_clean()
 
     def shutdown(sig=None, frame=None):
         logger.info("Shutting down...")
         fetcher.stop()
-        try: ffmpeg.stdin.close()
-        except Exception: pass
-        try: ffmpeg.terminate()
-        except Exception: pass
+        for proc in (ffmpeg, ffmpeg_clean):
+            try: proc.stdin.close()
+            except Exception: pass
+            try: proc.terminate()
+            except Exception: pass
         cap.release()
         sys.exit(0)
 
@@ -228,10 +210,10 @@ def main():
 
             update_occupancy(slots, centroids)
 
-            # Save the clean frame BEFORE drawing overlays — used by layout editor
+            # Clean frame goes to the layout editor stream before any drawing
             clean_frame = frame.copy()
 
-            # Draw detection overlays onto the main frame — used by parking allotment display
+            # Overlay frame goes to the parking allotment display stream
             frame = draw_overlays(frame, slots)
 
             frame_count += 1
@@ -239,16 +221,19 @@ def main():
                 push_status(slots)
 
             if now - last_snapshot_time >= config.SNAPSHOT_INTERVAL:
-                # Push the overlaid frame for the parking allotment snapshot section
                 push_snapshot(frame, slots, now)
-                # Push the clean frame separately for the layout editor
-                push_clean_snapshot(clean_frame, now)
                 last_snapshot_time = now
 
             try:
                 ffmpeg.stdin.write(frame.tobytes())
             except BrokenPipeError:
-                logger.error("FFmpeg pipe closed, exiting.")
+                logger.error("FFmpeg overlay pipe closed, exiting.")
+                break
+
+            try:
+                ffmpeg_clean.stdin.write(clean_frame.tobytes())
+            except BrokenPipeError:
+                logger.error("FFmpeg clean pipe closed, exiting.")
                 break
 
     except KeyboardInterrupt:

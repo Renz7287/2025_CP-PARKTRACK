@@ -486,81 +486,56 @@ def api_upload_snapshot(request, pk):
 
 
 @group_required('Admin')
-@require_http_methods(['POST'])
-def api_capture_snapshot(request, pk):
-    """
-    Returns the latest CLEAN snapshot for preview in the layout editor modal.
-    Does NOT update camera.snapshot_url — use api_set_snapshot_url for that.
-    """
-    import time
-
+@require_http_methods(['GET'])
+def api_get_clean_stream(request, pk):
+    """Returns the HLS URL for the clean (no-overlay) live stream from the Pi.
+    Used by the layout editor modal to show a live feed for snapshot selection."""
     try:
-        camera = Camera.objects.get(id=pk, is_active=True)
+        Camera.objects.get(id=pk, is_active=True)
     except Camera.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
 
-    clean_dir = os.path.join(django_settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
-
-    if not os.path.exists(clean_dir):
+    hls_path = os.path.join(django_settings.MEDIA_ROOT, 'video_stream', 'clean_stream', 'stream.m3u8')
+    if not os.path.exists(hls_path):
         return JsonResponse(
-            {'success': False, 'error': 'No clean snapshots found. Is the Pi running?'},
+            {'success': False, 'error': 'Clean stream not available. Is the Pi running?'},
             status=404,
         )
 
-    snapshots = [f for f in os.listdir(clean_dir) if f.endswith('.jpg')]
-    if not snapshots:
-        return JsonResponse(
-            {'success': False, 'error': 'No clean snapshots yet. The Pi uploads one every 60 seconds.'},
-            status=404,
-        )
-
-    latest    = max(snapshots, key=lambda f: os.path.getmtime(os.path.join(clean_dir, f)))
-    media_url = f'{django_settings.MEDIA_URL}video_stream/clean_snapshots/{latest}?v={int(time.time())}'
-
-    return JsonResponse({
-        'success':      True,
-        'message':      'Clean snapshot loaded successfully.',
-        'snapshot_url': media_url,
-    })
+    stream_url = f'{django_settings.MEDIA_URL}video_stream/clean_stream/stream.m3u8'
+    return JsonResponse({'success': True, 'stream_url': stream_url})
 
 
 @group_required('Admin')
 @require_http_methods(['POST'])
-def api_set_snapshot_url(request, pk):
-    """
-    Persists a snapshot URL (chosen via "Use This Snapshot" in the layout editor)
-    into camera.snapshot_url so it survives page navigation.
-
-    Called by the JS btn-capture-use handler after the admin selects a clean
-    snapshot from the Pi feed as the editor background.
-
-    Body (JSON):
-        { "snapshot_url": "/media/video_stream/clean_snapshots/clean_123.jpg?v=..." }
-    """
+def api_capture_snapshot_from_frame(request, pk):
+    """Accepts a JPEG frame grabbed from the client-side canvas (live video element)
+    and saves it as the camera's snapshot_url."""
     try:
         camera = Camera.objects.get(id=pk, is_active=True)
     except Camera.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
 
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
+    frame_file = request.FILES.get('snapshot')
+    if not frame_file:
+        return JsonResponse({'success': False, 'error': 'No frame data received.'}, status=400)
 
-    snapshot_url = data.get('snapshot_url', '').strip()
-    if not snapshot_url:
-        return JsonResponse({'success': False, 'error': 'snapshot_url is required.'}, status=400)
+    filename  = f'snapshot_camera_{pk}.jpg'
+    save_dir  = os.path.join(django_settings.MEDIA_ROOT, 'snapshots')
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, filename)
 
-    # Basic sanity check — must be a relative media path, not an external URL
-    if not snapshot_url.startswith('/'):
-        return JsonResponse({'success': False, 'error': 'snapshot_url must be a relative path.'}, status=400)
+    with open(save_path, 'wb') as f:
+        for chunk in frame_file.chunks():
+            f.write(chunk)
 
-    camera.snapshot_url = snapshot_url
+    media_url           = f'{django_settings.MEDIA_URL}snapshots/{filename}'
+    camera.snapshot_url = media_url
     camera.save()
 
     return JsonResponse({
         'success':      True,
-        'message':      'Snapshot URL saved.',
-        'snapshot_url': snapshot_url,
+        'message':      'Snapshot saved.',
+        'snapshot_url': media_url,
         'camera':       camera.to_dict(),
     })
