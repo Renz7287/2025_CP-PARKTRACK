@@ -1,0 +1,1 @@
+web: gunicorn parktrack.wsgi --workers 2 --timeout 120
