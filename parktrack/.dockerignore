@@ -1,0 +1,7 @@
+venv/
+media/
+*.mp4
+*.ts
+.git
+.gitignore
+__pycache__/
