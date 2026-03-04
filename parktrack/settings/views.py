@@ -1,7 +1,7 @@
 import json, os
 import urllib.request
 from django.db import transaction
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -17,11 +17,17 @@ from .models import Camera, ParkingSlot
 def personal_information(request, pk):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
-    user = User.objects.get(id=pk)
-    driver_profile = DriverProfile.objects.filter(user=user).first()
+    # Use get_object_or_404 to avoid unhandled DoesNotExist on User
+    user = get_object_or_404(User, id=pk)
+
+    # Safely get driver_profile — avoids RelatedObjectDoesNotExist crash
+    driver_profile = getattr(user, 'driver_profile', None)
 
     user_form = UserEditForm(instance=user)
-    driver_profile_form = DriverProfileEditForm(instance=user.driver_profile) if driver_profile else None
+
+    # Only instantiate the driver profile form if the profile actually exists
+    driver_profile_form = DriverProfileEditForm(instance=driver_profile) if driver_profile else None
+
     change_password_form = ChangePasswordForm(user=user)
 
     cities = City.objects.all()
@@ -32,68 +38,44 @@ def personal_information(request, pk):
         'user_form': user_form,
         'driver_profile_form': driver_profile_form,
         'change_password_form': change_password_form,
-        'cities': cities
+        'cities': cities,
     }
     return render(request, 'settings/index.html', context)
 
 
-@group_required('Driver')
-def vehicle_management(request, pk):
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
-    owner = DriverProfile.objects.get(user=pk)
-    vehicles = owner.vehicles.all()
-
-    form = VehicleModalForm()
-
-    brands = list(VehicleBrand.objects.all().values('id', 'brand_name'))
-
-    context = {
-        'is_partial': is_ajax,
-        'vehicles': vehicles,
-        'form': form,
-        'brands': brands
-    }
-    return render(request, 'settings/vehicle-management.html', context)
-
-
-@group_required('Admin')
-def parking_slot_management(request):
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
-    context = {
-        'is_partial': is_ajax
-    }
-    return render(request, 'settings/parking-slot-management.html', context)
-
-
 @group_required('Admin', 'Driver')
 def edit_user(request, pk):
-    user = User.objects.get(id=pk)
+    user = get_object_or_404(User, id=pk)
 
     if request.method == 'POST':
-        user_form = UserEditForm(request.POST, request.FILES, instance=user)
-        driver_profile_form = DriverProfileEditForm(request.POST, instance=user.driver_profile)
+        # Safely get driver_profile
+        driver_profile = getattr(user, 'driver_profile', None)
 
-        if user_form.is_valid() and driver_profile_form.is_valid():
+        user_form = UserEditForm(request.POST, request.FILES, instance=user)
+        driver_profile_form = DriverProfileEditForm(request.POST, instance=driver_profile) if driver_profile else None
+
+        forms_valid = user_form.is_valid() and (driver_profile_form.is_valid() if driver_profile_form else True)
+
+        if forms_valid:
             with transaction.atomic():
                 user_form.save()
-                driver_profile_form.save()
+                if driver_profile_form:
+                    driver_profile_form.save()
 
             html = render(
                 request, 'components/personal-information.html',
                 {
-                    'driver_profile': request.user.driver_profile,
+                    'driver_profile': getattr(request.user, 'driver_profile', None),
                     'user_form': user_form,
                     'driver_profile_form': driver_profile_form,
-                    'cities': City.objects.all()
+                    'cities': City.objects.all(),
                 },
             ).content.decode('utf-8')
 
             return JsonResponse({'success': True, 'html': html, 'message': 'Personal information updated successfully!'})
 
         errors = {}
-        for form in [user_form, driver_profile_form]:
+        for form in filter(None, [user_form, driver_profile_form]):
             for field, field_errors in form.errors.items():
                 errors[field] = field_errors
 
@@ -104,7 +86,7 @@ def edit_user(request, pk):
 
 @group_required('Admin', 'Driver')
 def change_password(request, pk):
-    user = User.objects.get(id=pk)
+    user = get_object_or_404(User, id=pk)
 
     if request.method == 'POST':
         form = ChangePasswordForm(data=request.POST, user=user)
@@ -125,7 +107,36 @@ def change_password(request, pk):
 
         return JsonResponse({'success': False, 'errors': errors})
 
-    return JsonResponse({'success': False, 'erros': {'__all__': ['Invalid request']}})
+    return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid request']}})
+
+
+@group_required('Driver')
+def vehicle_management(request, pk):
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    owner = get_object_or_404(DriverProfile, user=pk)
+    vehicles = owner.vehicles.all()
+
+    form = VehicleModalForm()
+    brands = list(VehicleBrand.objects.all().values('id', 'brand_name'))
+
+    context = {
+        'is_partial': is_ajax,
+        'vehicles': vehicles,
+        'form': form,
+        'brands': brands,
+    }
+    return render(request, 'settings/vehicle-management.html', context)
+
+
+@group_required('Admin')
+def parking_slot_management(request):
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    context = {
+        'is_partial': is_ajax,
+    }
+    return render(request, 'settings/parking-slot-management.html', context)
 
 
 @group_required('Driver')
@@ -137,15 +148,15 @@ def add_vehicle(request):
 
         if form.is_valid():
             vehicle = form.save(commit=False)
-            vehicle.owner = DriverProfile.objects.get(user=user)
+            vehicle.owner = get_object_or_404(DriverProfile, user=user)
             vehicle.save()
 
             html = render(request, 'components/vehicles-table.html',
                 {
-                    'owner': DriverProfile.objects.get(user=user),
+                    'owner': get_object_or_404(DriverProfile, user=user),
                     'vehicles': Vehicle.objects.filter(owner__user=user),
                     'form': form,
-                    'brands': list(VehicleBrand.objects.all().values('id', 'brand_name'))
+                    'brands': list(VehicleBrand.objects.all().values('id', 'brand_name')),
                 }
             ).content.decode('utf-8')
 
@@ -162,7 +173,7 @@ def add_vehicle(request):
 
 @group_required('Driver')
 def edit_vehicle(request, pk):
-    vehicle = Vehicle.objects.get(id=pk)
+    vehicle = get_object_or_404(Vehicle, id=pk)
 
     if request.method == 'POST':
         form = VehicleModalForm(request.POST, request.FILES, instance=vehicle)
@@ -172,10 +183,10 @@ def edit_vehicle(request, pk):
 
             html = render(request, 'components/vehicles-table.html',
                 {
-                    'owner': DriverProfile.objects.get(user=request.user),
+                    'owner': get_object_or_404(DriverProfile, user=request.user),
                     'vehicles': Vehicle.objects.filter(owner__user=request.user),
                     'form': form,
-                    'brands': list(VehicleBrand.objects.all().values('id', 'brand_name'))
+                    'brands': list(VehicleBrand.objects.all().values('id', 'brand_name')),
                 }
             ).content.decode('utf-8')
 
@@ -194,10 +205,10 @@ def edit_vehicle(request, pk):
 def delete_vehicle(request, pk):
     if request.method == 'POST':
         try:
-            vehicle = Vehicle.objects.get(id=pk)
+            vehicle = get_object_or_404(Vehicle, id=pk)
             vehicle.delete()
             return JsonResponse({'success': True})
-        except Vehicle.DoesNotExist:
+        except Exception:
             return JsonResponse({'success': False, 'errors': 'Vehicle not found'})
 
     return JsonResponse({'success': False, 'errors': {'__all__': ['Invalid Request']}})
@@ -219,7 +230,7 @@ def api_get_slots(request):
 
     return JsonResponse({
         'success': True,
-        'slots': [slot.to_dict() for slot in slots]
+        'slots': [slot.to_dict() for slot in slots],
     })
 
 
@@ -438,10 +449,6 @@ def api_edit_camera(request, pk):
 @group_required('Admin')
 @require_http_methods(['POST'])
 def api_upload_snapshot(request, pk):
-    """
-    Handles manual snapshot upload from the admin UI (Upload File tab).
-    Saves the file and updates camera.snapshot_url.
-    """
     try:
         camera = Camera.objects.get(id=pk, is_active=True)
     except Camera.DoesNotExist:
@@ -503,11 +510,10 @@ def api_get_clean_stream(request, pk):
     stream_url = '/parking-allotment/stream/clean_stream/stream.m3u8'
     return JsonResponse({'success': True, 'stream_url': stream_url})
 
+
 @group_required('Admin')
 @require_http_methods(['POST'])
 def api_capture_snapshot_from_frame(request, pk):
-    """Accepts a JPEG frame grabbed from the client-side canvas (live video element)
-    and saves it as the camera's snapshot_url."""
     try:
         camera = Camera.objects.get(id=pk, is_active=True)
     except Camera.DoesNotExist:
