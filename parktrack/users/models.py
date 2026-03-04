@@ -6,11 +6,11 @@ from django.contrib.auth.models import BaseUserManager, AbstractUser, Permission
 
 class City(models.Model):
     id = models.AutoField(primary_key=True)
-    psgcCode = models.CharField(max_length=10)
-    citymunDesc = models.CharField(max_length=255)
-    regCode = models.CharField(max_length=10)
-    provCode = models.CharField(max_length=10)
-    citymunCode = models.CharField(max_length=10)
+    psgcCode = models.CharField(max_length=255, db_column='psgcCode')
+    citymunDesc = models.TextField(db_column='citymunDesc')
+    regDesc = models.CharField(max_length=255, db_column='regDesc')       # was regCode → actual col is regDesc
+    provCode = models.CharField(max_length=255, db_column='provCode')
+    citymunCode = models.CharField(max_length=255, db_column='citymunCode')
 
     class Meta:
         db_table = 'refcitymun'
@@ -19,13 +19,14 @@ class City(models.Model):
     def __str__(self):
         return self.citymunDesc
 
+
 class Barangay(models.Model):
     id = models.AutoField(primary_key=True)
-    brgyDesc = models.CharField(max_length=255)
-    regCode = models.CharField(max_length=10)
-    provCode = models.CharField(max_length=10)
-    citymunCode = models.CharField(max_length=10)
-    brgyCode = models.CharField(max_length=10)
+    brgyCode = models.CharField(max_length=255, db_column='brgyCode')
+    brgyDesc = models.TextField(db_column='brgyDesc')
+    regCode = models.CharField(max_length=255, db_column='regCode')
+    provCode = models.CharField(max_length=255, db_column='provCode')
+    citymunCode = models.CharField(max_length=255, db_column='citymunCode')
 
     class Meta:
         db_table = 'refbrgy'
@@ -33,6 +34,7 @@ class Barangay(models.Model):
 
     def __str__(self):
         return self.brgyDesc
+
 
 class VehicleBrand(models.Model):
     id = models.AutoField(primary_key=True)
