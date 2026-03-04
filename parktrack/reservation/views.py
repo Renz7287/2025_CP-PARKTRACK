@@ -2,6 +2,7 @@ from users.models import Vehicle
 import json
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
+from django.db import models
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -106,8 +107,13 @@ def get_available_slots(request):
     _expire_stale_reservations()
     include_disabled = request.GET.get('include_disabled') == '1'
 
-    if include_disabled and (getattr(request.user, 'is_admin', False) or request.user.is_staff):
-        qs = ParkingSlot.objects.all().select_related('camera')
+    is_admin = getattr(request.user, 'is_admin', False) or request.user.is_staff
+
+    if include_disabled and is_admin:
+        # Show active slots + explicitly disabled ones, but not layout-deleted slots
+        qs = ParkingSlot.objects.filter(
+            models.Q(is_active=True) | models.Q(status='disabled')
+        ).select_related('camera')
     else:
         qs = ParkingSlot.objects.filter(is_active=True).select_related('camera')
 
@@ -122,8 +128,6 @@ def get_available_slots(request):
     slots = []
     for slot in qs:
         d = slot.to_dict()
-        # If the slot has an active reservation, always show it as reserved
-        # regardless of what the detection pipeline may have written to slot.status
         if slot.id in reserved_slot_ids:
             d['status'] = 'reserved'
         d['is_reservable'] = (
