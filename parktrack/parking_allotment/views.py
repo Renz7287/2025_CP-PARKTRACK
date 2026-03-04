@@ -14,33 +14,26 @@ def parking_allotment(request):
 
 def serve_hls(request, filename):
     """
-    Serves HLS stream files (.m3u8 playlist and .ts segments) with correct
-    MIME types. Django's dev server does not set the right Content-Type for
-    these file types, causing browsers to reject them.
-
-    URL: /parking-allotment/stream/<filename>
-    Maps to: MEDIA_ROOT/video_stream/<filename>
+    Serves HLS stream files (.m3u8 and .ts) with correct MIME types.
+    Checks video_stream/ first, then video_stream/clean_stream/ subdirectory.
     """
-    # Only allow .m3u8 and .ts extensions — nothing else
     ext = os.path.splitext(filename)[1].lower()
     if ext not in ('.m3u8', '.ts'):
         return HttpResponse(status=404)
 
-    # Prevent directory traversal — filename must be a plain filename, no slashes
     if '/' in filename or '\\' in filename or '..' in filename:
         return HttpResponse(status=400)
 
-    file_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', filename)
-
-    if not os.path.exists(file_path):
+    # Check main stream directory first, then clean stream subdirectory
+    for subdir in ['', 'clean_stream']:
+        file_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', subdir, filename)
+        if os.path.exists(file_path):
+            break
+    else:
         return HttpResponse(status=404)
 
-    if ext == '.m3u8':
-        content_type = 'application/vnd.apple.mpegurl'
-    else:
-        content_type = 'video/MP2T'
+    content_type = 'application/vnd.apple.mpegurl' if ext == '.m3u8' else 'video/MP2T'
 
-    # Stream the file in chunks so large .ts segments don't load into RAM
     def file_iterator(path, chunk_size=8192):
         with open(path, 'rb') as f:
             while True:
@@ -50,7 +43,6 @@ def serve_hls(request, filename):
                 yield chunk
 
     response = StreamingHttpResponse(file_iterator(file_path), content_type=content_type)
-    # No-cache headers so hls.js always gets the latest segments
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma']        = 'no-cache'
     response['Expires']       = '0'
@@ -300,3 +292,60 @@ def api_clean_snapshot(request):
         return JsonResponse({'url': camera.snapshot_url})
 
     return JsonResponse({'url': ''})
+
+@csrf_exempt
+def push_stream_segment(request, filename):
+    """
+    PUT /parking-allotment/api/stream/push/<filename>
+
+    Receives .ts segments and .m3u8 playlist pushed by FFmpeg via HTTP PUT.
+    Saves to MEDIA_ROOT/video_stream/ so serve_hls() can serve them to browsers.
+    """
+    api_key = request.headers.get('X-API-KEY')
+    if api_key != settings.UPLOAD_API_KEY:
+        return HttpResponse(status=401)
+
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ('.m3u8', '.ts'):
+        return HttpResponse(status=400)
+
+    if '/' in filename or '\\' in filename or '..' in filename:
+        return HttpResponse(status=400)
+
+    stream_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream')
+    os.makedirs(stream_dir, exist_ok=True)
+
+    file_path = os.path.join(stream_dir, filename)
+    with open(file_path, 'wb') as f:
+        f.write(request.body)
+
+    return HttpResponse(status=204)
+
+
+@csrf_exempt
+def push_clean_stream_segment(request, filename):
+    """
+    PUT /parking-allotment/api/stream/push-clean/<filename>
+
+    Same as push_stream_segment but saves to video_stream/clean_stream/
+    for the layout editor live preview.
+    """
+    api_key = request.headers.get('X-API-KEY')
+    if api_key != settings.UPLOAD_API_KEY:
+        return HttpResponse(status=401)
+
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ('.m3u8', '.ts'):
+        return HttpResponse(status=400)
+
+    if '/' in filename or '\\' in filename or '..' in filename:
+        return HttpResponse(status=400)
+
+    clean_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'clean_stream')
+    os.makedirs(clean_dir, exist_ok=True)
+
+    file_path = os.path.join(clean_dir, filename)
+    with open(file_path, 'wb') as f:
+        f.write(request.body)
+
+    return HttpResponse(status=204)

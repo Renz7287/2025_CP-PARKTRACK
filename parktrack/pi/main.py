@@ -27,6 +27,12 @@ config.SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def open_video_source():
+    # To test with pre-recorded video: set both USE_USB_CAMERA and USE_PI_CAMERA to False
+    # and place your video file at the path defined by config.VIDEO_FILE.
+    #
+    # To use USB webcam: set USE_USB_CAMERA = True in config.py
+    # To use Pi Camera Module: set USE_PI_CAMERA = True in config.py
+
     if config.USE_USB_CAMERA:
         cap = cv2.VideoCapture(config.USB_CAMERA_INDEX)
         source = f"USB camera (index {config.USB_CAMERA_INDEX})"
@@ -58,8 +64,6 @@ def start_ffmpeg():
 
 
 def start_ffmpeg_clean():
-    """Second FFmpeg process that encodes raw frames with no polygon overlays.
-    Used exclusively by the layout editor's live preview."""
     logger.info("Starting FFmpeg (clean stream)...")
     proc = subprocess.Popen(config.FFMPEG_CLEAN_CMD, stdin=subprocess.PIPE)
     logger.info("FFmpeg clean stream started (PID %d)", proc.pid)
@@ -157,9 +161,9 @@ def main():
     fetcher.start()
 
     logger.info("Loading YOLO model: %s", config.YOLO_MODEL_PATH)
-    model       = YOLO(str(config.YOLO_MODEL_PATH))
-    cap         = open_video_source()
-    ffmpeg      = start_ffmpeg()
+    model        = YOLO(str(config.YOLO_MODEL_PATH))
+    cap          = open_video_source()
+    ffmpeg       = start_ffmpeg()
     ffmpeg_clean = start_ffmpeg_clean()
 
     def shutdown(sig=None, frame=None):
@@ -198,6 +202,7 @@ def main():
                     time.sleep(0.1)
                     continue
                 else:
+                    # Loop pre-recorded video back to the start
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     continue
 
@@ -210,11 +215,8 @@ def main():
 
             update_occupancy(slots, centroids)
 
-            # Clean frame goes to the layout editor stream before any drawing
             clean_frame = frame.copy()
-
-            # Overlay frame goes to the parking allotment display stream
-            frame = draw_overlays(frame, slots)
+            frame       = draw_overlays(frame, slots)
 
             frame_count += 1
             if frame_count % config.WRITE_STATUS_EVERY == 0:

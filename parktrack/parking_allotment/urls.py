@@ -13,5 +13,7 @@ urlpatterns = [
     path('api/upload-snapshot/', views.upload_snapshot, name='upload_snapshot'),
     path('api/upload-clean-snapshot/', views.upload_clean_snapshot, name='upload_clean_snapshot'),
     path('api/upload-status/', views.upload_status, name='upload_status'),
+    path('api/stream/push/<str:filename>', views.push_stream_segment, name='push_stream_segment'),
+    path('api/stream/push-clean/<str:filename>', views.push_clean_stream_segment, name='push_clean_stream_segment'),
     path('stream/<str:filename>', views.serve_hls, name='serve_hls'),
 ]
