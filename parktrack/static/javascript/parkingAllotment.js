@@ -64,18 +64,19 @@ export function initializeParkingAllotment() {
 
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveSyncDurationCount:       2,
-                liveMaxLatencyDurationCount: 5,
-                maxBufferLength:             30,   // was 10 — too small for live streams
-                maxMaxBufferLength:          60,
+                liveSyncDurationCount:       4,
+                liveMaxLatencyDurationCount: 8,
+                maxBufferLength:             45,
+                maxMaxBufferLength:          90,
                 lowLatencyMode:              false,
                 startFragPrefetch:           true,
-                manifestLoadingTimeOut:      10000,
-                manifestLoadingMaxRetry:     6,
-                levelLoadingTimeOut:         10000,
-                levelLoadingMaxRetry:        6,
-                fragLoadingTimeOut:          20000,
-                fragLoadingMaxRetry:         6,
+                manifestLoadingTimeOut:      15000,
+                manifestLoadingMaxRetry:     8,
+                levelLoadingTimeOut:         15000,
+                levelLoadingMaxRetry:        8,
+                fragLoadingTimeOut:          25000,
+                fragLoadingMaxRetry:         8,
+                fragLoadingRetryDelay:       1000,
             });
 
             hls.loadSource(VIDEO_SRC);

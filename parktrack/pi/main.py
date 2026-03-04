@@ -242,9 +242,9 @@ def draw_overlays(frame: np.ndarray, slots: list) -> np.ndarray:
         pts   = slot["pts_np"]
         cv2.polylines(frame, [pts], isClosed=True, color=color, thickness=2)
         text_x = int(pts[0][0])
-        text_y = int(max(pts[0][1] - 8, 10))
+        text_y = int(max(pts[0][1] - 5, 10))
         cv2.putText(frame, f"{slot['slot_label']} {label}", (text_x, text_y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, color, 1, cv2.LINE_AA)
     return frame
 
 
