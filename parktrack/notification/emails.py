@@ -10,7 +10,6 @@ SUBJECTS = {
 }
 
 def send_notification_email(recipient, notif_type, message):
-    """Send an email via SendGrid HTTP API (works on PythonAnywhere free tier)."""
     email = getattr(recipient, 'email', None)
     if not email:
         return
@@ -27,13 +26,16 @@ def send_notification_email(recipient, notif_type, message):
         import sendgrid
         from sendgrid.helpers.mail import Mail
 
-        sg      = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
-        mail    = Mail(
-            from_email    = settings.DEFAULT_FROM_EMAIL,
-            to_emails     = email,
-            subject       = subject,
+        sg   = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+        mail = Mail(
+            from_email         = 'parktrack3@gmail.com',
+            to_emails          = email,
+            subject            = subject,
             plain_text_content = body,
         )
-        sg.send(mail)
+        response = sg.send(mail)
+        logger.info("Email sent to %s, status: %d", email, response.status_code)
     except Exception as exc:
         logger.warning("Failed to send notification email to %s: %s", email, exc)
+        if hasattr(exc, 'body'):
+            logger.warning("SendGrid error body: %s", exc.body)
