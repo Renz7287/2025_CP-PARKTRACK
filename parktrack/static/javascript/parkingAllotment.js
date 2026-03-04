@@ -121,7 +121,6 @@ export function initializeParkingAllotment() {
             video.play().catch(() => {});
         }
 
-        startLiveOverlay();
     }
 
     function stopStream() {
@@ -132,99 +131,6 @@ export function initializeParkingAllotment() {
             video.removeAttribute('src');
             video.load();
         }
-        stopLiveOverlay();
-    }
-
-    // ── Live polygon overlay on video ─────────────────────────────────────────
-
-    let liveOverlayInterval = null;
-    let liveSlots           = [];
-
-    function startLiveOverlay() {
-        fetchLiveSlots();
-        if (liveOverlayInterval) clearInterval(liveOverlayInterval);
-        liveOverlayInterval = setInterval(fetchLiveSlots, 5000);
-    }
-
-    function stopLiveOverlay() {
-        if (liveOverlayInterval) { clearInterval(liveOverlayInterval); liveOverlayInterval = null; }
-        const canvas = document.getElementById('live-overlay-canvas');
-        if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
-    }
-
-    async function fetchLiveSlots() {
-        try {
-            const slotResp = await fetch('/settings/api/slots/?camera_id=1', { cache: 'no-store' });
-            const slotData = await slotResp.json();
-            if (!slotData.success) return;
-
-            const statusResp = await fetch('/parking-allotment/api/parking-status/', { cache: 'no-store' });
-            const statusData = await statusResp.json();
-
-            // Build a label → status map from the Pi's push data.
-            // Prefer the explicit 'status' field; fall back to the legacy 'occupied' boolean.
-            const slotStatusMap = {};
-            (statusData.slots || []).forEach(s => {
-                slotStatusMap[s.slot_label] = s.status
-                    || (s.occupied ? 'occupied' : 'vacant');
-            });
-
-            liveSlots = slotData.slots.map(slot => ({
-                ...slot,
-                detection_status: slotStatusMap[slot.slot_label] ?? 'vacant',
-            }));
-
-            drawLiveOverlay();
-        } catch (e) {
-            console.error('fetchLiveSlots failed:', e);
-        }
-    }
-
-    // Colour config for each detection status
-    const STATUS_STYLE = {
-        occupied: { stroke: '#ef4444', fill: 'rgba(239,68,68,0.20)',  label: 'Occupied' },
-        improper: { stroke: '#f97316', fill: 'rgba(249,115,22,0.20)', label: 'Improper' },
-        vacant:   { stroke: '#22c55e', fill: 'rgba(34,197,94,0.15)',  label: 'Vacant'   },
-    };
-
-    function drawLiveOverlay() {
-        const canvas = document.getElementById('live-overlay-canvas');
-        const video  = document.getElementById('live-video');
-        if (!canvas || !video) return;
-
-        const rect = video.getBoundingClientRect();
-        canvas.width  = rect.width;
-        canvas.height = rect.height;
-
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        liveSlots.forEach(slot => {
-            const pts = slot.polygon_points;
-            if (!pts || pts.length < 3) return;
-
-            const style = STATUS_STYLE[slot.detection_status] ?? STATUS_STYLE.vacant;
-
-            // Draw filled + stroked polygon
-            ctx.beginPath();
-            ctx.moveTo(pts[0][0] * canvas.width, pts[0][1] * canvas.height);
-            pts.slice(1).forEach(p => ctx.lineTo(p[0] * canvas.width, p[1] * canvas.height));
-            ctx.closePath();
-            ctx.fillStyle   = style.fill;
-            ctx.fill();
-            ctx.strokeStyle = style.stroke;
-            ctx.lineWidth   = 2;
-            ctx.stroke();
-
-            // Label at polygon centroid
-            const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length * canvas.width;
-            const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length * canvas.height;
-            ctx.fillStyle    = style.stroke;
-            ctx.font         = 'bold 13px monospace';
-            ctx.textAlign    = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`${slot.slot_label} ${style.label}`, cx, cy);
-        });
     }
 
     // ── Live occupancy counter ────────────────────────────────────────────────
