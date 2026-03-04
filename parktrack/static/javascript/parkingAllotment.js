@@ -58,38 +58,57 @@ export function initializeParkingAllotment() {
         if (hls) { hls.destroy(); hls = null; }
 
         if (typeof Hls === 'undefined') {
-            console.error('hls.js not loaded — check your base template includes the hls.js script tag');
+            console.error('hls.js not loaded');
             return;
         }
 
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveSyncDurationCount:         8,
-                liveMaxLatencyDurationCount:   10,
-                maxBufferLength:               60,
-                maxMaxBufferLength:            120,
-                lowLatencyMode:                false,
-                startFragPrefetch:             true,
-                manifestLoadingTimeOut:        20000,
-                manifestLoadingMaxRetry:       10,
-                manifestLoadingRetryDelay:     2000,
-                levelLoadingTimeOut:           20000,
-                levelLoadingMaxRetry:          10,
-                levelLoadingRetryDelay:        2000,
-                fragLoadingTimeOut:            30000,
-                fragLoadingMaxRetry:           10,
-                fragLoadingRetryDelay:         2000,
-                maxStarvationDelay:            20,
-                maxLoadingDelay:               20,
-                nudgeMaxRetry:                 10,
-                nudgeOffset:                   0.5,
+                liveSyncDurationCount:       6,
+                liveMaxLatencyDurationCount: 10,
+                maxBufferLength:             90,
+                maxMaxBufferLength:          180,
+                lowLatencyMode:              false,
+                startFragPrefetch:           true,
+                autoStartLoad:               false,
+                manifestLoadingTimeOut:      20000,
+                manifestLoadingMaxRetry:     12,
+                manifestLoadingRetryDelay:   3000,
+                levelLoadingTimeOut:         20000,
+                levelLoadingMaxRetry:        12,
+                levelLoadingRetryDelay:      3000,
+                fragLoadingTimeOut:          40000,
+                fragLoadingMaxRetry:         12,
+                fragLoadingRetryDelay:       3000,
+                maxStarvationDelay:          30,
+                maxLoadingDelay:             30,
+                nudgeMaxRetry:               15,
+                nudgeOffset:                 0.3,
             });
 
             hls.loadSource(VIDEO_SRC);
             hls.attachMedia(video);
 
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play().catch(() => {});
+            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                // Wait until 5 segments are buffered before starting playback
+                // to avoid immediate stalling on slow PythonAnywhere responses
+                const waitForBuffer = setInterval(() => {
+                    const buffered = video.buffered.length > 0
+                        ? video.buffered.end(0) - video.currentTime
+                        : 0;
+                    if (buffered >= 25) {
+                        clearInterval(waitForBuffer);
+                        hls.startLoad();
+                        video.play().catch(() => {});
+                    }
+                }, 1000);
+
+                // Fallback: start anyway after 40s if buffer check never passes
+                setTimeout(() => {
+                    clearInterval(waitForBuffer);
+                    hls.startLoad();
+                    video.play().catch(() => {});
+                }, 40000);
             });
 
             hls.on(Hls.Events.ERROR, (event, data) => {
@@ -108,7 +127,6 @@ export function initializeParkingAllotment() {
             video.play().catch(() => {});
         }
 
-        // Start drawing the polygon overlay once the stream starts
         startLiveOverlay();
     }
 
