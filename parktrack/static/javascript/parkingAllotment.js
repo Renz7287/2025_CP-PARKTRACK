@@ -46,9 +46,6 @@ export function initializeParkingAllotment() {
     showSection('snapshot');
 
     // ── HLS Stream ────────────────────────────────────────────────────────────
-    // Uses the dedicated serve_hls Django view which sets correct MIME types.
-    // Django's dev server does not set the right Content-Type for .m3u8/.ts
-    // files when serving them via MEDIA_URL, causing hls.js to fail.
     const VIDEO_SRC = '/parking-allotment/stream/stream.m3u8';
 
     function startStream() {
@@ -64,32 +61,48 @@ export function initializeParkingAllotment() {
 
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveSyncDurationCount:       5,
+                liveSyncDurationCount:       6,
                 liveMaxLatencyDurationCount: 10,
-                maxBufferLength:             60,
-                maxMaxBufferLength:          120,
+                maxBufferLength:             90,
+                maxMaxBufferLength:          180,
                 lowLatencyMode:              false,
                 startFragPrefetch:           true,
+                autoStartLoad:               false,
                 manifestLoadingTimeOut:      20000,
-                manifestLoadingMaxRetry:     10,
-                manifestLoadingRetryDelay:   2000,
+                manifestLoadingMaxRetry:     12,
+                manifestLoadingRetryDelay:   3000,
                 levelLoadingTimeOut:         20000,
-                levelLoadingMaxRetry:        10,
-                levelLoadingRetryDelay:      2000,
-                fragLoadingTimeOut:          30000,
-                fragLoadingMaxRetry:         10,
-                fragLoadingRetryDelay:       2000,
+                levelLoadingMaxRetry:        12,
+                levelLoadingRetryDelay:      3000,
+                fragLoadingTimeOut:          40000,
+                fragLoadingMaxRetry:         12,
+                fragLoadingRetryDelay:       3000,
                 maxStarvationDelay:          30,
                 maxLoadingDelay:             30,
-                nudgeMaxRetry:               10,
+                nudgeMaxRetry:               15,
                 nudgeOffset:                 0.3,
             });
 
             hls.loadSource(VIDEO_SRC);
             hls.attachMedia(video);
 
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play().catch(() => {});
+            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                const waitForBuffer = setInterval(() => {
+                    const buffered = video.buffered.length > 0
+                        ? video.buffered.end(0) - video.currentTime
+                        : 0;
+                    if (buffered >= 25) {
+                        clearInterval(waitForBuffer);
+                        hls.startLoad();
+                        video.play().catch(() => {});
+                    }
+                }, 1000);
+
+                setTimeout(() => {
+                    clearInterval(waitForBuffer);
+                    hls.startLoad();
+                    video.play().catch(() => {});
+                }, 40000);
             });
 
             hls.on(Hls.Events.ERROR, (event, data) => {
@@ -123,15 +136,11 @@ export function initializeParkingAllotment() {
     }
 
     // ── Live polygon overlay on video ─────────────────────────────────────────
-    // Draws slot polygons + occupancy status on a canvas layered over the video.
-    // Fetches slot data from the same status API the Pi pushes to, so it always
-    // reflects the latest layout and detection results without restarting the Pi.
 
     let liveOverlayInterval = null;
     let liveSlots           = [];
 
     function startLiveOverlay() {
-        // Fetch slots immediately then poll every 5 seconds
         fetchLiveSlots();
         if (liveOverlayInterval) clearInterval(liveOverlayInterval);
         liveOverlayInterval = setInterval(fetchLiveSlots, 5000);
@@ -145,23 +154,24 @@ export function initializeParkingAllotment() {
 
     async function fetchLiveSlots() {
         try {
-            // Get current slot layout from settings API
             const slotResp = await fetch('/settings/api/slots/?camera_id=1', { cache: 'no-store' });
             const slotData = await slotResp.json();
             if (!slotData.success) return;
 
-            // Get current occupancy status from the Pi's push endpoint
             const statusResp = await fetch('/parking-allotment/api/parking-status/', { cache: 'no-store' });
             const statusData = await statusResp.json();
 
-            // Merge occupancy into slots
-            const occupiedLabels = new Set(
-                (statusData.slots || []).filter(s => s.occupied).map(s => s.slot_label)
-            );
+            // Build a label → status map from the Pi's push data.
+            // Prefer the explicit 'status' field; fall back to the legacy 'occupied' boolean.
+            const slotStatusMap = {};
+            (statusData.slots || []).forEach(s => {
+                slotStatusMap[s.slot_label] = s.status
+                    || (s.occupied ? 'occupied' : 'vacant');
+            });
 
             liveSlots = slotData.slots.map(slot => ({
                 ...slot,
-                is_occupied: occupiedLabels.has(slot.slot_label),
+                detection_status: slotStatusMap[slot.slot_label] ?? 'vacant',
             }));
 
             drawLiveOverlay();
@@ -170,12 +180,18 @@ export function initializeParkingAllotment() {
         }
     }
 
+    // Colour config for each detection status
+    const STATUS_STYLE = {
+        occupied: { stroke: '#ef4444', fill: 'rgba(239,68,68,0.20)',  label: 'Occupied' },
+        improper: { stroke: '#f97316', fill: 'rgba(249,115,22,0.20)', label: 'Improper' },
+        vacant:   { stroke: '#22c55e', fill: 'rgba(34,197,94,0.15)',  label: 'Vacant'   },
+    };
+
     function drawLiveOverlay() {
         const canvas = document.getElementById('live-overlay-canvas');
         const video  = document.getElementById('live-video');
         if (!canvas || !video) return;
 
-        // Keep canvas dimensions in sync with the displayed video size
         const rect = video.getBoundingClientRect();
         canvas.width  = rect.width;
         canvas.height = rect.height;
@@ -187,33 +203,31 @@ export function initializeParkingAllotment() {
             const pts = slot.polygon_points;
             if (!pts || pts.length < 3) return;
 
-            const color  = slot.is_occupied ? '#ef4444' : '#22c55e';
-            const fill   = slot.is_occupied ? 'rgba(239,68,68,0.20)' : 'rgba(34,197,94,0.15)';
-            const label  = slot.is_occupied ? 'Occupied' : 'Vacant';
+            const style = STATUS_STYLE[slot.detection_status] ?? STATUS_STYLE.vacant;
 
-            // polygon_points are normalized [0–1], scale to canvas pixels
+            // Draw filled + stroked polygon
             ctx.beginPath();
             ctx.moveTo(pts[0][0] * canvas.width, pts[0][1] * canvas.height);
             pts.slice(1).forEach(p => ctx.lineTo(p[0] * canvas.width, p[1] * canvas.height));
             ctx.closePath();
-            ctx.fillStyle = fill;
+            ctx.fillStyle   = style.fill;
             ctx.fill();
-            ctx.strokeStyle = color;
+            ctx.strokeStyle = style.stroke;
             ctx.lineWidth   = 2;
             ctx.stroke();
 
-            // Label at centroid
+            // Label at polygon centroid
             const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length * canvas.width;
             const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length * canvas.height;
-            ctx.fillStyle    = color;
+            ctx.fillStyle    = style.stroke;
             ctx.font         = 'bold 13px monospace';
             ctx.textAlign    = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`${slot.slot_label} ${label}`, cx, cy);
+            ctx.fillText(`${slot.slot_label} ${style.label}`, cx, cy);
         });
     }
 
-    // Mobile parking map (pan + zoom)
+    // ── Mobile parking map (pan + zoom) ───────────────────────────────────────
 
     const parkingContainer = document.getElementById('parking-container');
     const parkingImage     = document.getElementById('parking-image');
@@ -292,8 +306,10 @@ export function initializeParkingAllotment() {
             const data = await response.json();
             const occupiedEl = document.getElementById('occupied-count');
             const vacantEl   = document.getElementById('vacant-count');
-            if (occupiedEl) occupiedEl.innerText = data.occupied;
-            if (vacantEl)   vacantEl.innerText   = data.vacant;
+            const improperEl = document.getElementById('improper-count');
+            if (occupiedEl) occupiedEl.innerText = data.occupied ?? 0;
+            if (vacantEl)   vacantEl.innerText   = data.vacant   ?? 0;
+            if (improperEl) improperEl.innerText  = data.improper ?? 0;
         } catch (error) {
             console.error('Failed to fetch parking status', error);
         }
@@ -323,7 +339,9 @@ export function initializeParkingAllotment() {
             const data = await response.json();
             if (data.url && snapshotImage) snapshotImage.src = data.url + '?t=' + Date.now();
             const availableEl = document.getElementById('available-parking');
-            if (availableEl) availableEl.innerText = data.vacant ?? '--';
+            const improperEl  = document.getElementById('improper-parking');
+            if (availableEl) availableEl.innerText = data.vacant   ?? '--';
+            if (improperEl)  improperEl.innerText  = data.improper ?? '--';
             if (data.last_modified) nextSnapshotAt = data.last_modified + SNAPSHOT_MS;
         } catch (error) {
             console.error('Failed to fetch snapshot:', error);

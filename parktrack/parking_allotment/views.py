@@ -78,6 +78,7 @@ def upload_snapshot(request):
         snapshot   — JPEG image file (with polygon overlays drawn on it)
         occupied   — integer
         vacant     — integer
+        improper   — integer  (new: vehicles straddling slot boundaries)
     """
     api_key = request.headers.get('X-API-KEY')
     if api_key != settings.UPLOAD_API_KEY:
@@ -91,6 +92,7 @@ def upload_snapshot(request):
 
     occupied = int(request.POST.get('occupied', 0))
     vacant   = int(request.POST.get('vacant',   0))
+    improper = int(request.POST.get('improper', 0))
 
     snapshot_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'snapshots')
     os.makedirs(snapshot_dir, exist_ok=True)
@@ -104,7 +106,7 @@ def upload_snapshot(request):
             f.write(chunk)
 
     with open(sidecar_path, 'w') as f:
-        json.dump({'occupied': occupied, 'vacant': vacant}, f)
+        json.dump({'occupied': occupied, 'vacant': vacant, 'improper': improper}, f)
 
     url = settings.MEDIA_URL + 'video_stream/snapshots/' + filename
     return JsonResponse({'status': 'ok', 'url': url})
@@ -162,7 +164,16 @@ def upload_status(request):
         X-API-KEY  — must match settings.UPLOAD_API_KEY
 
     Body (JSON):
-        { "timestamp": ..., "occupied": ..., "vacant": ..., "slots": [...] }
+        {
+            "timestamp": ...,
+            "occupied":  ...,
+            "vacant":    ...,
+            "improper":  ...,          ← new field
+            "slots": [
+                { "id": ..., "slot_label": ..., "occupied": bool, "status": str },
+                ...
+            ]
+        }
     """
     api_key = request.headers.get('X-API-KEY')
     if api_key != settings.UPLOAD_API_KEY:
@@ -174,6 +185,11 @@ def upload_status(request):
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    # Ensure improper key is always present for older Pi clients that don't send it
+    data.setdefault('improper', 0)
+    for slot in data.get('slots', []):
+        slot.setdefault('status', 'occupied' if slot.get('occupied') else 'vacant')
 
     video_dir   = os.path.join(settings.MEDIA_ROOT, 'video_stream')
     os.makedirs(video_dir, exist_ok=True)
@@ -197,12 +213,18 @@ def upload_status(request):
 def parking_status(request):
     status_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')
     if not os.path.exists(status_path):
-        return JsonResponse({'occupied': 0, 'vacant': 0, 'slots': []})
+        return JsonResponse({'occupied': 0, 'vacant': 0, 'improper': 0, 'slots': []})
     try:
         with open(status_path, 'r') as f:
             data = json.load(f)
     except Exception:
         return JsonResponse({'error': 'Failed to read status'}, status=500)
+
+    # Back-fill improper for older status files
+    data.setdefault('improper', 0)
+    for slot in data.get('slots', []):
+        slot.setdefault('status', 'occupied' if slot.get('occupied') else 'vacant')
+
     return JsonResponse(data)
 
 
@@ -216,45 +238,59 @@ def latest_snapshot(request):
     status_path  = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')
 
     if not os.path.exists(snapshot_dir):
-        return JsonResponse({'url': '', 'last_modified': None, 'vacant': 0})
+        return JsonResponse({'url': '', 'last_modified': None, 'vacant': 0, 'improper': 0})
 
     snapshots = [f for f in os.listdir(snapshot_dir) if f.endswith('.jpg')]
     if not snapshots:
-        return JsonResponse({'url': '', 'last_modified': None, 'vacant': 0})
+        return JsonResponse({'url': '', 'last_modified': None, 'vacant': 0, 'improper': 0})
 
     latest_file      = max(snapshots, key=lambda f: os.path.getmtime(os.path.join(snapshot_dir, f)))
     file_path        = os.path.join(snapshot_dir, latest_file)
     url              = settings.MEDIA_URL + 'video_stream/snapshots/' + latest_file
     last_modified_ms = int(os.path.getmtime(file_path) * 1000)
 
-    vacant       = 0
+    vacant   = 0
+    improper = 0
     sidecar_path = file_path.replace('.jpg', '.json')
     if os.path.exists(sidecar_path):
         try:
             with open(sidecar_path, 'r') as f:
-                vacant = json.load(f).get('vacant', 0)
+                sidecar      = json.load(f)
+                vacant       = sidecar.get('vacant',   0)
+                improper     = sidecar.get('improper', 0)
         except Exception:
-            vacant = 0
+            pass
     elif os.path.exists(status_path):
         try:
             with open(status_path, 'r') as f:
-                vacant = json.load(f).get('vacant', 0)
+                status_data  = json.load(f)
+                vacant       = status_data.get('vacant',   0)
+                improper     = status_data.get('improper', 0)
         except Exception:
-            vacant = 0
+            pass
 
-    return JsonResponse({'url': url, 'last_modified': last_modified_ms, 'vacant': vacant})
+    return JsonResponse({
+        'url':           url,
+        'last_modified': last_modified_ms,
+        'vacant':        vacant,
+        'improper':      improper,
+    })
 
 
 def vacant_slots_status(request):
     status_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')
     if not os.path.exists(status_path):
-        return JsonResponse({'vacant': 0})
+        return JsonResponse({'vacant': 0, 'improper': 0})
     try:
         with open(status_path, 'r') as f:
-            vacant_count = json.load(f).get('vacant', 0)
+            data = json.load(f)
+            return JsonResponse({
+                'vacant':   data.get('vacant',   0),
+                'improper': data.get('improper', 0),
+            })
     except Exception:
         return JsonResponse({'error': 'Failed to read status.'}, status=500)
-    return JsonResponse({'vacant': vacant_count})
+
 
 def api_clean_snapshot(request):
     """
@@ -274,11 +310,10 @@ def api_clean_snapshot(request):
     if os.path.exists(clean_dir):
         snapshots = [f for f in os.listdir(clean_dir) if f.endswith('.jpg')]
         if snapshots:
-            latest   = max(snapshots, key=lambda f: os.path.getmtime(os.path.join(clean_dir, f)))
-            url      = f'{settings.MEDIA_URL}video_stream/clean_snapshots/{latest}?v={int(time_module.time())}'
+            latest = max(snapshots, key=lambda f: os.path.getmtime(os.path.join(clean_dir, f)))
+            url    = f'{settings.MEDIA_URL}video_stream/clean_snapshots/{latest}?v={int(time_module.time())}'
             return JsonResponse({'url': url})
 
-    # Fallback: use the manually uploaded camera snapshot if no Pi clean snapshot exists
     from settings.models import Camera
     camera = Camera.objects.filter(is_active=True).first()
     if camera and camera.snapshot_url:
@@ -286,13 +321,11 @@ def api_clean_snapshot(request):
 
     return JsonResponse({'url': ''})
 
+
 @csrf_exempt
 def push_stream_segment(request, filename):
     """
     PUT /parking-allotment/api/stream/push/<filename>
-
-    Receives .ts segments and .m3u8 playlist pushed by FFmpeg via HTTP PUT.
-    Saves to MEDIA_ROOT/video_stream/ so serve_hls() can serve them to browsers.
     """
     api_key = request.headers.get('X-API-KEY')
     if api_key != settings.UPLOAD_API_KEY:
@@ -319,9 +352,6 @@ def push_stream_segment(request, filename):
 def push_clean_stream_segment(request, filename):
     """
     PUT /parking-allotment/api/stream/push-clean/<filename>
-
-    Same as push_stream_segment but saves to video_stream/clean_stream/
-    for the layout editor live preview.
     """
     api_key = request.headers.get('X-API-KEY')
     if api_key != settings.UPLOAD_API_KEY:
@@ -342,6 +372,7 @@ def push_clean_stream_segment(request, filename):
         f.write(request.body)
 
     return HttpResponse(status=204)
+
 
 @csrf_exempt
 def delete_stream_segment(request, filename):
@@ -394,7 +425,6 @@ def batch_delete_stream_segments(request):
     """
     POST /parking-allotment/api/stream/batch-delete/
     Body: { "files": ["segment_001.ts", ...], "stream": "overlay" | "clean" }
-    Deletes all listed segments in one request to minimize round-trips.
     """
     api_key = request.headers.get('X-API-KEY')
     if api_key != settings.UPLOAD_API_KEY:
@@ -434,11 +464,11 @@ def batch_delete_stream_segments(request):
 
     return JsonResponse({'deleted': deleted, 'errors': errors})
 
+
 def list_stream_segments(request, stream_type='overlay'):
     """
     GET /parking-allotment/api/stream/list/
     GET /parking-allotment/api/stream/list-clean/
-    Returns list of .ts segment filenames currently on the server.
     """
     api_key = request.headers.get('X-API-KEY')
     if api_key != settings.UPLOAD_API_KEY:

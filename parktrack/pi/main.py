@@ -11,7 +11,7 @@ import time
 import cv2
 import numpy as np
 import requests
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon, box as shapely_box
 from ultralytics import YOLO
 
 import config
@@ -30,12 +30,8 @@ config.SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def open_video_source():
-    # Pre-recorded test video: set both USE_USB_CAMERA and USE_PI_CAMERA to False
-    # and place your video file at the path defined by config.VIDEO_FILE.
-    # USB webcam:        set USE_USB_CAMERA = True in config.py
-    # Pi Camera Module:  set USE_PI_CAMERA  = True in config.py
     if config.USE_USB_CAMERA:
-        cap = cv2.VideoCapture(config.USB_CAMERA_INDEX)
+        cap    = cv2.VideoCapture(config.USB_CAMERA_INDEX)
         source = f"USB camera (index {config.USB_CAMERA_INDEX})"
     elif config.USE_PI_CAMERA:
         gst = (
@@ -43,10 +39,10 @@ def open_video_source():
             "video/x-raw,width={w},height={h},framerate={fps}/1 ! "
             "videoconvert ! appsink"
         ).format(w=config.OUTPUT_WIDTH, h=config.OUTPUT_HEIGHT, fps=config.OUTPUT_FPS)
-        cap = cv2.VideoCapture(gst, cv2.CAP_GSTREAMER)
+        cap    = cv2.VideoCapture(gst, cv2.CAP_GSTREAMER)
         source = "Pi Camera Module"
     else:
-        cap = cv2.VideoCapture(str(config.VIDEO_FILE))
+        cap    = cv2.VideoCapture(str(config.VIDEO_FILE))
         source = str(config.VIDEO_FILE)
 
     if not cap.isOpened():
@@ -72,7 +68,6 @@ def start_ffmpeg_clean():
 
 
 def _get_active_segments(m3u8_path):
-    """Returns set of segment filenames currently listed in the playlist."""
     active = set()
     try:
         with open(m3u8_path, 'r') as f:
@@ -86,7 +81,6 @@ def _get_active_segments(m3u8_path):
 
 
 def _read_file(path):
-    """Read file into memory and return (data, md5_hash) or (None, None) on error."""
     try:
         with open(path, 'rb') as f:
             data = f.read()
@@ -97,14 +91,6 @@ def _read_file(path):
 
 def start_hls_uploader(local_dir, push_url, delete_url, list_url, batch_delete_url,
                         stream_type, api_key, interval=1.0):
-    """
-    Keeps remote HLS dir in sync with local:
-    - Startup: lists remote segments and batch-deletes anything not in the
-      current active playlist (cleans up leftovers from prior runs).
-    - Each tick: pushes new/changed active segments, batch-deletes segments
-      that have rolled out of the playlist.
-    Uses batch delete to minimize round-trips to PythonAnywhere.
-    """
     seen   = {}
     pushed = set()
 
@@ -208,10 +194,23 @@ def start_hls_uploader(local_dir, push_url, delete_url, list_url, batch_delete_u
     t.start()
     return t
 
-def get_centroids(yolo_results) -> list:
-    centroids = []
+
+# ── Detection helpers ──────────────────────────────────────────────────────────
+
+def get_detections(yolo_results) -> list:
+    """
+    Extract bounding boxes from YOLO results.
+
+    Returns a list of dicts:
+        { 'cx': float, 'cy': float,
+          'x1': float, 'y1': float, 'x2': float, 'y2': float,
+          'shapely_box': Polygon }
+
+    Boxes smaller than config.MIN_BOX_PIXELS on either dimension are dropped.
+    """
+    detections = []
     if not (hasattr(yolo_results, "boxes") and len(yolo_results.boxes) > 0):
-        return centroids
+        return detections
 
     xyxy = yolo_results.boxes.xyxy
     if hasattr(xyxy, "cpu"):
@@ -223,38 +222,168 @@ def get_centroids(yolo_results) -> list:
         x1, y1, x2, y2 = map(float, box[:4])
         if (x2 - x1) < config.MIN_BOX_PIXELS or (y2 - y1) < config.MIN_BOX_PIXELS:
             continue
-        centroids.append(((x1 + x2) / 2.0, (y1 + y2) / 2.0))
+        detections.append({
+            'cx':          (x1 + x2) / 2.0,
+            'cy':          (y1 + y2) / 2.0,
+            'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2,
+            'shapely_box': shapely_box(x1, y1, x2, y2),
+        })
 
-    return centroids
+    return detections
 
 
-def update_occupancy(slots: list, centroids: list):
+def _box_overlap_ratio(det: dict, slot_poly: Polygon) -> float:
+    """
+    Fraction of the slot polygon area covered by the vehicle bounding box.
+    Returns 0.0 if the slot polygon is invalid or has no area.
+    """
+    if not slot_poly.is_valid or slot_poly.area == 0:
+        return 0.0
+    return det['shapely_box'].intersection(slot_poly).area / slot_poly.area
+
+
+def _slot_status_for_detection(det: dict, slot_poly: Polygon) -> str:
+    """
+    Classify how a single detected vehicle relates to one slot.
+
+    Returns one of:
+        'occupied' – vehicle is solidly inside the slot
+        'improper' – vehicle overlaps the slot but isn't centred inside it
+                     (straddles the boundary or is at an odd angle)
+        'vacant'   – vehicle has no meaningful overlap with the slot
+
+    Thresholds (all tunable in config.py):
+        OVERLAP_THRESHOLD          – minimum overlap to count as any presence  (default 0.15)
+        OCCUPIED_OVERLAP_THRESHOLD – minimum overlap to count as fully parked  (default 0.40)
+    """
+    overlap_threshold  = getattr(config, 'OVERLAP_THRESHOLD',          0.15)
+    occupied_threshold = getattr(config, 'OCCUPIED_OVERLAP_THRESHOLD',  0.40)
+
+    # Fast path: centroid inside polygon → definitely occupied
+    if slot_poly.contains(Point(det['cx'], det['cy'])):
+        return 'occupied'
+
+    # Centroid missed — check how much of the slot the box covers
+    ratio = _box_overlap_ratio(det, slot_poly)
+
+    if ratio >= occupied_threshold:
+        return 'occupied'
+    elif ratio >= overlap_threshold:
+        return 'improper'
+    else:
+        return 'vacant'
+
+
+def classify_slot(slot_poly: Polygon, detections: list) -> str:
+    """
+    Given all vehicle detections for a frame, determine the overall status
+    of one parking slot.
+
+    Priority: occupied > improper > vacant
+    (An 'improper' vehicle touching the slot beats vacant but not a properly
+    parked vehicle.)
+    """
+    best = 'vacant'
+    for det in detections:
+        status = _slot_status_for_detection(det, slot_poly)
+        if status == 'occupied':
+            return 'occupied'   # can't do better, short-circuit
+        if status == 'improper':
+            best = 'improper'
+    return best
+
+
+# ── Occupancy smoothing ────────────────────────────────────────────────────────
+
+# Maps raw per-frame status strings to integer weights used in the history buffer.
+_STATUS_WEIGHT = {'occupied': 2, 'improper': 1, 'vacant': 0}
+_WEIGHT_TO_STATUS = [
+    # (min_sum_threshold, status)  — evaluated in descending priority order
+    # Thresholds assume a deque of length config.SMOOTH_FRAMES (default 5).
+    # Adjust config.SMOOTH_THRESHOLD / config.IMPROPER_THRESHOLD as needed.
+]
+
+
+def update_occupancy(slots: list, detections: list):
+    """
+    Update each slot's smoothed status using a rolling history buffer.
+
+    Each frame appends the raw per-frame status weight to slot['history'].
+    The smoothed status is decided by summing the history:
+
+        sum >= config.SMOOTH_THRESHOLD   → 'occupied'
+        sum >= config.IMPROPER_THRESHOLD → 'improper'
+        otherwise                        → 'vacant'
+
+    Recommended config.py additions:
+        SMOOTH_FRAMES       = 5    # history deque length (already used implicitly by maxlen)
+        SMOOTH_THRESHOLD    = 6    # sum needed to call a slot occupied  (e.g. 3× weight-2)
+        IMPROPER_THRESHOLD  = 3    # sum needed to call a slot improper  (e.g. 3× weight-1)
+    """
+    smooth_threshold   = getattr(config, 'SMOOTH_THRESHOLD',   6)
+    improper_threshold = getattr(config, 'IMPROPER_THRESHOLD',  3)
+
     for slot in slots:
-        present = any(slot["poly"].contains(Point(cx, cy)) for cx, cy in centroids)
-        slot["history"].append(1 if present else 0)
-        slot["is_occupied"] = sum(slot["history"]) >= config.SMOOTH_THRESHOLD
+        raw_status = classify_slot(slot['poly'], detections)
+        slot['history'].append(_STATUS_WEIGHT[raw_status])
+
+        total = sum(slot['history'])
+        if total >= smooth_threshold:
+            slot['status'] = 'occupied'
+        elif total >= improper_threshold:
+            slot['status'] = 'improper'
+        else:
+            slot['status'] = 'vacant'
+
+        # Keep legacy boolean for any code that still reads it
+        slot['is_occupied'] = slot['status'] == 'occupied'
+
+
+# ── Rendering ─────────────────────────────────────────────────────────────────
+
+# BGR colours for each status
+_STATUS_COLOR = {
+    'occupied': (0,   0,   255),   # red
+    'improper': (0,   165, 255),   # orange
+    'vacant':   (0,   255,  0),    # green
+}
+_STATUS_LABEL = {
+    'occupied': 'Occupied',
+    'improper': 'Improper',
+    'vacant':   'Vacant',
+}
 
 
 def draw_overlays(frame: np.ndarray, slots: list) -> np.ndarray:
     for slot in slots:
-        color = (0, 0, 255) if slot["is_occupied"] else (0, 255, 0)
-        pts   = slot["pts_np"]
+        status = slot.get('status', 'occupied' if slot.get('is_occupied') else 'vacant')
+        color  = _STATUS_COLOR[status]
+        pts    = slot['pts_np']
         cv2.polylines(frame, [pts], isClosed=True, color=color, thickness=2)
         text_x = int(pts[0][0])
         text_y = int(max(pts[0][1] - 8, 10))
-        cv2.putText(frame, slot['slot_label'], (text_x, text_y),
+        label  = f"{slot['slot_label']} {_STATUS_LABEL[status]}"
+        cv2.putText(frame, label, (text_x, text_y),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2, cv2.LINE_AA)
     return frame
 
+
+# ── Push helpers ──────────────────────────────────────────────────────────────
 
 def push_status(slots: list):
     """POST occupancy status to Django so the browser can read it."""
     data = {
         "timestamp": int(time.time()),
-        "occupied":  sum(1 for s in slots if s["is_occupied"]),
-        "vacant":    sum(1 for s in slots if not s["is_occupied"]),
+        "occupied":  sum(1 for s in slots if s.get('status') == 'occupied'),
+        "vacant":    sum(1 for s in slots if s.get('status') == 'vacant'),
+        "improper":  sum(1 for s in slots if s.get('status') == 'improper'),
         "slots": [
-            {"id": s["id"], "slot_label": s["slot_label"], "occupied": bool(s["is_occupied"])}
+            {
+                "id":         s["id"],
+                "slot_label": s["slot_label"],
+                "occupied":   s.get('status') == 'occupied',
+                "status":     s.get('status', 'vacant'),
+            }
             for s in slots
         ],
     }
@@ -272,8 +401,9 @@ def push_status(slots: list):
 def push_snapshot(frame: np.ndarray, slots: list, now: float):
     """POST the overlaid frame to Django for the parking allotment display."""
     filename = f"snapshot_{int(now)}.jpg"
-    occupied = sum(1 for s in slots if s["is_occupied"])
-    vacant   = sum(1 for s in slots if not s["is_occupied"])
+    occupied = sum(1 for s in slots if s.get('status') == 'occupied')
+    vacant   = sum(1 for s in slots if s.get('status') == 'vacant')
+    improper = sum(1 for s in slots if s.get('status') == 'improper')
 
     success, buf = cv2.imencode(".jpg", frame)
     if not success:
@@ -284,7 +414,7 @@ def push_snapshot(frame: np.ndarray, slots: list, now: float):
         requests.post(
             f"{config.DJANGO_BASE_URL}/parking-allotment/api/upload-snapshot/",
             files={"snapshot": (filename, buf.tobytes(), "image/jpeg")},
-            data={"occupied": occupied, "vacant": vacant},
+            data={"occupied": occupied, "vacant": vacant, "improper": improper},
             headers={"X-API-KEY": config.UPLOAD_API_KEY},
             timeout=config.REQUEST_TIMEOUT,
         )
@@ -292,6 +422,8 @@ def push_snapshot(frame: np.ndarray, slots: list, now: float):
     except Exception as exc:
         logger.warning("push_snapshot failed: %s", exc)
 
+
+# ── Main loop ─────────────────────────────────────────────────────────────────
 
 def main():
     fetcher = SlotFetcher()
@@ -303,7 +435,6 @@ def main():
     ffmpeg       = start_ffmpeg()
     ffmpeg_clean = start_ffmpeg_clean()
 
-    # Upload HLS files to Django via Python requests instead of FFmpeg HTTP push
     start_hls_uploader(
         config.VIDEO_DIR,
         config.STREAM_PUSH_URL,
@@ -359,18 +490,17 @@ def main():
                     time.sleep(0.1)
                     continue
                 else:
-                    # Loop pre-recorded video back to the start
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     continue
 
             frame = cv2.resize(frame, (config.OUTPUT_WIDTH, config.OUTPUT_HEIGHT),
                                interpolation=cv2.INTER_LINEAR)
 
-            slots     = fetcher.get_slots()
-            results   = model(frame, conf=config.YOLO_CONFIDENCE, verbose=False)[0]
-            centroids = get_centroids(results)
+            slots      = fetcher.get_slots()
+            results    = model(frame, conf=config.YOLO_CONFIDENCE, verbose=False)[0]
+            detections = get_detections(results)          # replaces get_centroids()
 
-            update_occupancy(slots, centroids)
+            update_occupancy(slots, detections)           # now uses full boxes
 
             clean_frame = frame.copy()
             frame       = draw_overlays(frame, slots)
