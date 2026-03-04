@@ -1,11 +1,9 @@
 """
 Django settings for parktrack project.
 """
-
 from pathlib import Path
 import os
 import dj_database_url
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,7 +13,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
-
 UPLOAD_API_KEY = os.getenv('UPLOAD_API_KEY')
 
 INSTALLED_APPS = [
@@ -67,9 +64,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'parktrack.wsgi.application'
 
-# Database
-# Render provides DATABASE_URL automatically when you attach a PostgreSQL instance.
-# Falls back to local MySQL when DATABASE_URL is not set (local dev).
+# Uses DATABASE_URL if set (production), otherwise falls back to local MySQL
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 if DATABASE_URL:
@@ -84,11 +79,11 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'parktrack',
-            'USER': 'root',
-            'PASSWORD': '',
-            'HOST': 'localhost',
-            'PORT': '3306',
+            'NAME': os.getenv('MYSQL_DATABASE', 'parktrack'),
+            'USER': os.getenv('MYSQL_USER', 'root'),
+            'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
+            'HOST': os.getenv('MYSQL_HOST', 'localhost'),
+            'PORT': os.getenv('MYSQL_PORT', '3306'),
         }
     }
 

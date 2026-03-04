@@ -1,10 +1,10 @@
 from pathlib import Path
 
-# Production server URL — update this when deploying
-# LAN testing:  DJANGO_BASE_URL = "http://10.246.146.103:8000"
-# Deployed:
-DJANGO_BASE_URL = "https://parktrack-tu17.onrender.com/"
-# DJANGO_BASE_URL = "http://localhost:8000"
+# Production server URL
+# LAN testing:    DJANGO_BASE_URL = "http://10.246.146.103:8000"
+# PythonAnywhere: DJANGO_BASE_URL = "https://yourusername.pythonanywhere.com"
+# Local:          DJANGO_BASE_URL = "http://localhost:8000"
+DJANGO_BASE_URL = "https://yourusername.pythonanywhere.com"
 
 CAMERA_ID          = 1
 SLOT_POLL_INTERVAL = 30
@@ -47,14 +47,9 @@ SMOOTH_THRESHOLD = max(1, HISTORY_LEN // 2 + 1)
 
 WRITE_STATUS_EVERY = 3
 
-# HLS push endpoints on the Django server
-# FFmpeg pushes segments via HTTP PUT instead of writing to local disk,
-# so segments land directly on the server's persistent storage.
 STREAM_PUSH_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/push/"
 CLEAN_STREAM_PUSH_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/push-clean/"
 
-# Overlay stream — includes polygon and detection status drawn on each frame.
-# delete_segments removes .ts files that fall off the playlist window automatically.
 FFMPEG_CMD = [
     "ffmpeg",
     "-f",       "rawvideo",
@@ -79,8 +74,6 @@ FFMPEG_CMD = [
     f"{STREAM_PUSH_URL}stream.m3u8",
 ]
 
-# Clean stream — no overlays, used only by the layout editor live preview.
-# Keeps only 3 segments on disk since it is a single-admin preview feed.
 FFMPEG_CLEAN_CMD = [
     "ffmpeg",
     "-f",       "rawvideo",
