@@ -13,23 +13,16 @@ def parking_allotment(request):
 
 
 def serve_hls(request, filename):
-    """
-    Serves HLS stream files (.m3u8 and .ts) with correct MIME types.
-    Checks video_stream/ first, then video_stream/clean_stream/ subdirectory.
-    """
     ext = os.path.splitext(filename)[1].lower()
     if ext not in ('.m3u8', '.ts'):
         return HttpResponse(status=404)
 
-    if '/' in filename or '\\' in filename or '..' in filename:
+    if '..' in filename or filename.startswith('/'):
         return HttpResponse(status=400)
 
-    # Check main stream directory first, then clean stream subdirectory
-    for subdir in ['', 'clean_stream']:
-        file_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', subdir, filename)
-        if os.path.exists(file_path):
-            break
-    else:
+    file_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', filename)
+
+    if not os.path.exists(file_path):
         return HttpResponse(status=404)
 
     content_type = 'application/vnd.apple.mpegurl' if ext == '.m3u8' else 'video/MP2T'

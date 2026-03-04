@@ -488,8 +488,6 @@ def api_upload_snapshot(request, pk):
 @group_required('Admin')
 @require_http_methods(['GET'])
 def api_get_clean_stream(request, pk):
-    """Returns the HLS URL for the clean (no-overlay) live stream from the Pi.
-    Used by the layout editor modal to show a live feed for snapshot selection."""
     try:
         Camera.objects.get(id=pk, is_active=True)
     except Camera.DoesNotExist:
@@ -502,9 +500,8 @@ def api_get_clean_stream(request, pk):
             status=404,
         )
 
-    stream_url = f'{django_settings.MEDIA_URL}video_stream/clean_stream/stream.m3u8'
+    stream_url = '/parking-allotment/stream/clean_stream/stream.m3u8'
     return JsonResponse({'success': True, 'stream_url': stream_url})
-
 
 @group_required('Admin')
 @require_http_methods(['POST'])

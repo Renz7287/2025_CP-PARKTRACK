@@ -4,7 +4,7 @@ from pathlib import Path
 # LAN testing:    DJANGO_BASE_URL = "http://10.246.146.103:8000"
 # PythonAnywhere: DJANGO_BASE_URL = "https://yourusername.pythonanywhere.com"
 # Local:          DJANGO_BASE_URL = "http://localhost:8000"
-DJANGO_BASE_URL = "https://yourusername.pythonanywhere.com"
+DJANGO_BASE_URL = "https://parktrack.pythonanywhere.com"
 
 CAMERA_ID          = 1
 SLOT_POLL_INTERVAL = 30
