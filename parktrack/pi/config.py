@@ -17,23 +17,23 @@ UPLOAD_API_KEY = "parktrack@2025"
 # USB webcam:              USE_USB_CAMERA = True
 # Pi Camera Module (CSI):  USE_PI_CAMERA  = True
 USE_PI_CAMERA    = False
-USE_USB_CAMERA   = False
+USE_USB_CAMERA   = True
 USB_CAMERA_INDEX = 0
 
 # Local paths — update commented lines when running on Pi
-# PROJECT_DIR = Path('/home/parktrack')
-PROJECT_DIR = Path(__file__).resolve().parent.parent
-VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.mp4"
+PROJECT_DIR = Path('/home/parktrack')
+# PROJECT_DIR = Path(__file__).resolve().parent.parent
+# VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.mp4"
 
 OUTPUT_WIDTH  = 640
 OUTPUT_HEIGHT = 360
 OUTPUT_FPS    = 3
 
 # Stream output directories — update commented lines when running on Pi
-# VIDEO_DIR    = Path('/home/parktrack/stream')
-# SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
-VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
-SNAPSHOT_DIR = PROJECT_DIR / "media" / "snapshots"
+VIDEO_DIR    = Path('/home/parktrack/stream')
+SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
+# VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
+# SNAPSHOT_DIR = PROJECT_DIR / "media" / "snapshots"
 
 SNAPSHOT_INTERVAL = 60
 MAX_SNAPSHOTS     = 10
