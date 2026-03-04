@@ -12,7 +12,12 @@ class SlotStatusLog(models.Model):
     is_occupied = models.BooleanField()
 
 class VehicleEntry(models.Model):
-    timestamp = models.DateTimeField(auto_now_add=True)
+    ENTRY_TYPE_CHOICES = [
+        ('entry', 'Entry'),
+        ('exit',  'Exit'),
+    ]
+    entry_type = models.CharField(max_length=10, choices=ENTRY_TYPE_CHOICES, default='entry')
+    timestamp  = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Entry at {self.timestamp}"
+        return f"{self.entry_type} at {self.timestamp}"
