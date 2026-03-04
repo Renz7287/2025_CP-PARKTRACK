@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     buttonsStyling: false
                 }).then(() => {
-                    window.location.href = '/';
+                    window.location.href = '/login/';
                 });
                 return;
             }
