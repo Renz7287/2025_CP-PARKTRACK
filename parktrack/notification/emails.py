@@ -1,4 +1,3 @@
-from django.core.mail import send_mail
 from django.conf import settings
 import logging
 
@@ -11,13 +10,12 @@ SUBJECTS = {
 }
 
 def send_notification_email(recipient, notif_type, message):
-    """Send an email mirror of an in-app notification. Fails silently on error."""
+    """Send an email via SendGrid HTTP API (works on PythonAnywhere free tier)."""
     email = getattr(recipient, 'email', None)
     if not email:
         return
 
     subject = SUBJECTS.get(notif_type, 'ParkTrack Notification')
-
     body = (
         f"Hi {recipient.get_full_name() or recipient.username},\n\n"
         f"{message}\n\n"
@@ -26,12 +24,16 @@ def send_notification_email(recipient, notif_type, message):
     )
 
     try:
-        send_mail(
-            subject=subject,
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            fail_silently=False,
+        import sendgrid
+        from sendgrid.helpers.mail import Mail
+
+        sg      = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+        mail    = Mail(
+            from_email    = settings.DEFAULT_FROM_EMAIL,
+            to_emails     = email,
+            subject       = subject,
+            plain_text_content = body,
         )
+        sg.send(mail)
     except Exception as exc:
         logger.warning("Failed to send notification email to %s: %s", email, exc)
