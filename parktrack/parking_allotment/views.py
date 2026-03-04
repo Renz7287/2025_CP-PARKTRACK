@@ -342,3 +342,115 @@ def push_clean_stream_segment(request, filename):
         f.write(request.body)
 
     return HttpResponse(status=204)
+
+@csrf_exempt
+def delete_stream_segment(request, filename):
+    """DELETE /parking-allotment/api/stream/delete/<filename>"""
+    api_key = request.headers.get('X-API-KEY')
+    if api_key != settings.UPLOAD_API_KEY:
+        return HttpResponse(status=401)
+    if request.method != 'DELETE':
+        return HttpResponse(status=405)
+    if os.path.splitext(filename)[1].lower() != '.ts':
+        return HttpResponse(status=400)
+    if '/' in filename or '\\' in filename or '..' in filename:
+        return HttpResponse(status=400)
+
+    file_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', filename)
+    try:
+        os.remove(file_path)
+    except FileNotFoundError:
+        pass
+    except OSError as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    return HttpResponse(status=204)
+
+
+@csrf_exempt
+def delete_clean_stream_segment(request, filename):
+    """DELETE /parking-allotment/api/stream/delete-clean/<filename>"""
+    api_key = request.headers.get('X-API-KEY')
+    if api_key != settings.UPLOAD_API_KEY:
+        return HttpResponse(status=401)
+    if request.method != 'DELETE':
+        return HttpResponse(status=405)
+    if os.path.splitext(filename)[1].lower() != '.ts':
+        return HttpResponse(status=400)
+    if '/' in filename or '\\' in filename or '..' in filename:
+        return HttpResponse(status=400)
+
+    file_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'clean_stream', filename)
+    try:
+        os.remove(file_path)
+    except FileNotFoundError:
+        pass
+    except OSError as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    return HttpResponse(status=204)
+
+
+@csrf_exempt
+def batch_delete_stream_segments(request):
+    """
+    POST /parking-allotment/api/stream/batch-delete/
+    Body: { "files": ["segment_001.ts", ...], "stream": "overlay" | "clean" }
+    Deletes all listed segments in one request to minimize round-trips.
+    """
+    api_key = request.headers.get('X-API-KEY')
+    if api_key != settings.UPLOAD_API_KEY:
+        return HttpResponse(status=401)
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    stream_type = data.get('stream', 'overlay')
+    files       = data.get('files', [])
+
+    if stream_type == 'clean':
+        base_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'clean_stream')
+    else:
+        base_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream')
+
+    deleted = []
+    errors  = []
+
+    for filename in files:
+        if os.path.splitext(filename)[1].lower() != '.ts':
+            continue
+        if '/' in filename or '\\' in filename or '..' in filename:
+            continue
+        file_path = os.path.join(base_dir, filename)
+        try:
+            os.remove(file_path)
+            deleted.append(filename)
+        except FileNotFoundError:
+            deleted.append(filename)
+        except OSError as e:
+            errors.append({'file': filename, 'error': str(e)})
+
+    return JsonResponse({'deleted': deleted, 'errors': errors})
+
+def list_stream_segments(request, stream_type='overlay'):
+    """
+    GET /parking-allotment/api/stream/list/
+    GET /parking-allotment/api/stream/list-clean/
+    Returns list of .ts segment filenames currently on the server.
+    """
+    api_key = request.headers.get('X-API-KEY')
+    if api_key != settings.UPLOAD_API_KEY:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    if stream_type == 'clean':
+        stream_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'clean_stream')
+    else:
+        stream_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream')
+
+    if not os.path.exists(stream_dir):
+        return JsonResponse({'files': []})
+
+    files = [f for f in os.listdir(stream_dir) if f.endswith('.ts')]
+    return JsonResponse({'files': files})

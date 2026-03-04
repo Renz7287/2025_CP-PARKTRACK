@@ -1,9 +1,11 @@
+import hashlib
 import json
 import logging
 import os
 import signal
 import subprocess
 import sys
+import threading
 import time
 
 import cv2
@@ -24,15 +26,14 @@ logger = logging.getLogger("main")
 
 config.VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 config.SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
+(config.VIDEO_DIR / "clean_stream").mkdir(parents=True, exist_ok=True)
 
 
 def open_video_source():
-    # To test with pre-recorded video: set both USE_USB_CAMERA and USE_PI_CAMERA to False
+    # Pre-recorded test video: set both USE_USB_CAMERA and USE_PI_CAMERA to False
     # and place your video file at the path defined by config.VIDEO_FILE.
-    #
-    # To use USB webcam: set USE_USB_CAMERA = True in config.py
-    # To use Pi Camera Module: set USE_PI_CAMERA = True in config.py
-
+    # USB webcam:        set USE_USB_CAMERA = True in config.py
+    # Pi Camera Module:  set USE_PI_CAMERA  = True in config.py
     if config.USE_USB_CAMERA:
         cap = cv2.VideoCapture(config.USB_CAMERA_INDEX)
         source = f"USB camera (index {config.USB_CAMERA_INDEX})"
@@ -69,6 +70,143 @@ def start_ffmpeg_clean():
     logger.info("FFmpeg clean stream started (PID %d)", proc.pid)
     return proc
 
+
+def _get_active_segments(m3u8_path):
+    """Returns set of segment filenames currently listed in the playlist."""
+    active = set()
+    try:
+        with open(m3u8_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.endswith('.ts'):
+                    active.add(os.path.basename(line))
+    except Exception:
+        pass
+    return active
+
+
+def _read_file(path):
+    """Read file into memory and return (data, md5_hash) or (None, None) on error."""
+    try:
+        with open(path, 'rb') as f:
+            data = f.read()
+        return data, hashlib.md5(data).hexdigest()
+    except Exception:
+        return None, None
+
+
+def start_hls_uploader(local_dir, push_url, delete_url, list_url, batch_delete_url,
+                        stream_type, api_key, interval=1.0):
+    """
+    Keeps remote HLS dir in sync with local:
+    - Startup: lists remote segments and batch-deletes anything not in the
+      current active playlist (cleans up leftovers from prior runs).
+    - Each tick: pushes new/changed active segments, batch-deletes segments
+      that have rolled out of the playlist.
+    Uses batch delete to minimize round-trips to PythonAnywhere.
+    """
+    seen   = {}
+    pushed = set()
+
+    def fetch_remote_segments():
+        try:
+            resp = requests.get(list_url, headers={'X-API-KEY': api_key}, timeout=10)
+            if resp.ok:
+                return set(resp.json().get('files', []))
+        except Exception as exc:
+            logger.warning("Failed to list remote segments: %s", exc)
+        return set()
+
+    def batch_delete(names):
+        if not names:
+            return
+        try:
+            resp = requests.post(
+                batch_delete_url,
+                json={'files': list(names), 'stream': stream_type},
+                headers={'X-API-KEY': api_key},
+                timeout=15,
+            )
+            if resp.ok:
+                result = resp.json()
+                for name in result.get('deleted', []):
+                    pushed.discard(name)
+                    seen.pop(name, None)
+                    logger.info("Batch deleted remote segment: %s", name)
+                for err in result.get('errors', []):
+                    logger.warning("Batch delete error: %s", err)
+            else:
+                logger.warning("Batch delete failed: HTTP %d", resp.status_code)
+        except Exception as exc:
+            logger.warning("Batch delete request failed: %s", exc)
+
+    def startup_cleanup(active_segments):
+        remote = fetch_remote_segments()
+        stale  = remote - active_segments
+        if stale:
+            logger.info("Startup cleanup: removing %d stale remote segment(s): %s",
+                        len(stale), sorted(stale))
+            batch_delete(stale)
+        else:
+            logger.info("Startup cleanup: remote is clean, %d active segment(s)", len(remote))
+        pushed.update(remote - stale)
+
+    def loop():
+        startup_done = False
+
+        while True:
+            try:
+                if not local_dir.exists():
+                    time.sleep(interval)
+                    continue
+
+                m3u8            = local_dir / "stream.m3u8"
+                active_segments = _get_active_segments(m3u8) if m3u8.exists() else set()
+
+                if not startup_done and m3u8.exists():
+                    startup_cleanup(active_segments)
+                    startup_done = True
+
+                stale_remote = pushed - active_segments - {'stream.m3u8'}
+                if stale_remote:
+                    batch_delete(stale_remote)
+
+                for fpath in list(local_dir.iterdir()):
+                    if fpath.suffix == '.ts' and fpath.name not in active_segments:
+                        continue
+                    if fpath.suffix not in ('.m3u8', '.ts'):
+                        continue
+
+                    data, h = _read_file(fpath)
+                    if data is None:
+                        continue
+
+                    if seen.get(fpath.name) == h:
+                        continue
+
+                    try:
+                        resp = requests.put(
+                            push_url + fpath.name,
+                            data=data,
+                            headers={'X-API-KEY': api_key},
+                            timeout=15,
+                        )
+                        if resp.status_code in (200, 201, 204):
+                            seen[fpath.name] = h
+                            pushed.add(fpath.name)
+                            logger.debug("Pushed: %s", fpath.name)
+                        else:
+                            logger.warning("Push rejected (%s): HTTP %d", fpath.name, resp.status_code)
+                    except Exception as exc:
+                        logger.warning("HLS upload failed (%s): %s", fpath.name, exc)
+
+            except Exception as exc:
+                logger.warning("HLS uploader error: %s", exc)
+            time.sleep(interval)
+
+    t = threading.Thread(target=loop, daemon=True, name="HLSUploader")
+    t.start()
+    return t
 
 def get_centroids(yolo_results) -> list:
     centroids = []
@@ -165,6 +303,26 @@ def main():
     cap          = open_video_source()
     ffmpeg       = start_ffmpeg()
     ffmpeg_clean = start_ffmpeg_clean()
+
+    # Upload HLS files to Django via Python requests instead of FFmpeg HTTP push
+    start_hls_uploader(
+        config.VIDEO_DIR,
+        config.STREAM_PUSH_URL,
+        config.STREAM_DELETE_URL,
+        config.STREAM_LIST_URL,
+        config.STREAM_BATCH_DELETE_URL,
+        'overlay',
+        config.UPLOAD_API_KEY,
+    )
+    start_hls_uploader(
+        config.VIDEO_DIR / "clean_stream",
+        config.CLEAN_STREAM_PUSH_URL,
+        config.CLEAN_STREAM_DELETE_URL,
+        config.CLEAN_STREAM_LIST_URL,
+        config.CLEAN_STREAM_BATCH_DELETE_URL,
+        'clean',
+        config.UPLOAD_API_KEY,
+    )
 
     def shutdown(sig=None, frame=None):
         logger.info("Shutting down...")

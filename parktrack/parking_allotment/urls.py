@@ -15,5 +15,10 @@ urlpatterns = [
     path('api/upload-status/', views.upload_status, name='upload_status'),
     path('api/stream/push/<str:filename>', views.push_stream_segment, name='push_stream_segment'),
     path('api/stream/push-clean/<str:filename>', views.push_clean_stream_segment, name='push_clean_stream_segment'),
+    path('api/stream/delete/<str:filename>', views.delete_stream_segment, name='delete_stream_segment'),
+    path('api/stream/delete-clean/<str:filename>', views.delete_clean_stream_segment, name='delete_clean_stream_segment'),
+    path('api/stream/batch-delete/', views.batch_delete_stream_segments, name='batch_delete_stream_segments'),
+    path('api/stream/list/', views.list_stream_segments, name='list_stream_segments'),
+    path('api/stream/list-clean/', lambda req: views.list_stream_segments(req, stream_type='clean'), name='list_clean_stream_segments'),
     path('stream/<path:filename>', views.serve_hls, name='serve_hls'),
 ]
