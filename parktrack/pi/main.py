@@ -356,14 +356,12 @@ _STATUS_LABEL = {
 
 def draw_overlays(frame: np.ndarray, slots: list) -> np.ndarray:
     for slot in slots:
-        status = slot.get('status', 'occupied' if slot.get('is_occupied') else 'vacant')
-        color  = _STATUS_COLOR[status]
-        pts    = slot['pts_np']
+        color = (0, 0, 255) if slot["is_occupied"] else (0, 255, 0)
+        pts   = slot["pts_np"]
         cv2.polylines(frame, [pts], isClosed=True, color=color, thickness=2)
         text_x = int(pts[0][0])
         text_y = int(max(pts[0][1] - 8, 10))
-        label  = f"{slot['slot_label']} {_STATUS_LABEL[status]}"
-        cv2.putText(frame, label, (text_x, text_y),
+        cv2.putText(frame, slot['slot_label'], (text_x, text_y),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2, cv2.LINE_AA)
     return frame
 
