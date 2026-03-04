@@ -1,23 +1,15 @@
 from django.db import models
 
-# Create your models here.
-class ParkingSlot(models.Model):
-    slot_id = models.CharField(max_length=20)
-    is_occupied = models.BooleanField(default=False)
-    last_updated = models.DateTimeField(auto_now=True)
 
-class SlotStatusLog(models.Model):
-    slot = models.ForeignKey(ParkingSlot, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_occupied = models.BooleanField()
+class OccupancySnapshot(models.Model):
+    """Periodic record of parking occupancy pushed by the Pi."""
+    occupied   = models.IntegerField(default=0)
+    vacant     = models.IntegerField(default=0)
+    total      = models.IntegerField(default=0)
+    recorded_at = models.DateTimeField(auto_now_add=True)
 
-class VehicleEntry(models.Model):
-    ENTRY_TYPE_CHOICES = [
-        ('entry', 'Entry'),
-        ('exit',  'Exit'),
-    ]
-    entry_type = models.CharField(max_length=10, choices=ENTRY_TYPE_CHOICES, default='entry')
-    timestamp  = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['-recorded_at']
 
     def __str__(self):
-        return f"{self.entry_type} at {self.timestamp}"
+        return f"{self.recorded_at} — {self.occupied}/{self.total} occupied"

@@ -369,19 +369,12 @@ def draw_overlays(frame: np.ndarray, slots: list) -> np.ndarray:
 # ── Push helpers ──────────────────────────────────────────────────────────────
 
 def push_status(slots: list):
-    """POST occupancy status to Django so the browser can read it."""
     data = {
         "timestamp": int(time.time()),
-        "occupied":  sum(1 for s in slots if s.get('status') == 'occupied'),
-        "vacant":    sum(1 for s in slots if s.get('status') == 'vacant'),
-        "improper":  sum(1 for s in slots if s.get('status') == 'improper'),
+        "occupied":  sum(1 for s in slots if s["is_occupied"]),
+        "vacant":    sum(1 for s in slots if not s["is_occupied"]),
         "slots": [
-            {
-                "id":         s["id"],
-                "slot_label": s["slot_label"],
-                "occupied":   s.get('status') == 'occupied',
-                "status":     s.get('status', 'vacant'),
-            }
+            {"id": s["id"], "slot_label": s["slot_label"], "occupied": bool(s["is_occupied"])}
             for s in slots
         ],
     }
@@ -389,6 +382,13 @@ def push_status(slots: list):
         requests.post(
             f"{config.DJANGO_BASE_URL}/parking-allotment/api/upload-status/",
             json=data,
+            headers={"X-API-KEY": config.UPLOAD_API_KEY},
+            timeout=config.REQUEST_TIMEOUT,
+        )
+        # Record occupancy snapshot for dashboard statistics
+        requests.post(
+            f"{config.DJANGO_BASE_URL}/parking-usage/api/record-occupancy/",
+            json={"occupied": data["occupied"], "vacant": data["vacant"]},
             headers={"X-API-KEY": config.UPLOAD_API_KEY},
             timeout=config.REQUEST_TIMEOUT,
         )

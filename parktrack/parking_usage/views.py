@@ -1,114 +1,138 @@
+import json
+import os
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.db.models import Count, Q
+from django.db.models.functions import ExtractWeekDay, ExtractHour
+from datetime import timedelta
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 from utils.decorators import group_required
-from .models import VehicleEntry
-from django.db.models.functions import ExtractHour, ExtractWeekDay
-from django.db.models import Count
-import json
+from .models import OccupancySnapshot
+from reservation.models import Reservation
+from settings.models import ParkingSlot
 
 
 @group_required('Admin')
 def parking_usage(request):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-    context = {
-        'is_partial': is_ajax,
-    }
-    return render(request, 'parking_usage/index.html', context)
+    return render(request, 'parking_usage/index.html', {'is_partial': is_ajax})
 
 
-@require_POST
-def increment_vehicle_count(request):
+@csrf_exempt
+def record_occupancy(request):
     """
-    Creates a new VehicleEntry record to log a vehicle detection.
-    Expects optional JSON body: { "type": "entry" | "exit" }
+    Called by push_status in main.py to record a periodic occupancy snapshot.
+    Expects JSON: { occupied: int, vacant: int }
     """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    api_key = request.headers.get('X-API-KEY')
+    if api_key != settings.UPLOAD_API_KEY:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
     try:
-        body = json.loads(request.body) if request.body else {}
-    except json.JSONDecodeError:
-        body = {}
+        data    = json.loads(request.body)
+        occupied = int(data.get('occupied', 0))
+        vacant   = int(data.get('vacant',   0))
+        total    = occupied + vacant
+        OccupancySnapshot.objects.create(occupied=occupied, vacant=vacant, total=total)
+        return JsonResponse({'status': 'ok'})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
-    entry_type = body.get('type', 'entry')  # Default to 'entry'
 
-    VehicleEntry.objects.create(entry_type=entry_type)
-    return JsonResponse({'status': 'success'}, status=201)
-
-
+@group_required('Admin')
 def get_parking_stats(request):
-    """
-    Returns parking statistics for the current week.
-    - daily_table: list of [in_count, out_count] per day (Mon–Sun)
-    - hourly_by_day: dict of day_index -> 24-hour counts for that day
-    - summary: total entries this week, peak hour, peak day
-    """
-    now = timezone.now()
-    # Get the start of the current week (Monday)
-    week_start = now - timezone.timedelta(days=now.weekday())
-    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    weekly_entries = VehicleEntry.objects.filter(timestamp__gte=week_start)
-
-    # --- Daily totals (Mon=2 ... Sun=1 in Django's ExtractWeekDay) ---
-    # Django: Sun=1, Mon=2, Tue=3, Wed=4, Thu=5, Fri=6, Sat=7
-    DJANGO_DAY_TO_INDEX = {2: 0, 3: 1, 4: 2, 5: 3, 6: 4, 7: 5, 1: 6}
-
-    daily_stats = (
-        weekly_entries
-        .annotate(day=ExtractWeekDay('timestamp'))
-        .values('day', 'entry_type')
-        .annotate(total=Count('id'))
-        .order_by('day')
+    now        = timezone.now()
+    week_start = (now - timedelta(days=now.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0
     )
 
-    # Structure: [[in, out], ...] for Mon-Sun
-    daily_table = [[0, 0] for _ in range(7)]
+    # 1. Live occupancy from status.json
+    status_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')
+    live = {'occupied': 0, 'vacant': 0, 'total': 0, 'available': False}
+    if os.path.exists(status_path):
+        try:
+            with open(status_path, 'r') as f:
+                s = json.load(f)
+            live['occupied']  = s.get('occupied', 0)
+            live['vacant']    = s.get('vacant',   0)
+            live['total']     = live['occupied'] + live['vacant']
+            live['available'] = True
+        except Exception:
+            pass
+
+    # 2. Reservation stats this week
+    week_reservations = Reservation.objects.filter(created_at__gte=week_start)
+    reservation_summary = {
+        'total':     week_reservations.count(),
+        'active':    week_reservations.filter(status='active').count(),
+        'expired':   week_reservations.filter(status='expired').count(),
+        'cancelled': week_reservations.filter(status='cancelled').count(),
+        'fulfilled': week_reservations.filter(status='fulfilled').count(),
+    }
+
+    # 3. Reservations per day this week (Mon-Sun)
+    DJANGO_DAY_TO_INDEX = {2: 0, 3: 1, 4: 2, 5: 3, 6: 4, 7: 5, 1: 6}
+    daily_reservations  = [0] * 7
+    daily_stats = (
+        week_reservations
+        .annotate(day=ExtractWeekDay('created_at'))
+        .values('day')
+        .annotate(total=Count('id'))
+    )
     for entry in daily_stats:
         idx = DJANGO_DAY_TO_INDEX.get(entry['day'])
         if idx is not None:
-            if entry.get('entry_type') == 'exit':
-                daily_table[idx][1] += entry['total']
-            else:
-                daily_table[idx][0] += entry['total']
+            daily_reservations[idx] = entry['total']
 
-    # --- Hourly breakdown per day of week ---
-    hourly_stats = (
-        weekly_entries
-        .annotate(day=ExtractWeekDay('timestamp'), hour=ExtractHour('timestamp'))
-        .values('day', 'hour')
-        .annotate(count=Count('id'))
-        .order_by('day', 'hour')
-    )
-
-    hourly_by_day = {i: [0] * 24 for i in range(7)}
-    for item in hourly_stats:
-        idx = DJANGO_DAY_TO_INDEX.get(item['day'])
-        if idx is not None and item['hour'] is not None:
-            hourly_by_day[idx][item['hour']] += item['count']
-
-    # --- Summary stats ---
-    total_entries = sum(day[0] for day in daily_table)
-    total_exits = sum(day[1] for day in daily_table)
-
-    # Find peak hour across the whole week
-    all_hourly = [0] * 24
-    for day_hours in hourly_by_day.values():
-        for h, count in enumerate(day_hours):
-            all_hourly[h] += count
-    peak_hour = all_hourly.index(max(all_hourly)) if any(all_hourly) else None
-
-    # Find peak day
-    day_totals = [day[0] for day in daily_table]
-    peak_day_idx = day_totals.index(max(day_totals)) if any(day_totals) else None
+    peak_day_idx = daily_reservations.index(max(daily_reservations)) if any(daily_reservations) else None
     days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
+    # 4. Reservations per hour this week
+    hourly_reservations = [0] * 24
+    hourly_stats = (
+        week_reservations
+        .annotate(hour=ExtractHour('created_at'))
+        .values('hour')
+        .annotate(total=Count('id'))
+    )
+    for entry in hourly_stats:
+        if entry['hour'] is not None:
+            hourly_reservations[entry['hour']] = entry['total']
+
+    peak_hour = hourly_reservations.index(max(hourly_reservations)) if any(hourly_reservations) else None
+
+    # 5. Slot utilization — most reserved slots all time
+    slot_utilization = (
+        Reservation.objects
+        .values('slot__slot_label')
+        .annotate(total=Count('id'))
+        .order_by('-total')[:8]
+    )
+    slot_labels = [s['slot__slot_label'] for s in slot_utilization]
+    slot_counts = [s['total']            for s in slot_utilization]
+
+    # 6. Occupancy trend this week from snapshots
+    snapshots = (
+        OccupancySnapshot.objects
+        .filter(recorded_at__gte=week_start)
+        .annotate(day=ExtractWeekDay('recorded_at'))
+        .values('day')
+        .annotate(
+            avg_occupied=Count('occupied'),
+        )
+    )
+
     return JsonResponse({
-        'daily_table': daily_table,
-        'hourly_by_day': hourly_by_day,
-        'summary': {
-            'total_entries': total_entries,
-            'total_exits': total_exits,
-            'peak_hour': f"{peak_hour}:00" if peak_hour is not None else 'N/A',
-            'peak_day': days_of_week[peak_day_idx] if peak_day_idx is not None else 'N/A',
-        }
+        'live':                 live,
+        'reservation_summary':  reservation_summary,
+        'daily_reservations':   daily_reservations,
+        'hourly_reservations':  hourly_reservations,
+        'peak_day':             days_of_week[peak_day_idx] if peak_day_idx is not None else 'N/A',
+        'peak_hour':            f"{peak_hour}:00" if peak_hour is not None else 'N/A',
+        'slot_utilization':     {'labels': slot_labels, 'counts': slot_counts},
     })
