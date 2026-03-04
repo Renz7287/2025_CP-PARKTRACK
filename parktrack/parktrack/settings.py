@@ -121,3 +121,11 @@ AUTO_LOGOUT = {
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', 10 * 1024 * 1024))
 FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 10 * 1024 * 1024))
+
+EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST          = 'smtp.gmail.com'
+EMAIL_PORT          = 587
+EMAIL_USE_TLS       = True
+EMAIL_HOST_USER     = 'parktrack@gmail.com'
+EMAIL_HOST_PASSWORD = 'bhib khwx pfdk lzxu'
+DEFAULT_FROM_EMAIL  = 'ParkTrack <parktrack@gmail.com>'

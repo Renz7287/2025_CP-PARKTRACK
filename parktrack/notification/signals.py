@@ -2,6 +2,19 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from reservation.models import Reservation
 from .models import Notification
+from .emails import send_notification_email
+
+
+def _create_and_email(recipient, notif_type, message, reservation):
+    """Create an in-app notification and send its email mirror."""
+    Notification.objects.create(
+        recipient=recipient,
+        notif_type=notif_type,
+        message=message,
+        reservation=reservation,
+    )
+    send_notification_email(recipient, notif_type, message)
+
 
 @receiver(post_save, sender=Reservation)
 def handle_reservation_status_change(sender, instance, created, **kwargs):
@@ -17,15 +30,14 @@ def handle_reservation_status_change(sender, instance, created, **kwargs):
             return
 
         if instance.cancelled_by_admin:
-            Notification.objects.create(
+            _create_and_email(
                 recipient=instance.user,
                 notif_type=Notification.Type.CANCELLED,
                 message=f"Your reservation for slot {instance.slot.slot_label} has been cancelled by an admin.",
                 reservation=instance,
             )
         else:
-            # Driver cancelled — notify the driver and all admins
-            Notification.objects.create(
+            _create_and_email(
                 recipient=instance.user,
                 notif_type=Notification.Type.CANCELLED,
                 message=f"Your reservation for slot {instance.slot.slot_label} has been cancelled.",
@@ -34,7 +46,7 @@ def handle_reservation_status_change(sender, instance, created, **kwargs):
             from django.contrib.auth import get_user_model
             User = get_user_model()
             for admin in User.objects.filter(is_admin=True):
-                Notification.objects.create(
+                _create_and_email(
                     recipient=admin,
                     notif_type=Notification.Type.CANCELLED,
                     message=f"{instance.user.get_full_name() or instance.user.email} cancelled their reservation for slot {instance.slot.slot_label}.",
@@ -49,7 +61,7 @@ def handle_reservation_status_change(sender, instance, created, **kwargs):
         if already_notified:
             return
 
-        Notification.objects.create(
+        _create_and_email(
             recipient=instance.user,
             notif_type=Notification.Type.EXPIRED,
             message=f"Your reservation for slot {instance.slot.slot_label} has expired.",

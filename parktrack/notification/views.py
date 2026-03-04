@@ -4,10 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
 from .models import Notification
+from .emails import send_notification_email
+
 
 def check_expiring_reservations(user):
     from reservation.models import Reservation
-
     threshold = timezone.now() + timedelta(minutes=30)
     soon_expiring = Reservation.objects.filter(
         user=user,
@@ -21,28 +22,29 @@ def check_expiring_reservations(user):
             notif_type=Notification.Type.EXPIRING_SOON,
         ).exists()
         if not already_notified:
+            message = f"Your reservation for slot {reservation.slot} expires in less than 30 minutes."
             Notification.objects.create(
                 recipient=user,
                 notif_type=Notification.Type.EXPIRING_SOON,
-                message=f"Your reservation for slot {reservation.slot} expires in less than 30 minutes.",
+                message=message,
                 reservation=reservation,
             )
+            send_notification_email(user, Notification.Type.EXPIRING_SOON, message)
+
 
 @login_required
 def notification(request):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
     if not request.user.is_admin:
         check_expiring_reservations(request.user)
-
     notifs = Notification.objects.filter(recipient=request.user)
     unread_count = notifs.filter(is_read=False).count()
-
     return render(request, 'notification/index.html', {
-        'is_partial': is_ajax,
+        'is_partial':    is_ajax,
         'notifications': notifs,
-        'unread_count': unread_count,
+        'unread_count':  unread_count,
     })
+
 
 @login_required
 def mark_all_read(request):
@@ -50,6 +52,7 @@ def mark_all_read(request):
         Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
         return JsonResponse({'status': 'ok'})
     return JsonResponse({'status': 'error'}, status=405)
+
 
 @login_required
 def mark_one_read(request, pk):
@@ -59,6 +62,7 @@ def mark_one_read(request, pk):
         notif.save()
         return JsonResponse({'status': 'ok'})
     return JsonResponse({'status': 'error'}, status=405)
+
 
 @login_required
 def unread_count(request):
