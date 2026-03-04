@@ -64,19 +64,25 @@ export function initializeParkingAllotment() {
 
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveSyncDurationCount:       4,
-                liveMaxLatencyDurationCount: 8,
-                maxBufferLength:             45,
-                maxMaxBufferLength:          90,
-                lowLatencyMode:              false,
-                startFragPrefetch:           true,
-                manifestLoadingTimeOut:      15000,
-                manifestLoadingMaxRetry:     8,
-                levelLoadingTimeOut:         15000,
-                levelLoadingMaxRetry:        8,
-                fragLoadingTimeOut:          25000,
-                fragLoadingMaxRetry:         8,
-                fragLoadingRetryDelay:       1000,
+                liveSyncDurationCount:         8,
+                liveMaxLatencyDurationCount:   10,
+                maxBufferLength:               60,
+                maxMaxBufferLength:            120,
+                lowLatencyMode:                false,
+                startFragPrefetch:             true,
+                manifestLoadingTimeOut:        20000,
+                manifestLoadingMaxRetry:       10,
+                manifestLoadingRetryDelay:     2000,
+                levelLoadingTimeOut:           20000,
+                levelLoadingMaxRetry:          10,
+                levelLoadingRetryDelay:        2000,
+                fragLoadingTimeOut:            30000,
+                fragLoadingMaxRetry:           10,
+                fragLoadingRetryDelay:         2000,
+                maxStarvationDelay:            20,
+                maxLoadingDelay:               20,
+                nudgeMaxRetry:                 10,
+                nudgeOffset:                   0.5,
             });
 
             hls.loadSource(VIDEO_SRC);
@@ -89,11 +95,11 @@ export function initializeParkingAllotment() {
             hls.on(Hls.Events.ERROR, (event, data) => {
                 if (!data.fatal) return;
                 if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                    setTimeout(() => hls && hls.startLoad(), 3000);
+                    hls.startLoad();
                 } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
                     hls.recoverMediaError();
                 } else {
-                    setTimeout(startStream, 5000);
+                    setTimeout(startStream, 8000);
                 }
             });
 
