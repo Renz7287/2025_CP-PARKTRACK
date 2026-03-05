@@ -42,41 +42,31 @@ YOLO_MODEL_PATH = PROJECT_DIR / "weights" / "best.pt"
 YOLO_CONFIDENCE = 0.35
 MIN_BOX_PIXELS  = 10
 
-# ── Detection thresholds ───────────────────────────────────────────────────────
-# How much of the slot polygon must the vehicle box cover:
-#   >= OCCUPIED_OVERLAP_THRESHOLD  AND centroid inside → 'occupied'
-#   >= OVERLAP_THRESHOLD           (centroid anywhere) → 'improper'
-#   <  OVERLAP_THRESHOLD                               → 'vacant'
-OVERLAP_THRESHOLD          = 0.15   # min spill area to register any presence
-OCCUPIED_OVERLAP_THRESHOLD = 0.55   # min coverage (centroid must also be inside)
-
-# ── Smoothing history ──────────────────────────────────────────────────────────
-# Per-frame weights: occupied=2, improper=1, vacant=0
-# Rolling deque length = HISTORY_LEN frames
+# ── Smoothing history (centroid-only mode) ─────────────────────────────────────
+# Each frame adds 1 (centroid inside polygon) or 0 (not inside).
+# Max possible sum = HISTORY_LEN.
 #
 # With OUTPUT_FPS=3, HISTORY_LEN=9 covers a 3-second window.
-# SMOOTH_THRESHOLD=14 means at least 7 of 9 frames must be 'occupied'
-# before the slot turns red — filters shadows, pedestrians, brief glare.
+# SMOOTH_THRESHOLD=7 means at least 7 of 9 frames must have a centroid
+# inside the slot polygon before it flips to occupied.
+# This filters pedestrians, shadows, and brief glare without
+# adding noticeable lag when a real car parks.
 #
-# IMPROPER_THRESHOLD=4 means 4 consecutive 'improper' frames (weight 1 each)
-# before the slot turns orange.
-#
-# DO NOT add any code below that recalculates or overwrites these values.
-HISTORY_LEN        = 9    # frames to keep in rolling history (3 s at 3 fps)
-SMOOTH_THRESHOLD   = 14   # weighted sum needed → 'occupied'  (≈7/9 frames occupied)
-IMPROPER_THRESHOLD = 4    # weighted sum needed → 'improper'  (≈4/9 frames improper)
+# DO NOT add any code below that recalculates or overwrites SMOOTH_THRESHOLD.
+HISTORY_LEN      = 9   # frames to keep in rolling buffer  (3 s at 3 fps)
+SMOOTH_THRESHOLD = 7   # centroid-hits needed to flip occupied  (≈7/9 frames)
 
 WRITE_STATUS_EVERY = 3
 
-STREAM_PUSH_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/push/"
-CLEAN_STREAM_PUSH_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/push-clean/"
-STREAM_DELETE_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/delete/"
-CLEAN_STREAM_DELETE_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/delete-clean/"
-STREAM_LIST_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/list/"
-CLEAN_STREAM_LIST_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/list-clean/"
+STREAM_PUSH_URL               = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/push/"
+CLEAN_STREAM_PUSH_URL         = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/push-clean/"
+STREAM_DELETE_URL             = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/delete/"
+CLEAN_STREAM_DELETE_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/delete-clean/"
+STREAM_LIST_URL               = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/list/"
+CLEAN_STREAM_LIST_URL         = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/list-clean/"
 STREAM_BATCH_DELETE_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/batch-delete/"
 CLEAN_STREAM_BATCH_DELETE_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/batch-delete/"
-CLEAN_SNAPSHOT_PUSH_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/upload-clean-snapshot/"
+CLEAN_SNAPSHOT_PUSH_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/upload-clean-snapshot/"
 
 # FFmpeg writes HLS files locally — Python uploader thread pushes them to Django
 FFMPEG_CMD = [
@@ -92,9 +82,9 @@ FFMPEG_CMD = [
     "-profile:v","baseline",
     "-level",    "3.0",
     "-pix_fmt",  "yuv420p",
-    "-b:v",     "800k",
-    "-maxrate", "1000k",
-    "-bufsize", "1500k",
+    "-b:v",      "800k",
+    "-maxrate",  "1000k",
+    "-bufsize",  "1500k",
     "-g",        str(OUTPUT_FPS),
     "-sc_threshold", "0",
     "-f",        "hls",
@@ -119,9 +109,9 @@ FFMPEG_CLEAN_CMD = [
     "-profile:v","baseline",
     "-level",    "3.0",
     "-pix_fmt",  "yuv420p",
-    "-b:v",     "800k",
-    "-maxrate", "1000k",
-    "-bufsize", "1500k",
+    "-b:v",      "800k",
+    "-maxrate",  "1000k",
+    "-bufsize",  "1500k",
     "-g",        str(OUTPUT_FPS),
     "-sc_threshold", "0",
     "-f",        "hls",
