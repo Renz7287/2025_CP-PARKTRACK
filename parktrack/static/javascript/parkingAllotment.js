@@ -62,10 +62,10 @@ export function initializeParkingAllotment() {
 
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveSyncDurationCount:       8,
-                liveMaxLatencyDurationCount: 12,
-                maxBufferLength:             60,
-                maxMaxBufferLength:          120,
+                liveSyncDurationCount:       3,
+                liveMaxLatencyDurationCount: 6,
+                maxBufferLength:             15,
+                maxMaxBufferLength:          30,
                 lowLatencyMode:              false,
                 startFragPrefetch:           true,
                 autoStartLoad:               true,

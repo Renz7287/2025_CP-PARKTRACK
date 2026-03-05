@@ -125,7 +125,7 @@ FFMPEG_CLEAN_CMD = [
     "-f",        "hls",
     "-hls_time",      "2",
     "-hls_list_size", "10",
-    "-hls_flags",     "delete_segments+omit_endlist",
+    "-hls_flags",     "omit_endlist",
     "-hls_segment_type",     "mpegts",
     "-hls_segment_filename", str(VIDEO_DIR / "clean_stream" / "segment_%03d.ts"),
     str(VIDEO_DIR / "clean_stream" / "stream.m3u8"),
