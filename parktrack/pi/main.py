@@ -204,9 +204,7 @@ def get_detections(yolo_results) -> list:
     Extract bounding boxes from YOLO results.
 
     Returns a list of dicts:
-        { 'cx': float, 'cy': float,
-          'x1': float, 'y1': float, 'x2': float, 'y2': float,
-          'shapely_box': Polygon }
+        { 'cx', 'cy', 'x1', 'y1', 'x2', 'y2', 'shapely_box' }
 
     Boxes smaller than config.MIN_BOX_PIXELS on either dimension are dropped.
     """
@@ -248,29 +246,31 @@ def _slot_status_for_detection(det: dict, slot_poly: Polygon) -> str:
     """
     Classify how a single detected vehicle relates to one slot.
 
-    Returns one of:
-        'occupied' – vehicle is solidly inside the slot
-        'improper' – vehicle overlaps the slot but isn't centred inside it
-                     (straddles the boundary or is at an odd angle)
-        'vacant'   – vehicle has no meaningful overlap with the slot
+    Requires BOTH conditions to call a slot 'occupied':
+      1. Vehicle centroid is inside the slot polygon
+      2. Vehicle box covers >= OCCUPIED_OVERLAP_THRESHOLD of the slot area
 
-    Thresholds (all tunable in config.py):
-        OVERLAP_THRESHOLD          – minimum overlap to count as any presence  (default 0.15)
-        OCCUPIED_OVERLAP_THRESHOLD – minimum overlap to count as fully parked  (default 0.40)
+    This dual-gate prevents large vehicles in adjacent slots from triggering
+    'occupied' just because their bounding box spills over the boundary.
+
+    A vehicle that only partially overlaps (one condition true, not both)
+    is classified as 'improper' — it is touching the slot but not parked in it.
+
+    Thresholds in config.py:
+        OVERLAP_THRESHOLD          = 0.15   # min spill area → 'improper'
+        OCCUPIED_OVERLAP_THRESHOLD = 0.55   # min coverage (with centroid inside) → 'occupied'
     """
     overlap_threshold  = getattr(config, 'OVERLAP_THRESHOLD',          0.15)
-    occupied_threshold = getattr(config, 'OCCUPIED_OVERLAP_THRESHOLD',  0.40)
+    occupied_threshold = getattr(config, 'OCCUPIED_OVERLAP_THRESHOLD',  0.55)
 
-    # Fast path: centroid inside polygon → definitely occupied
-    if slot_poly.contains(Point(det['cx'], det['cy'])):
-        return 'occupied'
+    centroid_inside = slot_poly.contains(Point(det['cx'], det['cy']))
+    ratio           = _box_overlap_ratio(det, slot_poly)
 
-    # Centroid missed — check how much of the slot the box covers
-    ratio = _box_overlap_ratio(det, slot_poly)
-
-    if ratio >= occupied_threshold:
+    if centroid_inside and ratio >= occupied_threshold:
+        # Vehicle is centred in the slot and covers most of it → occupied
         return 'occupied'
     elif ratio >= overlap_threshold:
+        # Vehicle is touching/straddling the slot but not truly parked in it → improper
         return 'improper'
     else:
         return 'vacant'
@@ -278,18 +278,14 @@ def _slot_status_for_detection(det: dict, slot_poly: Polygon) -> str:
 
 def classify_slot(slot_poly: Polygon, detections: list) -> str:
     """
-    Given all vehicle detections for a frame, determine the overall status
-    of one parking slot.
-
+    Return the highest-priority status across all detections for one slot.
     Priority: occupied > improper > vacant
-    (An 'improper' vehicle touching the slot beats vacant but not a properly
-    parked vehicle.)
     """
     best = 'vacant'
     for det in detections:
         status = _slot_status_for_detection(det, slot_poly)
         if status == 'occupied':
-            return 'occupied'   # can't do better, short-circuit
+            return 'occupied'       # short-circuit — can't do better
         if status == 'improper':
             best = 'improper'
     return best
@@ -297,33 +293,32 @@ def classify_slot(slot_poly: Polygon, detections: list) -> str:
 
 # ── Occupancy smoothing ────────────────────────────────────────────────────────
 
-# Maps raw per-frame status strings to integer weights used in the history buffer.
+# Per-frame status → integer weight for the rolling history buffer.
+# occupied=2 dominates improper=1 so a single properly-parked car
+# overrides any number of partial-overlap 'improper' readings.
 _STATUS_WEIGHT = {'occupied': 2, 'improper': 1, 'vacant': 0}
-_WEIGHT_TO_STATUS = [
-    # (min_sum_threshold, status)  — evaluated in descending priority order
-    # Thresholds assume a deque of length config.SMOOTH_FRAMES (default 5).
-    # Adjust config.SMOOTH_THRESHOLD / config.IMPROPER_THRESHOLD as needed.
-]
 
 
 def update_occupancy(slots: list, detections: list):
     """
-    Update each slot's smoothed status using a rolling history buffer.
+    Smooth noisy per-frame detections using a weighted rolling history.
 
-    Each frame appends the raw per-frame status weight to slot['history'].
-    The smoothed status is decided by summing the history:
+    Config values (add to config.py):
+        SMOOTH_FRAMES       = 5    # deque maxlen — already set in slot_fetcher
+        SMOOTH_THRESHOLD    = 8    # sum >= 8 → occupied  (needs ~4/5 frames occupied)
+        IMPROPER_THRESHOLD  = 3    # sum >= 3 → improper  (needs ~3 consecutive improper frames)
 
-        sum >= config.SMOOTH_THRESHOLD   → 'occupied'
-        sum >= config.IMPROPER_THRESHOLD → 'improper'
-        otherwise                        → 'vacant'
+    Why SMOOTH_THRESHOLD=8?
+        Max score for 5 frames of 'occupied' (weight 2) = 10.
+        Requiring 8 means at least 4 of 5 frames must detect a vehicle before
+        the slot flips occupied — filters out shadows, glare, passing cars.
 
-    Recommended config.py additions:
-        SMOOTH_FRAMES       = 5    # history deque length (already used implicitly by maxlen)
-        SMOOTH_THRESHOLD    = 6    # sum needed to call a slot occupied  (e.g. 3× weight-2)
-        IMPROPER_THRESHOLD  = 3    # sum needed to call a slot improper  (e.g. 3× weight-1)
+    Why IMPROPER_THRESHOLD=3?
+        Weight 1 per frame, so 3 means 3 consecutive improper frames before
+        the slot turns orange — prevents momentary boundary clips from flashing.
     """
-    smooth_threshold   = getattr(config, 'SMOOTH_THRESHOLD',   6)
-    improper_threshold = getattr(config, 'IMPROPER_THRESHOLD',  3)
+    smooth_threshold   = getattr(config, 'SMOOTH_THRESHOLD',   8)
+    improper_threshold = getattr(config, 'IMPROPER_THRESHOLD', 3)
 
     for slot in slots:
         raw_status = classify_slot(slot['poly'], detections)
@@ -337,7 +332,7 @@ def update_occupancy(slots: list, detections: list):
         else:
             slot['status'] = 'vacant'
 
-        # Keep legacy boolean for any code that still reads it
+        # Keep legacy boolean so any code still reading is_occupied doesn't break
         slot['is_occupied'] = slot['status'] == 'occupied'
 
 
@@ -347,7 +342,7 @@ def update_occupancy(slots: list, detections: list):
 _STATUS_COLOR = {
     'occupied': (0,   0,   255),   # red
     'improper': (0,   165, 255),   # orange
-    'vacant':   (0,   255,  0),    # green
+    'vacant':   (0,   255,   0),   # green
 }
 _STATUS_LABEL = {
     'occupied': 'Occupied',
@@ -358,25 +353,51 @@ _STATUS_LABEL = {
 
 def draw_overlays(frame: np.ndarray, slots: list) -> np.ndarray:
     for slot in slots:
-        color = (0, 0, 255) if slot["is_occupied"] else (0, 255, 0)
-        pts   = slot["pts_np"]
+        # Use 3-way status; fall back gracefully for slots not yet updated
+        status = slot.get('status', 'occupied' if slot.get('is_occupied') else 'vacant')
+        color  = _STATUS_COLOR[status]
+        pts    = slot['pts_np']
+
+        # Semi-transparent polygon fill
+        overlay = frame.copy()
+        cv2.fillPoly(overlay, [pts], color)
+        cv2.addWeighted(overlay, 0.18, frame, 0.82, 0, frame)
+
+        # Polygon border
         cv2.polylines(frame, [pts], isClosed=True, color=color, thickness=2)
-        text_x = int(pts[0][0])
-        text_y = int(max(pts[0][1] - 8, 10))
-        cv2.putText(frame, slot['slot_label'], (text_x, text_y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2, cv2.LINE_AA)
+
+        # Label centred inside the polygon with a dark backing rect for readability
+        cx = int(pts[:, 0].mean())
+        cy = int(pts[:, 1].mean())
+        label = f"{slot['slot_label']} {_STATUS_LABEL[status]}"
+        (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.50, 2)
+        cv2.rectangle(frame,
+                      (cx - tw // 2 - 3, cy - th // 2 - 4),
+                      (cx + tw // 2 + 3, cy + th // 2 + 4),
+                      (0, 0, 0), -1)
+        cv2.putText(frame, label,
+                    (cx - tw // 2, cy + th // 2),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.50, color, 2, cv2.LINE_AA)
     return frame
 
 
 # ── Push helpers ──────────────────────────────────────────────────────────────
 
 def push_status(slots: list):
+    """POST occupancy status (with improper count) to Django."""
     data = {
         "timestamp": int(time.time()),
-        "occupied":  sum(1 for s in slots if s["is_occupied"]),
-        "vacant":    sum(1 for s in slots if not s["is_occupied"]),
+        "occupied":  sum(1 for s in slots if s.get('status') == 'occupied'),
+        "vacant":    sum(1 for s in slots if s.get('status') == 'vacant'),
+        "improper":  sum(1 for s in slots if s.get('status') == 'improper'),
         "slots": [
-            {"id": s["id"], "slot_label": s["slot_label"], "occupied": bool(s["is_occupied"])}
+            {
+                "id":         s["id"],
+                "slot_label": s["slot_label"],
+                # 'occupied' boolean kept for backward-compat with older Django views
+                "occupied":   s.get('status') == 'occupied',
+                "status":     s.get('status', 'vacant'),
+            }
             for s in slots
         ],
     }
@@ -421,6 +442,7 @@ def push_snapshot(frame: np.ndarray, slots: list, now: float):
         logger.info("Overlaid snapshot pushed to Django: %s", filename)
     except Exception as exc:
         logger.warning("push_snapshot failed: %s", exc)
+
 
 def push_clean_snapshot(frame: np.ndarray, now: float):
     """POST the clean (no overlay) frame to Django for the slot editor and reservation map."""
@@ -518,9 +540,9 @@ def main():
 
             slots      = fetcher.get_slots()
             results    = model(frame, conf=config.YOLO_CONFIDENCE, verbose=False)[0]
-            detections = get_detections(results)          # replaces get_centroids()
+            detections = get_detections(results)
 
-            update_occupancy(slots, detections)           # now uses full boxes
+            update_occupancy(slots, detections)
 
             clean_frame = frame.copy()
             frame       = draw_overlays(frame, slots)
@@ -530,7 +552,6 @@ def main():
                 push_status(slots)
 
             if now - last_snapshot_time >= config.SNAPSHOT_INTERVAL:
-                # Call both together at snapshot interval
                 push_snapshot(frame, slots, now)
                 push_clean_snapshot(clean_frame, now)
                 last_snapshot_time = now

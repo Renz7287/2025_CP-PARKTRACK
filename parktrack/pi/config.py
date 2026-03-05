@@ -42,10 +42,10 @@ YOLO_MODEL_PATH = PROJECT_DIR / "weights" / "best.pt"
 YOLO_CONFIDENCE = 0.35
 MIN_BOX_PIXELS  = 10
 
-OVERLAP_THRESHOLD          = 0.15   # min overlap to register any presence
-OCCUPIED_OVERLAP_THRESHOLD = 0.40   # min overlap to count as fully parked
-IMPROPER_THRESHOLD         = 3      # weighted history sum → improper
-SMOOTH_THRESHOLD           = 6      # weighted history sum → occupied
+OVERLAP_THRESHOLD          = 0.15   # min spill to show 'improper'
+OCCUPIED_OVERLAP_THRESHOLD = 0.55   # min coverage (+ centroid inside) to show 'occupied'
+SMOOTH_THRESHOLD           = 8      # ~4/5 frames must be occupied
+IMPROPER_THRESHOLD         = 3      # ~3 consecutive frames must be improper
 
 HISTORY_LEN      = max(3, OUTPUT_FPS)
 SMOOTH_THRESHOLD = max(1, HISTORY_LEN // 2 + 1)
