@@ -465,23 +465,20 @@ def api_upload_snapshot(request, pk):
             status=400,
         )
 
-    max_size = 10 * 1024 * 1024
-    if snapshot_file.size > max_size:
+    if snapshot_file.size > 10 * 1024 * 1024:
         return JsonResponse({'error': 'File too large. Maximum size is 10 MB.'}, status=400)
 
-    # Save to clean_snapshots with timestamp so api_clean_snapshot picks it up
-    clean_dir = os.path.join(django_settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
-    os.makedirs(clean_dir, exist_ok=True)
+    # Write as pinned_snapshot.jpg so it takes priority over Pi-pushed snapshots
+    video_dir   = os.path.join(django_settings.MEDIA_ROOT, 'video_stream')
+    os.makedirs(video_dir, exist_ok=True)
+    pinned_path = os.path.join(video_dir, 'pinned_snapshot.jpg')
 
-    import time
-    filename  = f'snapshot_{int(time.time())}.jpg'
-    save_path = os.path.join(clean_dir, filename)
-
-    with open(save_path, 'wb') as f:
+    with open(pinned_path, 'wb') as f:
         for chunk in snapshot_file.chunks():
             f.write(chunk)
 
-    media_url           = f'{django_settings.MEDIA_URL}video_stream/clean_snapshots/{filename}'
+    import time
+    media_url           = f'{django_settings.MEDIA_URL}video_stream/pinned_snapshot.jpg?v={int(time.time())}'
     camera.snapshot_url = media_url
     camera.save()
 
@@ -524,18 +521,17 @@ def api_capture_snapshot_from_frame(request, pk):
     if not frame_file:
         return JsonResponse({'error': 'No frame data received.'}, status=400)
 
-    clean_dir = os.path.join(django_settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
-    os.makedirs(clean_dir, exist_ok=True)
+    # Write as pinned_snapshot.jpg so it takes priority over Pi-pushed snapshots
+    video_dir   = os.path.join(django_settings.MEDIA_ROOT, 'video_stream')
+    os.makedirs(video_dir, exist_ok=True)
+    pinned_path = os.path.join(video_dir, 'pinned_snapshot.jpg')
 
-    import time
-    filename  = f'snapshot_{int(time.time())}.jpg'
-    save_path = os.path.join(clean_dir, filename)
-
-    with open(save_path, 'wb') as f:
+    with open(pinned_path, 'wb') as f:
         for chunk in frame_file.chunks():
             f.write(chunk)
 
-    media_url = f'{django_settings.MEDIA_URL}video_stream/clean_snapshots/{filename}'
+    import time
+    media_url           = f'{django_settings.MEDIA_URL}video_stream/pinned_snapshot.jpg?v={int(time.time())}'
     camera.snapshot_url = media_url
     camera.save()
 

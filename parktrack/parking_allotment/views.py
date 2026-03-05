@@ -293,20 +293,18 @@ def vacant_slots_status(request):
 
 
 def api_clean_snapshot(request):
-    """
-    GET /parking-allotment/api/clean-snapshot/
-
-    Returns the URL of the latest CLEAN snapshot (no polygon overlays).
-    Used by the Reservation page as the background image for the SVG slot
-    picker — the reservation JS draws its own polygon overlays, so it needs
-    a clean image, not the pre-burned overlaid one from latest_snapshot().
-
-    Falls back to camera.snapshot_url if no Pi-pushed clean snapshot exists yet.
-    """
     import time as time_module
+    from settings.models import Camera
 
-    clean_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
+    clean_dir   = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
+    pinned_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'pinned_snapshot.jpg')
 
+    # Always serve the pinned snapshot if it exists
+    if os.path.exists(pinned_path):
+        url = f'{settings.MEDIA_URL}video_stream/pinned_snapshot.jpg?v={int(time_module.time())}'
+        return JsonResponse({'url': url})
+
+    # Fall back to latest Pi-pushed snapshot
     if os.path.exists(clean_dir):
         snapshots = [f for f in os.listdir(clean_dir) if f.endswith('.jpg')]
         if snapshots:
@@ -314,7 +312,6 @@ def api_clean_snapshot(request):
             url    = f'{settings.MEDIA_URL}video_stream/clean_snapshots/{latest}?v={int(time_module.time())}'
             return JsonResponse({'url': url})
 
-    from settings.models import Camera
     camera = Camera.objects.filter(is_active=True).first()
     if camera and camera.snapshot_url:
         return JsonResponse({'url': camera.snapshot_url})
