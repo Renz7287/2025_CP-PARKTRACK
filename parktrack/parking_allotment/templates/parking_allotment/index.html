@@ -97,13 +97,25 @@
         <div class="relative rounded-2xl overflow-hidden shadow-xl border border-white/10 mb-4 sm:mb-5">
             <video id="live-video"
                 class="w-full h-[40vh] sm:h-[50vh] md:h-[65vh] lg:h-[75vh] xl:h-[78vh] object-cover bg-black"
-                controls
                 muted
                 playsinline>
             </video>
-            <!-- Covers native browser buffering spinner without blocking controls -->
+            <!-- Invisible overlay blocks native shadow-DOM spinner without blocking our controls -->
             <div id="live-buffer-overlay"
-                class="hidden absolute inset-0 pointer-events-none bg-black/0">
+                class="hidden absolute inset-0 bg-transparent pointer-events-none">
+            </div>
+            <!-- Minimal custom controls -->
+            <div class="absolute bottom-0 left-0 right-0 flex items-center gap-3 px-4 py-3 bg-gradient-to-t from-black/60 to-transparent">
+                <button id="live-play-btn" class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fa-solid fa-pause text-lg"></i>
+                </button>
+                <button id="live-mute-btn" class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fa-solid fa-volume-xmark text-lg"></i>
+                </button>
+                <div class="flex-1"></div>
+                <span class="text-white text-xs font-medium opacity-70">
+                    <i class="fa-solid fa-circle text-red-500 animate-pulse mr-1 text-xs"></i>LIVE
+                </span>
             </div>
         </div>
 

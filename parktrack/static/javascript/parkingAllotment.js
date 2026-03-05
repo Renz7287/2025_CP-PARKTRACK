@@ -60,12 +60,36 @@ export function initializeParkingAllotment() {
             return;
         }
 
+        // Wire custom controls
+        const playBtn = document.getElementById('live-play-btn');
+        const muteBtn = document.getElementById('live-mute-btn');
+
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                if (video.paused) {
+                    video.play().catch(() => {});
+                    playBtn.innerHTML = '<i class="fa-solid fa-pause text-lg"></i>';
+                } else {
+                    video.pause();
+                    playBtn.innerHTML = '<i class="fa-solid fa-play text-lg"></i>';
+                }
+            });
+        }
+        if (muteBtn) {
+            muteBtn.addEventListener('click', () => {
+                video.muted = !video.muted;
+                muteBtn.innerHTML = video.muted
+                    ? '<i class="fa-solid fa-volume-xmark text-lg"></i>'
+                    : '<i class="fa-solid fa-volume-high text-lg"></i>';
+            });
+        }
+
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveSyncDurationCount:       8,
-                liveMaxLatencyDurationCount: 12,
-                maxBufferLength:             60,
-                maxMaxBufferLength:          120,
+                liveSyncDurationCount:       3,
+                liveMaxLatencyDurationCount: 6,
+                maxBufferLength:             30,
+                maxMaxBufferLength:          60,
                 lowLatencyMode:              false,
                 startFragPrefetch:           true,
                 autoStartLoad:               true,
@@ -91,10 +115,10 @@ export function initializeParkingAllotment() {
                 video.play().catch(() => {});
             });
 
-            // Hide spinner by covering it — resume resumes where it left off naturally
-            video.addEventListener('waiting',  () => overlay?.classList.remove('hidden'));
-            video.addEventListener('playing',  () => overlay?.classList.add('hidden'));
-            video.addEventListener('canplay',  () => overlay?.classList.add('hidden'));
+            // Show overlay to block native spinner, hide when playback resumes
+            video.addEventListener('waiting', () => overlay?.classList.remove('hidden'));
+            video.addEventListener('playing', () => overlay?.classList.add('hidden'));
+            video.addEventListener('canplay', () => overlay?.classList.add('hidden'));
 
             hls.on(Hls.Events.ERROR, (event, data) => {
                 if (!data.fatal) return;
