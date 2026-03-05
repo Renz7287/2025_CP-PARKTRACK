@@ -72,7 +72,7 @@ def get_parking_stats(request):
         'active':    week_reservations.filter(status='active').count(),
         'expired':   week_reservations.filter(status='expired').count(),
         'cancelled': week_reservations.filter(status='cancelled').count(),
-        'fulfilled': week_reservations.filter(status='fulfilled').count(),
+        # 'fulfilled': week_reservations.filter(status='fulfilled').count(),
     }
 
     # 3. Reservations per day this week (Mon-Sun)
