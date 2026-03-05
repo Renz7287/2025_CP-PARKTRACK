@@ -94,13 +94,17 @@
         </div>
 
         <!-- Video player -->
-        <div class="rounded-2xl overflow-hidden shadow-xl border border-white/10 mb-4 sm:mb-5">
+        <div class="relative rounded-2xl overflow-hidden shadow-xl border border-white/10 mb-4 sm:mb-5">
             <video id="live-video"
-                   class="w-full h-[40vh] sm:h-[50vh] md:h-[65vh] lg:h-[75vh] xl:h-[78vh] object-cover bg-black"
-                   controls
-                   muted
-                   playsinline>
+                class="w-full h-[40vh] sm:h-[50vh] md:h-[65vh] lg:h-[75vh] xl:h-[78vh] object-cover bg-black"
+                controls
+                muted
+                playsinline>
             </video>
+            <!-- Covers native browser buffering spinner without blocking controls -->
+            <div id="live-buffer-overlay"
+                class="hidden absolute inset-0 pointer-events-none bg-black/0">
+            </div>
         </div>
 
         <button id="allotment-back-to-snapshot"

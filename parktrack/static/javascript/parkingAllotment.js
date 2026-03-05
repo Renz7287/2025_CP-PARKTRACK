@@ -49,7 +49,8 @@ export function initializeParkingAllotment() {
     const VIDEO_SRC = '/parking-allotment/stream/stream.m3u8';
 
     function startStream() {
-        const video = document.getElementById('live-video');
+        const video   = document.getElementById('live-video');
+        const overlay = document.getElementById('live-buffer-overlay');
         if (!video) return;
 
         if (hls) { hls.destroy(); hls = null; }
@@ -59,23 +60,12 @@ export function initializeParkingAllotment() {
             return;
         }
 
-        // Inject once — hides the native browser buffering spinner
-        if (!document.getElementById('hls-no-spinner')) {
-            const s = document.createElement('style');
-            s.id          = 'hls-no-spinner';
-            s.textContent = `
-                #live-video::-webkit-media-controls-overlay-play-button { display: none !important; }
-                #live-video::-webkit-media-controls-start-playback-button { display: none !important; }
-            `;
-            document.head.appendChild(s);
-        }
-
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveSyncDurationCount:       3,
-                liveMaxLatencyDurationCount: 6,
-                maxBufferLength:             15,
-                maxMaxBufferLength:          30,
+                liveSyncDurationCount:       8,
+                liveMaxLatencyDurationCount: 12,
+                maxBufferLength:             60,
+                maxMaxBufferLength:          120,
                 lowLatencyMode:              false,
                 startFragPrefetch:           true,
                 autoStartLoad:               true,
@@ -100,6 +90,11 @@ export function initializeParkingAllotment() {
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 video.play().catch(() => {});
             });
+
+            // Hide spinner by covering it — resume resumes where it left off naturally
+            video.addEventListener('waiting',  () => overlay?.classList.remove('hidden'));
+            video.addEventListener('playing',  () => overlay?.classList.add('hidden'));
+            video.addEventListener('canplay',  () => overlay?.classList.add('hidden'));
 
             hls.on(Hls.Events.ERROR, (event, data) => {
                 if (!data.fatal) return;
