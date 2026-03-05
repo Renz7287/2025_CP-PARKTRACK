@@ -25,19 +25,19 @@
 {% endif %}
 
     <header class="top-0 sticky bg-[#940B26] shadow-xl h-20 z-[5] pt-[0.5px] pb-3 flex items-center justify-between pr-6">
-        <div class="flex-1">
+        <div class="flex-1 min-w-0">
             {% block header %}
             {% endblock header %}
         </div>
         <a href="{% url 'notification:notification' %}"
-           class="js-link relative text-white text-2xl hover:text-red-200 transition-colors mt-3"
-           title="Notifications"
+        class="js-link relative text-white text-2xl hover:text-red-200 transition-colors mt-3 shrink-0 ml-3"
+        title="Notifications"
         >
             <i class="fa-regular fa-bell"></i>
             <span
                 id="notif-badge"
                 class="absolute -top-1.5 -right-1.5 bg-white text-[#940B26] text-[10px] font-bold
-                       w-4 h-4 flex items-center justify-center rounded-full hidden"
+                    w-4 h-4 flex items-center justify-center rounded-full hidden"
             ></span>
         </a>
     </header>
