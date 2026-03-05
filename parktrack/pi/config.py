@@ -50,7 +50,7 @@ MIN_BOX_PIXELS  = 10
 # 0.20 = vehicle must cover at least 20% of the slot to trigger via IoU.
 # Raise this if adjacent vehicles cause false positives.
 # Lower this if a parked vehicle is being missed.
-IOU_THRESHOLD = 0.20
+IOU_THRESHOLD = 0.40
 
 # ── Smoothing history ──────────────────────────────────────────────────────────
 # Each frame adds 1 (vehicle present) or 0 (absent) to a rolling buffer.
