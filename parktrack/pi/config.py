@@ -16,24 +16,24 @@ UPLOAD_API_KEY = "parktrack@2025"
 # Pre-recorded test video: both False (default)
 # USB webcam:              USE_USB_CAMERA = True
 # Pi Camera Module (CSI):  USE_PI_CAMERA  = True
-USE_PI_CAMERA    = False
+USE_PI_CAMERA    = True
 USE_USB_CAMERA   = False
 USB_CAMERA_INDEX = 0
 
 # Local paths
-# PROJECT_DIR = Path('/home/parktrack')
-PROJECT_DIR = Path(__file__).resolve().parent.parent
-VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.webm"
+PROJECT_DIR = Path('/home/parktrack')
+# PROJECT_DIR = Path(__file__).resolve().parent.parent
+# VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.webm"
 
 OUTPUT_WIDTH  = 1280
 OUTPUT_HEIGHT = 720
 OUTPUT_FPS    = 3
 
 # Stream output directories
-# VIDEO_DIR    = Path('/home/parktrack/stream')
-# SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
-VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
-SNAPSHOT_DIR = PROJECT_DIR / "media" / "snapshots"
+VIDEO_DIR    = Path('/home/parktrack/stream')
+SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
+# VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
+# SNAPSHOT_DIR = PROJECT_DIR / "media" / "snapshots"
 
 SNAPSHOT_INTERVAL = 60
 MAX_SNAPSHOTS     = 10
@@ -59,8 +59,6 @@ IOU_THRESHOLD = 0.50
 # At OUTPUT_FPS=3, HISTORY_LEN=9 = 3-second window.
 # SMOOTH_THRESHOLD=7 means 7 of the last 9 frames must detect a vehicle
 # before the slot flips occupied — filters pedestrians, shadows, glare.
-#
-# DO NOT add any code below that recalculates or overwrites these values.
 HISTORY_LEN      = 9   # rolling buffer length  (3 s at 3 fps)
 SMOOTH_THRESHOLD = 7   # hits needed to flip occupied  (≈7/9 frames)
 
