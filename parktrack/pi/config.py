@@ -60,6 +60,7 @@ STREAM_LIST_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/list/"
 CLEAN_STREAM_LIST_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/list-clean/"
 STREAM_BATCH_DELETE_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/batch-delete/"
 CLEAN_STREAM_BATCH_DELETE_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/batch-delete/"
+CLEAN_SNAPSHOT_PUSH_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/upload-clean-snapshot/"
 
 # FFmpeg writes HLS files locally — Python uploader thread pushes them to Django
 FFMPEG_CMD = [

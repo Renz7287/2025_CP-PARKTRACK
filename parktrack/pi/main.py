@@ -420,6 +420,26 @@ def push_snapshot(frame: np.ndarray, slots: list, now: float):
     except Exception as exc:
         logger.warning("push_snapshot failed: %s", exc)
 
+def push_clean_snapshot(frame: np.ndarray, now: float):
+    """POST the clean (no overlay) frame to Django for the slot editor and reservation map."""
+    filename = f"snapshot_{int(now)}.jpg"
+
+    success, buf = cv2.imencode(".jpg", frame)
+    if not success:
+        logger.warning("push_clean_snapshot: cv2.imencode failed")
+        return
+
+    try:
+        requests.post(
+            f"{config.DJANGO_BASE_URL}/parking-allotment/api/upload-clean-snapshot/",
+            files={"snapshot": (filename, buf.tobytes(), "image/jpeg")},
+            headers={"X-API-KEY": config.UPLOAD_API_KEY},
+            timeout=config.REQUEST_TIMEOUT,
+        )
+        logger.info("Clean snapshot pushed to Django: %s", filename)
+    except Exception as exc:
+        logger.warning("push_clean_snapshot failed: %s", exc)
+
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
@@ -508,7 +528,9 @@ def main():
                 push_status(slots)
 
             if now - last_snapshot_time >= config.SNAPSHOT_INTERVAL:
+                # Call both together at snapshot interval
                 push_snapshot(frame, slots, now)
+                push_clean_snapshot(clean_frame, now)
                 last_snapshot_time = now
 
             try:

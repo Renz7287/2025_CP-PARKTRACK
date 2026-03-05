@@ -517,22 +517,24 @@ def api_capture_snapshot_from_frame(request, pk):
     try:
         camera = Camera.objects.get(id=pk, is_active=True)
     except Camera.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
+        return JsonResponse({'error': 'Camera not found.'}, status=404)
 
     frame_file = request.FILES.get('snapshot')
     if not frame_file:
-        return JsonResponse({'success': False, 'error': 'No frame data received.'}, status=400)
+        return JsonResponse({'error': 'No frame data received.'}, status=400)
+
+    # Save to clean_snapshots so api_clean_snapshot() finds it
+    clean_dir = os.path.join(django_settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
+    os.makedirs(clean_dir, exist_ok=True)
 
     filename  = f'snapshot_camera_{pk}.jpg'
-    save_dir  = os.path.join(django_settings.MEDIA_ROOT, 'snapshots')
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, filename)
+    save_path = os.path.join(clean_dir, filename)
 
     with open(save_path, 'wb') as f:
         for chunk in frame_file.chunks():
             f.write(chunk)
 
-    media_url           = f'{django_settings.MEDIA_URL}snapshots/{filename}'
+    media_url = f'{django_settings.MEDIA_URL}video_stream/clean_snapshots/{filename}'
     camera.snapshot_url = media_url
     camera.save()
 
