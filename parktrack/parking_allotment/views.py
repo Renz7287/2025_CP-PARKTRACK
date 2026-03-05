@@ -473,3 +473,21 @@ def list_stream_segments(request, stream_type='overlay'):
 
     files = [f for f in os.listdir(stream_dir) if f.endswith('.ts')]
     return JsonResponse({'files': files})
+
+def api_latest_clean_snapshot(request):
+    """
+    For the reservation page — always serves the latest Pi-pushed clean snapshot.
+    Never falls back to the pinned snapshot (that's for the slot editor only).
+    """
+    import time as time_module
+
+    clean_dir = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
+
+    if os.path.exists(clean_dir):
+        snapshots = [f for f in os.listdir(clean_dir) if f.endswith('.jpg')]
+        if snapshots:
+            latest = max(snapshots, key=lambda f: os.path.getmtime(os.path.join(clean_dir, f)))
+            url    = f'{settings.MEDIA_URL}video_stream/clean_snapshots/{latest}?v={int(time_module.time())}'
+            return JsonResponse({'url': url})
+
+    return JsonResponse({'url': ''})

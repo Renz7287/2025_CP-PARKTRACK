@@ -21,4 +21,5 @@ urlpatterns = [
     path('api/stream/list/', views.list_stream_segments, name='list_stream_segments'),
     path('api/stream/list-clean/', lambda req: views.list_stream_segments(req, stream_type='clean'), name='list_clean_stream_segments'),
     path('stream/<path:filename>', views.serve_hls, name='serve_hls'),
+    path('api/latest-clean-snapshot/', views.api_latest_clean_snapshot, name='api-latest-clean-snapshot'),
 ]
