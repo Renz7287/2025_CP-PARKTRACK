@@ -20,7 +20,7 @@ USE_PI_CAMERA    = False
 USE_USB_CAMERA   = True
 USB_CAMERA_INDEX = 0
 
-# Local paths — update commented lines when running on Pi
+# Local paths
 PROJECT_DIR = Path('/home/parktrack')
 # PROJECT_DIR = Path(__file__).resolve().parent.parent
 # VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.mp4"
@@ -29,7 +29,7 @@ OUTPUT_WIDTH  = 1280
 OUTPUT_HEIGHT = 720
 OUTPUT_FPS    = 3
 
-# Stream output directories — update commented lines when running on Pi
+# Stream output directories
 VIDEO_DIR    = Path('/home/parktrack/stream')
 SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
 # VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
@@ -42,13 +42,29 @@ YOLO_MODEL_PATH = PROJECT_DIR / "weights" / "best.pt"
 YOLO_CONFIDENCE = 0.35
 MIN_BOX_PIXELS  = 10
 
-OVERLAP_THRESHOLD          = 0.15   # min spill to show 'improper'
-OCCUPIED_OVERLAP_THRESHOLD = 0.55   # min coverage (+ centroid inside) to show 'occupied'
-SMOOTH_THRESHOLD           = 8      # ~4/5 frames must be occupied
-IMPROPER_THRESHOLD         = 3      # ~3 consecutive frames must be improper
+# ── Detection thresholds ───────────────────────────────────────────────────────
+# How much of the slot polygon must the vehicle box cover:
+#   >= OCCUPIED_OVERLAP_THRESHOLD  AND centroid inside → 'occupied'
+#   >= OVERLAP_THRESHOLD           (centroid anywhere) → 'improper'
+#   <  OVERLAP_THRESHOLD                               → 'vacant'
+OVERLAP_THRESHOLD          = 0.15   # min spill area to register any presence
+OCCUPIED_OVERLAP_THRESHOLD = 0.55   # min coverage (centroid must also be inside)
 
-HISTORY_LEN      = max(3, OUTPUT_FPS)
-SMOOTH_THRESHOLD = max(1, HISTORY_LEN // 2 + 1)
+# ── Smoothing history ──────────────────────────────────────────────────────────
+# Per-frame weights: occupied=2, improper=1, vacant=0
+# Rolling deque length = HISTORY_LEN frames
+#
+# With OUTPUT_FPS=3, HISTORY_LEN=9 covers a 3-second window.
+# SMOOTH_THRESHOLD=14 means at least 7 of 9 frames must be 'occupied'
+# before the slot turns red — filters shadows, pedestrians, brief glare.
+#
+# IMPROPER_THRESHOLD=4 means 4 consecutive 'improper' frames (weight 1 each)
+# before the slot turns orange.
+#
+# DO NOT add any code below that recalculates or overwrites these values.
+HISTORY_LEN        = 9    # frames to keep in rolling history (3 s at 3 fps)
+SMOOTH_THRESHOLD   = 14   # weighted sum needed → 'occupied'  (≈7/9 frames occupied)
+IMPROPER_THRESHOLD = 4    # weighted sum needed → 'improper'  (≈4/9 frames improper)
 
 WRITE_STATUS_EVERY = 3
 
@@ -76,9 +92,9 @@ FFMPEG_CMD = [
     "-profile:v","baseline",
     "-level",    "3.0",
     "-pix_fmt",  "yuv420p",
-    "-b:v",      "300k",
-    "-maxrate",  "400k",
-    "-bufsize",  "600k",
+    "-b:v",     "800k",
+    "-maxrate", "1000k",
+    "-bufsize", "1500k",
     "-g",        str(OUTPUT_FPS),
     "-sc_threshold", "0",
     "-f",        "hls",
@@ -103,9 +119,9 @@ FFMPEG_CLEAN_CMD = [
     "-profile:v","baseline",
     "-level",    "3.0",
     "-pix_fmt",  "yuv420p",
-    "-b:v",      "200k",
-    "-maxrate",  "300k",
-    "-bufsize",  "400k",
+    "-b:v",     "800k",
+    "-maxrate", "1000k",
+    "-bufsize", "1500k",
     "-g",        str(OUTPUT_FPS),
     "-sc_threshold", "0",
     "-f",        "hls",
