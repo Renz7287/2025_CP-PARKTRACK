@@ -452,35 +452,36 @@ def api_upload_snapshot(request, pk):
     try:
         camera = Camera.objects.get(id=pk, is_active=True)
     except Camera.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Camera not found.'}, status=404)
+        return JsonResponse({'error': 'Camera not found.'}, status=404)
 
     snapshot_file = request.FILES.get('snapshot')
-
     if not snapshot_file:
-        return JsonResponse({'success': False, 'error': 'No file was uploaded.'}, status=400)
+        return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
     allowed_types = ['image/jpeg', 'image/png', 'image/webp']
     if snapshot_file.content_type not in allowed_types:
         return JsonResponse(
-            {'success': False, 'error': 'Invalid file type. Please upload a JPEG, PNG, or WEBP image.'},
+            {'error': 'Invalid file type. Please upload a JPEG, PNG, or WEBP image.'},
             status=400,
         )
 
     max_size = 10 * 1024 * 1024
     if snapshot_file.size > max_size:
-        return JsonResponse({'success': False, 'error': 'File too large. Maximum size is 10 MB.'}, status=400)
+        return JsonResponse({'error': 'File too large. Maximum size is 10 MB.'}, status=400)
 
-    ext       = os.path.splitext(snapshot_file.name)[1].lower() or '.jpg'
-    filename  = f'snapshot_camera_{pk}{ext}'
-    save_dir  = os.path.join(django_settings.MEDIA_ROOT, 'snapshots')
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, filename)
+    # Save to clean_snapshots with timestamp so api_clean_snapshot picks it up
+    clean_dir = os.path.join(django_settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
+    os.makedirs(clean_dir, exist_ok=True)
+
+    import time
+    filename  = f'snapshot_{int(time.time())}.jpg'
+    save_path = os.path.join(clean_dir, filename)
 
     with open(save_path, 'wb') as f:
         for chunk in snapshot_file.chunks():
             f.write(chunk)
 
-    media_url           = f'{django_settings.MEDIA_URL}snapshots/{filename}'
+    media_url           = f'{django_settings.MEDIA_URL}video_stream/clean_snapshots/{filename}'
     camera.snapshot_url = media_url
     camera.save()
 
@@ -523,11 +524,11 @@ def api_capture_snapshot_from_frame(request, pk):
     if not frame_file:
         return JsonResponse({'error': 'No frame data received.'}, status=400)
 
-    # Save to clean_snapshots so api_clean_snapshot() finds it
     clean_dir = os.path.join(django_settings.MEDIA_ROOT, 'video_stream', 'clean_snapshots')
     os.makedirs(clean_dir, exist_ok=True)
 
-    filename  = f'snapshot_camera_{pk}.jpg'
+    import time
+    filename  = f'snapshot_{int(time.time())}.jpg'
     save_path = os.path.join(clean_dir, filename)
 
     with open(save_path, 'wb') as f:
