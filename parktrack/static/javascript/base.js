@@ -23,10 +23,27 @@ document.addEventListener('DOMContentLoaded', () => {
     initializePageScripts();
     pollUnreadCount();
     setInterval(pollUnreadCount, 60_000);
-
     document.getElementById('open-submenu')?.addEventListener('click', () => openSubmenu());
     document.getElementById('open-sidebar')?.addEventListener('click', () => openCloseSidebar());
     document.getElementById('close-sidebar')?.addEventListener('click', () => openCloseSidebar());
+
+    // Close sidebar when clicking outside of it
+    document.addEventListener('click', (event) => {
+        const sidebar = document.querySelector('.js-sidebar');
+        const openBtn = document.getElementById('open-sidebar');
+        if (!sidebar) return;
+
+        const isOpen = !sidebar.classList.contains('left-[-300px]');
+        const clickedInsideSidebar = sidebar.contains(event.target);
+        const clickedOpenBtn = openBtn?.contains(event.target);
+
+        // Only close on mobile (sidebar is fixed/overlaying content)
+        const isMobile = window.innerWidth < 768;
+
+        if (isOpen && isMobile && !clickedInsideSidebar && !clickedOpenBtn) {
+            openCloseSidebar();
+        }
+    });
 
     document.body.addEventListener('click', (event) => {
         const link = event.target.closest('a.js-link');
