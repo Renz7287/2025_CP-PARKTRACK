@@ -293,18 +293,19 @@ export function initializeParkingSlotManagement() {
     function closeLabelModal()  { labelModal.classList.add('hidden'); }
 
     function openRenameModal(index) {
+        // Must be in edit mode to rename
+        if (currentMode === 'view') {
+            enterEditingMode();
+        }
+
         const slot = slots[index];
         if (!slot) return;
 
-        // Reuse the label modal but in rename mode
         labelInput.value = slot.slot_label;
         labelError.classList.add('hidden');
         labelModal.classList.remove('hidden');
         labelInput.focus();
         labelInput.select();
-
-        // Update modal title to indicate rename
-        const modalTitle = labelModal.querySelector('h3, p, .modal-title');
 
         if (_modalConfirmFn) {
             labelConfirm.removeEventListener('click', _modalConfirmFn);
@@ -322,8 +323,12 @@ export function initializeParkingSlotManagement() {
             closeLabelModal();
             markUnsaved(); redraw(); refreshFooter();
         };
-        _modalDiscardFn = () => { closeLabelModal(); };
-        _modalEnterFn   = (e) => { if (e.key === 'Enter') _modalConfirmFn(); };
+        _modalDiscardFn = () => {
+            closeLabelModal();
+            // If we auto-entered edit mode just for rename and nothing else changed, exit cleanly
+            if (!hasUnsavedChanges) cancelEditing();
+        };
+        _modalEnterFn = (e) => { if (e.key === 'Enter') _modalConfirmFn(); };
 
         labelConfirm.addEventListener('click', _modalConfirmFn);
         labelDiscard.addEventListener('click', _modalDiscardFn);
@@ -352,18 +357,16 @@ export function initializeParkingSlotManagement() {
                 </span>
                 <button
                     data-rename="${idx}"
-                    title="Rename slot"
-                    class="ml-auto shrink-0 opacity-50 hover:opacity-100 transition-opacity p-0.5 rounded"
+                    title="Rename slot${currentMode === 'view' ? ' (will enter edit mode)' : ''}"
+                    class="ml-auto shrink-0 opacity-40 hover:opacity-100 transition-opacity p-0.5 rounded"
                 >
                     <i class="fa-solid fa-pen text-xs"></i>
                 </button>`;
 
-            // Select slot on label click (edit mode)
             tag.querySelector(`[data-select="${idx}"]`).addEventListener('click', () => {
                 if (currentMode === 'edit') { selectedIndex = idx; redraw(); }
             });
 
-            // Rename on pencil click (always available when in edit toolbar)
             tag.querySelector(`[data-rename="${idx}"]`).addEventListener('click', (e) => {
                 e.stopPropagation();
                 openRenameModal(idx);
