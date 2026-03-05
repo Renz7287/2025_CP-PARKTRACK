@@ -3,58 +3,53 @@ import { initializeVehicleField } from "./utils/vehicle.js";
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Stepper
     (function () {
-        const step1 = document.getElementById('step-1');
-        const step2 = document.getElementById('step-2');
-        const backBtn = document.getElementById('back-to-step-1');
-        const titleEl = document.getElementById('form-title');
+        const step1          = document.getElementById('step-1');
+        const step2          = document.getElementById('step-2');
+        const backBtn        = document.getElementById('back-to-step-1');
+        const mobileBackBtn  = document.getElementById('back-to-step-1-mobile');
+        const titleEl        = document.getElementById('form-title');
+        const mobileTitleEl  = document.getElementById('form-title-mobile');
 
         function showStep(step) {
-            const mobileTitleEl  = document.getElementById('form-title-mobile');
-            const mobileBackBtn  = document.getElementById('back-to-step-1-mobile');
-
             if (step === 1) {
                 step1.classList.remove('hidden');
                 step2.classList.add('hidden');
                 backBtn?.classList.add('hidden');
                 mobileBackBtn?.classList.add('hidden');
-                if (titleEl)       titleEl.textContent       = 'Registration';
-                if (mobileTitleEl) mobileTitleEl.textContent  = 'Registration';
+                if (titleEl)       titleEl.textContent      = 'Registration';
+                if (mobileTitleEl) mobileTitleEl.textContent = 'Registration';
             } else {
                 step1.classList.add('hidden');
                 step2.classList.remove('hidden');
                 backBtn?.classList.remove('hidden');
                 mobileBackBtn?.classList.remove('hidden');
-                if (titleEl)       titleEl.textContent       = 'Vehicle Info';
-                if (mobileTitleEl) mobileTitleEl.textContent  = 'Vehicle Info';
+                if (titleEl)       titleEl.textContent      = 'Vehicle Info';
+                if (mobileTitleEl) mobileTitleEl.textContent = 'Vehicle Info';
             }
         }
 
         document.getElementById('next-to-step-2')?.addEventListener('click', () => showStep(2));
-        backBtn?.addEventListener('click', () => showStep(1));
-        document.getElementById('back-to-step-1-mobile')?.addEventListener('click', () => showStep(1));
+        backBtn?.addEventListener('click',       () => showStep(1));
+        mobileBackBtn?.addEventListener('click', () => showStep(1));
 
         showStep(1);
     })();
 
-    // Vehicle Image Upload
     (function () {
-        const dropzone   = document.getElementById('vehicle-image-dropzone');
-        const input      = document.getElementById('vehicle-image-input');
-        const preview    = document.getElementById('vehicle-image-preview');
+        const dropzone    = document.getElementById('vehicle-image-dropzone');
+        const input       = document.getElementById('vehicle-image-input');
+        const preview     = document.getElementById('vehicle-image-preview');
         const placeholder = document.getElementById('vehicle-image-placeholder');
-        const removeBtn  = document.getElementById('vehicle-image-remove');
+        const removeBtn   = document.getElementById('vehicle-image-remove');
 
         if (!dropzone || !input) return;
 
-        // Open file picker on dropzone click (but not on the remove button)
         dropzone.addEventListener('click', (e) => {
             if (e.target.closest('#vehicle-image-remove')) return;
             input.click();
         });
 
-        // Drag-and-drop
         dropzone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropzone.classList.add('border-[#940B26]', 'bg-red-50');
@@ -68,20 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) {
                 setPreview(file);
-                // Assign dropped file to input via DataTransfer
                 const dt = new DataTransfer();
                 dt.items.add(file);
                 input.files = dt.files;
             }
         });
 
-        // File picker change
         input.addEventListener('change', () => {
             const file = input.files[0];
             if (file) setPreview(file);
         });
 
-        // Remove
         removeBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
             clearPreview();
@@ -107,16 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     })();
 
-    // Vehicle Brand/Model Datalist
     initializeVehicleField({
         brandInputId: 'brand-dropdown',
         modelInputId: 'model-dropdown',
-        brandListId: 'brand-list',
-        modelListId: 'model-list',
-        baseUrl: '/vehicles'
+        brandListId:  'brand-list',
+        modelListId:  'model-list',
+        baseUrl:      '/vehicles'
     });
 
-    // Form Submission
     const form = document.getElementById('register-form');
     if (!form) return;
 
@@ -127,8 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const response = await fetch(form.action, {
-                method: 'POST',
-                body: formData,
+                method:  'POST',
+                body:    formData,
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
 
@@ -153,12 +143,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.errors) {
                 clearErrors();
 
-                // If personal info errors appear while on step 2, jump back
                 const step1Fields = ['user-first_name', 'user-middle_name', 'user-last_name', 'user-email', 'user-password1', 'user-password2'];
                 const hasStep1Error = Object.keys(data.errors).some(k => step1Fields.includes(k));
                 if (hasStep1Error) {
-                    document.getElementById('next-to-step-2')?.click();
-                    // Briefly switch to step 1 via our showStep equivalent
                     document.getElementById('back-to-step-1')?.click();
                 }
 
