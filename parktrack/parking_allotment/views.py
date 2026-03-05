@@ -61,25 +61,27 @@ def upload_video(request):
     return JsonResponse({'status': 'uploaded', 'path': dest_path})
 
 
+def _cleanup_old_snapshots(directory, keep=5):
+    """Keep only the `keep` most recently modified .jpg files in directory."""
+    try:
+        files = [f for f in os.listdir(directory) if f.endswith('.jpg')]
+        if len(files) <= keep:
+            return
+        files.sort(key=lambda f: os.path.getmtime(os.path.join(directory, f)), reverse=True)
+        for old in files[keep:]:
+            try:
+                os.remove(os.path.join(directory, old))
+                sidecar = os.path.join(directory, old.replace('.jpg', '.json'))
+                if os.path.exists(sidecar):
+                    os.remove(sidecar)
+            except OSError:
+                pass
+    except Exception:
+        pass
+
+
 @csrf_exempt
 def upload_snapshot(request):
-    """
-    POST /parking-allotment/api/upload-snapshot/
-
-    Called by the Pi after each periodic snapshot interval with the OVERLAID
-    frame (polygons + detection status drawn on it).
-    Saves the JPEG and a JSON sidecar to MEDIA_ROOT/video_stream/snapshots/
-    so Django can serve them to the browser via latest_snapshot().
-
-    Headers:
-        X-API-KEY  — must match settings.UPLOAD_API_KEY
-
-    Form data:
-        snapshot   — JPEG image file (with polygon overlays drawn on it)
-        occupied   — integer
-        vacant     — integer
-        improper   — integer  (new: vehicles straddling slot boundaries)
-    """
     api_key = request.headers.get('X-API-KEY')
     if api_key != settings.UPLOAD_API_KEY:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
@@ -108,26 +110,14 @@ def upload_snapshot(request):
     with open(sidecar_path, 'w') as f:
         json.dump({'occupied': occupied, 'vacant': vacant, 'improper': improper}, f)
 
+    _cleanup_old_snapshots(snapshot_dir, keep=5)
+
     url = settings.MEDIA_URL + 'video_stream/snapshots/' + filename
     return JsonResponse({'status': 'ok', 'url': url})
 
 
 @csrf_exempt
 def upload_clean_snapshot(request):
-    """
-    POST /parking-allotment/api/upload-clean-snapshot/
-
-    Called by the Pi alongside upload-snapshot, but sends the CLEAN frame
-    (no polygon or detection overlays). Saved to a separate folder
-    MEDIA_ROOT/video_stream/clean_snapshots/ so the Parking Layout Editor
-    can fetch a clean background image for drawing slot polygons.
-
-    Headers:
-        X-API-KEY  — must match settings.UPLOAD_API_KEY
-
-    Form data:
-        snapshot   — JPEG image file (clean, no overlays)
-    """
     api_key = request.headers.get('X-API-KEY')
     if api_key != settings.UPLOAD_API_KEY:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
@@ -147,6 +137,8 @@ def upload_clean_snapshot(request):
     with open(jpg_path, 'wb') as f:
         for chunk in snapshot_file.chunks():
             f.write(chunk)
+
+    _cleanup_old_snapshots(clean_dir, keep=5)
 
     url = settings.MEDIA_URL + 'video_stream/clean_snapshots/' + filename
     return JsonResponse({'status': 'ok', 'url': url})

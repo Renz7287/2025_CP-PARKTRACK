@@ -146,16 +146,15 @@ function renderDonutChart(summary) {
         summary.active    ?? 0,
         summary.expired   ?? 0,
         summary.cancelled ?? 0,
-        summary.fulfilled ?? 0,
     ];
 
     donutChart = new window.Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         data: {
-            labels: ['Active', 'Expired', 'Cancelled', 'Fulfilled'],
+            labels: ['Active', 'Expired', 'Cancelled'],
             datasets: [{
                 data:            values,
-                backgroundColor: ['#16a34a', '#6b7280', '#dc2626', '#2563eb'],
+                backgroundColor: ['#16a34a', '#6b7280', '#dc2626'],
                 borderWidth:     2,
                 borderColor:     '#fff',
                 hoverOffset:     6,
