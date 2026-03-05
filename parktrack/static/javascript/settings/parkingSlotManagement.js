@@ -362,7 +362,10 @@ export function initializeParkingSlotManagement() {
                 syncCanvasSize(); resolve();
             };
             parkingSnapshot.src = url;
-            if (parkingSnapshot.complete && parkingSnapshot.naturalWidth > 0) {
+            // Only use complete shortcut if src matches exactly (no cache-bust mismatch)
+            const currentBase = parkingSnapshot.src.split('?')[0];
+            const newBase     = url.split('?')[0];
+            if (currentBase !== newBase && parkingSnapshot.complete && parkingSnapshot.naturalWidth > 0) {
                 parkingSnapshot.onload = null; parkingSnapshot.onerror = null;
                 syncCanvasSize(); resolve();
             }
@@ -630,7 +633,7 @@ export function initializeParkingSlotManagement() {
             if (d.success) {
                 camera.snapshot_url = d.snapshot_url;
                 closeSnapshotModal();
-                await loadSnapshotAsync(d.snapshot_url);
+                await loadSnapshotAsync(d.snapshot_url + '?v=' + Date.now());
                 syncCanvasSize(); redraw();
                 swal('Uploaded!', 'Snapshot updated successfully.', 'success');
             } else {
@@ -746,7 +749,7 @@ export function initializeParkingSlotManagement() {
                     camera.snapshot_url = d.snapshot_url;
                     stopCleanStream();
                     closeSnapshotModal();
-                    await loadSnapshotAsync(d.snapshot_url);
+                    await loadSnapshotAsync(d.snapshot_url + '?v=' + Date.now());
                     syncCanvasSize(); redraw();
                     swal('Done!', 'Snapshot set successfully.', 'success');
                 } else {
