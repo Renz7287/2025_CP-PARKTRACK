@@ -10,6 +10,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from settings.models import ParkingSlot, Camera
+import os
+from django.conf import settings
 from .models import Reservation
 
 
@@ -24,7 +26,7 @@ def reservation(request):
     camera = Camera.objects.filter(is_active=True).first()
 
     try:
-        snapshot_url = reverse('parking_allotment:api-clean-snapshot')
+        snapshot_url = reverse('parking_allotment:api-latest-clean-snapshot')  # was api-clean-snapshot
     except Exception:
         snapshot_url = ''
 
@@ -106,11 +108,9 @@ def _parse_arrival_time(arrival_time_str):
 def get_available_slots(request):
     _expire_stale_reservations()
     include_disabled = request.GET.get('include_disabled') == '1'
-
     is_admin = getattr(request.user, 'is_admin', False) or request.user.is_staff
 
     if include_disabled and is_admin:
-        # Show active slots + explicitly disabled ones, but not layout-deleted slots
         qs = ParkingSlot.objects.filter(
             models.Q(is_active=True) | models.Q(status='disabled')
         ).select_related('camera')
@@ -125,15 +125,34 @@ def get_available_slots(request):
         Reservation.objects.filter(status='active').values_list('slot_id', flat=True)
     )
 
+    # Read Pi occupancy from status.json — keyed by slot_label
+    pi_occupied_labels = set()
+    status_path = os.path.join(settings.MEDIA_ROOT, 'video_stream', 'status.json')
+    if os.path.exists(status_path):
+        try:
+            with open(status_path, 'r') as f:
+                status_data = json.load(f)
+            for s in status_data.get('slots', []):
+                if s.get('occupied'):
+                    pi_occupied_labels.add(s.get('slot_label', ''))
+        except Exception:
+            pass
+
     slots = []
     for slot in qs:
         d = slot.to_dict()
+        pi_occupied = slot.slot_label in pi_occupied_labels
+
         if slot.id in reserved_slot_ids:
             d['status'] = 'reserved'
+        elif pi_occupied:
+            d['status'] = 'occupied'
+
         d['is_reservable'] = (
             slot.is_active
             and slot.status == 'available'
             and slot.id not in reserved_slot_ids
+            and not pi_occupied
         )
         slots.append(d)
 
