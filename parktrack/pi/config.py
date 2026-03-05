@@ -42,19 +42,27 @@ YOLO_MODEL_PATH = PROJECT_DIR / "weights" / "best.pt"
 YOLO_CONFIDENCE = 0.35
 MIN_BOX_PIXELS  = 10
 
-# ── Smoothing history (centroid-only mode) ─────────────────────────────────────
-# Each frame adds 1 (centroid inside polygon) or 0 (not inside).
+# ── Detection thresholds ───────────────────────────────────────────────────────
+# A slot is occupied if EITHER:
+#   - the vehicle centroid is inside the polygon, OR
+#   - the vehicle box covers >= IOU_THRESHOLD of the slot's polygon area
+#
+# 0.20 = vehicle must cover at least 20% of the slot to trigger via IoU.
+# Raise this if adjacent vehicles cause false positives.
+# Lower this if a parked vehicle is being missed.
+IOU_THRESHOLD = 0.20
+
+# ── Smoothing history ──────────────────────────────────────────────────────────
+# Each frame adds 1 (vehicle present) or 0 (absent) to a rolling buffer.
 # Max possible sum = HISTORY_LEN.
 #
-# With OUTPUT_FPS=3, HISTORY_LEN=9 covers a 3-second window.
-# SMOOTH_THRESHOLD=7 means at least 7 of 9 frames must have a centroid
-# inside the slot polygon before it flips to occupied.
-# This filters pedestrians, shadows, and brief glare without
-# adding noticeable lag when a real car parks.
+# At OUTPUT_FPS=3, HISTORY_LEN=9 = 3-second window.
+# SMOOTH_THRESHOLD=7 means 7 of the last 9 frames must detect a vehicle
+# before the slot flips occupied — filters pedestrians, shadows, glare.
 #
-# DO NOT add any code below that recalculates or overwrites SMOOTH_THRESHOLD.
-HISTORY_LEN      = 9   # frames to keep in rolling buffer  (3 s at 3 fps)
-SMOOTH_THRESHOLD = 7   # centroid-hits needed to flip occupied  (≈7/9 frames)
+# DO NOT add any code below that recalculates or overwrites these values.
+HISTORY_LEN      = 9   # rolling buffer length  (3 s at 3 fps)
+SMOOTH_THRESHOLD = 7   # hits needed to flip occupied  (≈7/9 frames)
 
 WRITE_STATUS_EVERY = 3
 

@@ -11,7 +11,7 @@ import time
 import cv2
 import numpy as np
 import requests
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon, box as shapely_box
 from ultralytics import YOLO
 
 import config
@@ -141,7 +141,6 @@ def start_hls_uploader(local_dir, push_url, delete_url, list_url, batch_delete_u
 
     def loop():
         startup_done = False
-
         while True:
             try:
                 if not local_dir.exists():
@@ -168,7 +167,6 @@ def start_hls_uploader(local_dir, push_url, delete_url, list_url, batch_delete_u
                     data, h = _read_file(fpath)
                     if data is None:
                         continue
-
                     if seen.get(fpath.name) == h:
                         continue
 
@@ -199,14 +197,15 @@ def start_hls_uploader(local_dir, push_url, delete_url, list_url, batch_delete_u
 
 # ── Detection ──────────────────────────────────────────────────────────────────
 
-def get_centroids(yolo_results) -> list:
+def get_detections(yolo_results) -> list:
     """
-    Extract centroid (cx, cy) from each YOLO bounding box.
-    Drops boxes smaller than config.MIN_BOX_PIXELS on either dimension.
+    Extract bounding boxes from YOLO results.
+    Returns list of dicts: { cx, cy, shapely_box }
+    Drops boxes smaller than config.MIN_BOX_PIXELS on either side.
     """
-    centroids = []
+    detections = []
     if not (hasattr(yolo_results, "boxes") and len(yolo_results.boxes) > 0):
-        return centroids
+        return detections
 
     xyxy = yolo_results.boxes.xyxy
     if hasattr(xyxy, "cpu"):
@@ -218,32 +217,78 @@ def get_centroids(yolo_results) -> list:
         x1, y1, x2, y2 = map(float, box[:4])
         if (x2 - x1) < config.MIN_BOX_PIXELS or (y2 - y1) < config.MIN_BOX_PIXELS:
             continue
-        centroids.append(((x1 + x2) / 2.0, (y1 + y2) / 2.0))
+        detections.append({
+            'cx':          (x1 + x2) / 2.0,
+            'cy':          (y1 + y2) / 2.0,
+            'shapely_box': shapely_box(x1, y1, x2, y2),
+        })
 
-    return centroids
+    return detections
 
 
-def update_occupancy(slots: list, centroids: list):
+def _is_slot_occupied_by(det: dict, slot_poly: Polygon) -> bool:
     """
-    For each slot, check if any centroid falls inside its polygon.
-    Smoothed over a rolling history buffer — slot only flips occupied
-    once SMOOTH_THRESHOLD frames confirm presence.
+    Returns True if either condition is met (OR logic):
+
+      1. CENTROID inside polygon
+         — vehicle is squarely parked, centroid lands inside the boundary
+
+      2. IoU overlap >= IOU_THRESHOLD
+         — vehicle body covers enough of the slot even if its centroid
+           clips just outside the polygon edge (angled parking, large SUV, etc.)
+
+    Why OR and not AND?
+      AND would miss vehicles whose centroid is barely outside the polygon.
+      OR catches both the clean centre-park case and the edge-clip case,
+      while IOU_THRESHOLD (default 0.20) prevents false positives from
+      distant vehicles whose boxes only marginally graze the slot area.
+
+    Config:
+        IOU_THRESHOLD = 0.20   # fraction of slot area that must be covered
     """
-    smooth_threshold = getattr(config, 'SMOOTH_THRESHOLD', 8)
+    iou_threshold = getattr(config, 'IOU_THRESHOLD', 0.20)
+
+    # Fast path: centroid inside polygon
+    if slot_poly.contains(Point(det['cx'], det['cy'])):
+        return True
+
+    # Fallback: overlap ratio
+    if not slot_poly.is_valid or slot_poly.area == 0:
+        return False
+
+    overlap_ratio = det['shapely_box'].intersection(slot_poly).area / slot_poly.area
+    return overlap_ratio >= iou_threshold
+
+
+def slot_has_vehicle(slot_poly: Polygon, detections: list) -> bool:
+    """Return True if any detection occupies this slot."""
+    return any(_is_slot_occupied_by(det, slot_poly) for det in detections)
+
+
+# ── Occupancy smoothing ────────────────────────────────────────────────────────
+
+def update_occupancy(slots: list, detections: list):
+    """
+    Smooth per-frame detections with a rolling binary history.
+    Each frame contributes 1 (vehicle present) or 0 (absent).
+    Slot flips to occupied when sum >= SMOOTH_THRESHOLD.
+    Max possible sum = HISTORY_LEN.
+    """
+    smooth_threshold = getattr(config, 'SMOOTH_THRESHOLD', 7)
 
     for slot in slots:
-        present = any(slot["poly"].contains(Point(cx, cy)) for cx, cy in centroids)
-        slot["history"].append(1 if present else 0)
-        slot["is_occupied"] = sum(slot["history"]) >= smooth_threshold
-        slot["status"] = "occupied" if slot["is_occupied"] else "vacant"
+        present = slot_has_vehicle(slot['poly'], detections)
+        slot['history'].append(1 if present else 0)
+        slot['is_occupied'] = sum(slot['history']) >= smooth_threshold
+        slot['status']      = 'occupied' if slot['is_occupied'] else 'vacant'
 
 
 # ── Rendering ──────────────────────────────────────────────────────────────────
 
 def draw_overlays(frame: np.ndarray, slots: list) -> np.ndarray:
     for slot in slots:
-        color = (0, 0, 255) if slot["is_occupied"] else (0, 255, 0)
-        pts   = slot["pts_np"]
+        color = (0, 0, 255) if slot['is_occupied'] else (0, 255, 0)
+        pts   = slot['pts_np']
 
         # Semi-transparent fill
         overlay = frame.copy()
@@ -253,9 +298,9 @@ def draw_overlays(frame: np.ndarray, slots: list) -> np.ndarray:
         # Border
         cv2.polylines(frame, [pts], isClosed=True, color=color, thickness=2)
 
-        # Label centred inside polygon with dark backing
-        cx = int(pts[:, 0].mean())
-        cy = int(pts[:, 1].mean())
+        # Label centred in polygon with dark backing
+        cx    = int(pts[:, 0].mean())
+        cy    = int(pts[:, 1].mean())
         label = f"{slot['slot_label']} {'Occupied' if slot['is_occupied'] else 'Vacant'}"
         (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.50, 2)
         cv2.rectangle(frame,
@@ -274,14 +319,14 @@ def push_status(slots: list):
     """POST occupancy status to Django."""
     data = {
         "timestamp": int(time.time()),
-        "occupied":  sum(1 for s in slots if s["is_occupied"]),
-        "vacant":    sum(1 for s in slots if not s["is_occupied"]),
+        "occupied":  sum(1 for s in slots if s['is_occupied']),
+        "vacant":    sum(1 for s in slots if not s['is_occupied']),
         "slots": [
             {
                 "id":         s["id"],
                 "slot_label": s["slot_label"],
-                "occupied":   bool(s["is_occupied"]),
-                "status":     "occupied" if s["is_occupied"] else "vacant",
+                "occupied":   bool(s['is_occupied']),
+                "status":     "occupied" if s['is_occupied'] else "vacant",
             }
             for s in slots
         ],
@@ -306,8 +351,8 @@ def push_status(slots: list):
 def push_snapshot(frame: np.ndarray, slots: list, now: float):
     """POST the overlaid frame to Django."""
     filename = f"snapshot_{int(now)}.jpg"
-    occupied = sum(1 for s in slots if s["is_occupied"])
-    vacant   = sum(1 for s in slots if not s["is_occupied"])
+    occupied = sum(1 for s in slots if s['is_occupied'])
+    vacant   = sum(1 for s in slots if not s['is_occupied'])
 
     success, buf = cv2.imencode(".jpg", frame)
     if not success:
@@ -421,11 +466,11 @@ def main():
             frame = cv2.resize(frame, (config.OUTPUT_WIDTH, config.OUTPUT_HEIGHT),
                                interpolation=cv2.INTER_LINEAR)
 
-            slots     = fetcher.get_slots()
-            results   = model(frame, conf=config.YOLO_CONFIDENCE, verbose=False)[0]
-            centroids = get_centroids(results)
+            slots      = fetcher.get_slots()
+            results    = model(frame, conf=config.YOLO_CONFIDENCE, verbose=False)[0]
+            detections = get_detections(results)
 
-            update_occupancy(slots, centroids)
+            update_occupancy(slots, detections)
 
             clean_frame = frame.copy()
             frame       = draw_overlays(frame, slots)
