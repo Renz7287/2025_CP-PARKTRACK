@@ -11,21 +11,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const titleEl = document.getElementById('form-title');
 
         function showStep(step) {
+            const mobileTitleEl  = document.getElementById('form-title-mobile');
+            const mobileBackBtn  = document.getElementById('back-to-step-1-mobile');
+
             if (step === 1) {
                 step1.classList.remove('hidden');
                 step2.classList.add('hidden');
                 backBtn?.classList.add('hidden');
-                if (titleEl) titleEl.textContent = 'Registration';
+                mobileBackBtn?.classList.add('hidden');
+                if (titleEl)       titleEl.textContent       = 'Registration';
+                if (mobileTitleEl) mobileTitleEl.textContent  = 'Registration';
             } else {
                 step1.classList.add('hidden');
                 step2.classList.remove('hidden');
                 backBtn?.classList.remove('hidden');
-                if (titleEl) titleEl.textContent = 'Vehicle Info';
+                mobileBackBtn?.classList.remove('hidden');
+                if (titleEl)       titleEl.textContent       = 'Vehicle Info';
+                if (mobileTitleEl) mobileTitleEl.textContent  = 'Vehicle Info';
             }
         }
 
         document.getElementById('next-to-step-2')?.addEventListener('click', () => showStep(2));
         backBtn?.addEventListener('click', () => showStep(1));
+        document.getElementById('back-to-step-1-mobile')?.addEventListener('click', () => showStep(1));
 
         showStep(1);
     })();

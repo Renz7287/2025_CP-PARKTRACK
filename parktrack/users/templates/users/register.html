@@ -3,18 +3,22 @@
 {% load static %}
 
 {% block title %}
-	Register
+    Register
 {% endblock title %}
 
 {% block content %}
 <div class="md:hidden block w-full h-[260px] bg-[#940B26] rounded-b-full absolute top-0 left-0 -z-10">
-	<div class="flex flex-col items-center mt-2">
-		<img 
-			src="{% static 'images/parktrack-logo-white.png' %}" 
-			class="w-18 h-18"
-		>
-		<h1 class="font-bold text-2xl text-white">Registration</h1>
-	</div>
+    <div class="flex flex-col items-center mt-2 relative">
+        <button type="button" id="back-to-step-1-mobile"
+                class="hidden absolute left-4 top-2 text-white text-xl p-1">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <img 
+            src="{% static 'images/parktrack-logo-white.png' %}" 
+            class="w-18 h-18"
+        >
+        <h1 class="font-bold text-2xl text-white" id="form-title-mobile">Registration</h1>
+    </div>
 </div>
 
 <section class="min-h-screen min-w-screen flex justify-center items-center">
@@ -99,6 +103,12 @@
                             <a class="text-[#940B26] decoration-solid underline" href="{% url 'users:login' %}">Login</a>
                         </p>
 
+                        <a href="{% url 'users:index' %}"
+                           class="flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-[#940B26] transition-colors mt-1">
+                            <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                            Back to Home
+                        </a>
+
                     </section>
 
                     <section id="step-2" class="hidden space-y-2">
@@ -136,8 +146,8 @@
                             <div class="flex flex-col col-span-2">
                                 <label class="font-bold text-sm mb-1">Vehicle Image <span class="font-normal text-gray-400"></span></label>
 
-								{{ vehicle_form.vehicle_image }}
-								
+                                {{ vehicle_form.vehicle_image }}
+                                
                                 <div
                                     id="vehicle-image-dropzone"
                                     class="
@@ -147,7 +157,6 @@
                                         transition-colors duration-200 group
                                     "
                                 >
-
                                     <img
                                         id="vehicle-image-preview"
                                         src="#"

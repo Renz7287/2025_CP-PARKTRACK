@@ -13,50 +13,52 @@
   <div class="flex justify-center rounded-3xl shadow-xl h-[400px] max-w-2xl min-w-xs bg-white">
 
     <div class="w-2/5 md:block hidden">
-		<img 
-			src="{% static 'images/login-image.jpg' %}" 
-			class="rounded-l-2xl h-full"
-		>
+        <img 
+            src="{% static 'images/login-image.jpg' %}" 
+            class="rounded-l-2xl h-full"
+        >
     </div>
   
     <div class="md:w-3/5 px-8 w-xs">
 
-		<div class="flex flex-col justify-center items-center mt-2">
-			<div class="flex items-center">
-				<img 
-					src="{% static 'images/parktrack-logo-red.png' %}" 
-					class="w-11 h-11"
-				>
-				<h1 class="font-bold text-3xl">ParkTrack</h1>
-			</div>
-			
-			<h1 class="font-bold text-2xl mt-5">Login</h1>
-		</div>
+        <div class="flex flex-col justify-center items-center mt-2">
+            <div class="flex items-center">
+                <img 
+                    src="{% static 'images/parktrack-logo-red.png' %}" 
+                    class="w-11 h-11"
+                >
+                <h1 class="font-bold text-3xl">ParkTrack</h1>
+            </div>
+            
+            <h1 class="font-bold text-2xl mt-5">Login</h1>
+        </div>
 
-		<form id="login-form" method="POST" class="flex flex-col gap-2 mt-8">
-			{% csrf_token %}
-			<label for="email" class="font-semibold text-sm">Email</label>
-			<input type="email" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="username" id="email">			
+        <form id="login-form" method="POST" class="flex flex-col gap-2 mt-8">
+            {% csrf_token %}
+            <label for="email" class="font-semibold text-sm">Email</label>
+            <input type="email" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="username" id="email">			
 
-			<label for="password" class="font-semibold text-sm">Password</label>
-			<input type="password" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="password" id="password">			
+            <label for="password" class="font-semibold text-sm">Password</label>
+            <input type="password" class="text-xs p-2 shadow-xl rounded-lg bg-[#F4F2F2]" name="password" id="password">			
 
-			<button 
-				type="submit" 
-				class="
-					bg-[#940B26] rounded-lg font-bold text-white p-1 mt-2
-					hover:scale-105 cursor-pointer
-				"
-				>
-				Login
-			</button>
-			<p class="font-semibold text-center text-xs">
-				Don't have an account?
-				<a class="text-[#940B26] decoration-solid underline" href="{% url 'users:register' %}">
-					Register
-				</a>
-			</p>
-		</form>
+            <button 
+                type="submit" 
+                class="bg-[#940B26] rounded-lg font-bold text-white p-1 mt-2 hover:scale-105 cursor-pointer"
+            >
+                Login
+            </button>
+            <p class="font-semibold text-center text-xs">
+                Don't have an account?
+                <a class="text-[#940B26] decoration-solid underline" href="{% url 'users:register' %}">
+                    Register
+                </a>
+            </p>
+            <a href="{% url 'users:home' %}" 
+               class="flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-[#940B26] transition-colors mt-1">
+                <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                Back to Home
+            </a>
+        </form>
 
     </div>
 
