@@ -59,16 +59,26 @@ export function initializeParkingAllotment() {
             return;
         }
 
+        // Inject once — hides the native browser buffering spinner
+        if (!document.getElementById('hls-no-spinner')) {
+            const s = document.createElement('style');
+            s.id          = 'hls-no-spinner';
+            s.textContent = `
+                #live-video::-webkit-media-controls-overlay-play-button { display: none !important; }
+                #live-video::-webkit-media-controls-start-playback-button { display: none !important; }
+            `;
+            document.head.appendChild(s);
+        }
+
         if (Hls.isSupported()) {
             hls = new Hls({
-                // Low latency tuning for a 3fps parking camera
                 liveSyncDurationCount:       3,
                 liveMaxLatencyDurationCount: 6,
                 maxBufferLength:             15,
                 maxMaxBufferLength:          30,
                 lowLatencyMode:              false,
                 startFragPrefetch:           true,
-                autoStartLoad:               true,      // start loading immediately
+                autoStartLoad:               true,
                 manifestLoadingTimeOut:      10000,
                 manifestLoadingMaxRetry:     6,
                 manifestLoadingRetryDelay:   2000,
@@ -88,7 +98,6 @@ export function initializeParkingAllotment() {
             hls.attachMedia(video);
 
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                // Play as soon as we have just 2 segments buffered
                 video.play().catch(() => {});
             });
 
