@@ -17,23 +17,23 @@ UPLOAD_API_KEY = "parktrack@2025"
 # USB webcam:              USE_USB_CAMERA = True
 # Pi Camera Module (CSI):  USE_PI_CAMERA  = True
 USE_PI_CAMERA    = False
-USE_USB_CAMERA   = True
+USE_USB_CAMERA   = False
 USB_CAMERA_INDEX = 0
 
 # Local paths
-PROJECT_DIR = Path('/home/parktrack')
-# PROJECT_DIR = Path(__file__).resolve().parent.parent
-# VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.mp4"
+# PROJECT_DIR = Path('/home/parktrack')
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.webm"
 
 OUTPUT_WIDTH  = 1280
 OUTPUT_HEIGHT = 720
 OUTPUT_FPS    = 3
 
 # Stream output directories
-VIDEO_DIR    = Path('/home/parktrack/stream')
-SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
-# VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
-# SNAPSHOT_DIR = PROJECT_DIR / "media" / "snapshots"
+# VIDEO_DIR    = Path('/home/parktrack/stream')
+# SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
+VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
+SNAPSHOT_DIR = PROJECT_DIR / "media" / "snapshots"
 
 SNAPSHOT_INTERVAL = 60
 MAX_SNAPSHOTS     = 10
@@ -98,7 +98,7 @@ FFMPEG_CMD = [
     "-f",        "hls",
     "-hls_time",      "2",
     "-hls_list_size", "10",
-    "-hls_flags",     "delete_segments+append_list",
+    "-hls_flags",     "append_list",
     "-hls_segment_type",     "mpegts",
     "-hls_segment_filename", str(VIDEO_DIR / "segment_%03d.ts"),
     str(VIDEO_DIR / "stream.m3u8"),

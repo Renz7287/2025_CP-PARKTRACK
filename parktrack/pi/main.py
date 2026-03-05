@@ -154,6 +154,17 @@ def start_hls_uploader(local_dir, push_url, delete_url, list_url, batch_delete_u
                     startup_cleanup(active_segments)
                     startup_done = True
 
+                # Delete local .ts files that fell off the playlist and were already uploaded
+                for fpath in list(local_dir.iterdir()):
+                    if fpath.suffix == '.ts' and fpath.name not in active_segments:
+                        if fpath.name in pushed:
+                            try:
+                                fpath.unlink()
+                                pushed.discard(fpath.name)
+                                seen.pop(fpath.name, None)
+                            except OSError:
+                                pass
+
                 stale_remote = pushed - active_segments - {'stream.m3u8'}
                 if stale_remote:
                     batch_delete(stale_remote)
