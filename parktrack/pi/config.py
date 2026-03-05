@@ -25,8 +25,8 @@ PROJECT_DIR = Path('/home/parktrack')
 # PROJECT_DIR = Path(__file__).resolve().parent.parent
 # VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.mp4"
 
-OUTPUT_WIDTH  = 640
-OUTPUT_HEIGHT = 360
+OUTPUT_WIDTH  = 1280
+OUTPUT_HEIGHT = 720
 OUTPUT_FPS    = 3
 
 # Stream output directories — update commented lines when running on Pi

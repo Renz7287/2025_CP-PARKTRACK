@@ -31,7 +31,9 @@ config.SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 def open_video_source():
     if config.USE_USB_CAMERA:
-        cap    = cv2.VideoCapture(config.USB_CAMERA_INDEX)
+        cap = cv2.VideoCapture(config.USB_CAMERA_INDEX)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH,  config.OUTPUT_WIDTH)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config.OUTPUT_HEIGHT)
         source = f"USB camera (index {config.USB_CAMERA_INDEX})"
     elif config.USE_PI_CAMERA:
         gst = (
