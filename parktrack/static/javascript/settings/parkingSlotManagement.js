@@ -288,8 +288,47 @@ export function initializeParkingSlotManagement() {
         labelDiscard.addEventListener('click', _modalDiscardFn);
         labelInput.addEventListener('keydown', _modalEnterFn);
     }
+
     function showLabelErr(msg) { labelErrorText.textContent = msg; labelError.classList.remove('hidden'); }
     function closeLabelModal()  { labelModal.classList.add('hidden'); }
+
+    function openRenameModal(index) {
+        const slot = slots[index];
+        if (!slot) return;
+
+        // Reuse the label modal but in rename mode
+        labelInput.value = slot.slot_label;
+        labelError.classList.add('hidden');
+        labelModal.classList.remove('hidden');
+        labelInput.focus();
+        labelInput.select();
+
+        // Update modal title to indicate rename
+        const modalTitle = labelModal.querySelector('h3, p, .modal-title');
+
+        if (_modalConfirmFn) {
+            labelConfirm.removeEventListener('click', _modalConfirmFn);
+            labelDiscard.removeEventListener('click', _modalDiscardFn);
+            labelInput.removeEventListener('keydown', _modalEnterFn);
+        }
+
+        _modalConfirmFn = () => {
+            const newLabel = labelInput.value.trim();
+            if (!newLabel) { showLabelErr('Please enter a slot label.'); return; }
+            if (newLabel !== slot.slot_label && slots.some(s => s.slot_label === newLabel)) {
+                showLabelErr(`"${newLabel}" is already used.`); return;
+            }
+            slot.slot_label = newLabel;
+            closeLabelModal();
+            markUnsaved(); redraw(); refreshFooter();
+        };
+        _modalDiscardFn = () => { closeLabelModal(); };
+        _modalEnterFn   = (e) => { if (e.key === 'Enter') _modalConfirmFn(); };
+
+        labelConfirm.addEventListener('click', _modalConfirmFn);
+        labelDiscard.addEventListener('click', _modalDiscardFn);
+        labelInput.addEventListener('keydown', _modalEnterFn);
+    }
 
     function refreshFooter() {
         if (slots.length === 0) { slotsFooter.classList.add('hidden'); return; }
@@ -299,11 +338,37 @@ export function initializeParkingSlotManagement() {
         slots.forEach((slot, idx) => {
             const occ = slot.status === 'occupied';
             const tag = document.createElement('div');
-            tag.className = ['flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium cursor-pointer transition-colors',
-                occ ? 'border-orange-300 bg-orange-50 text-orange-700' : 'border-green-300 bg-green-50 text-green-700'].join(' ');
-            tag.innerHTML = `<span class="w-2 h-2 rounded-full inline-block ${occ?'bg-orange-400':'bg-green-400'}"></span>
-                ${esc(slot.slot_label)}${slot.id===null?'<span class="text-xs font-normal text-gray-400 ml-1">(new)</span>':''}`;
-            tag.addEventListener('click', () => { if (currentMode==='edit') { selectedIndex=idx; redraw(); } });
+            tag.className = [
+                'flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors',
+                occ ? 'border-orange-300 bg-orange-50 text-orange-700'
+                    : 'border-green-300 bg-green-50 text-green-700',
+            ].join(' ');
+
+            tag.innerHTML = `
+                <span class="w-2 h-2 rounded-full inline-block shrink-0 ${occ ? 'bg-orange-400' : 'bg-green-400'}"></span>
+                <span class="flex-1 cursor-pointer" data-select="${idx}">
+                    ${esc(slot.slot_label)}
+                    ${slot.id === null ? '<span class="text-xs font-normal text-gray-400 ml-1">(new)</span>' : ''}
+                </span>
+                <button
+                    data-rename="${idx}"
+                    title="Rename slot"
+                    class="ml-auto shrink-0 opacity-50 hover:opacity-100 transition-opacity p-0.5 rounded"
+                >
+                    <i class="fa-solid fa-pen text-xs"></i>
+                </button>`;
+
+            // Select slot on label click (edit mode)
+            tag.querySelector(`[data-select="${idx}"]`).addEventListener('click', () => {
+                if (currentMode === 'edit') { selectedIndex = idx; redraw(); }
+            });
+
+            // Rename on pencil click (always available when in edit toolbar)
+            tag.querySelector(`[data-rename="${idx}"]`).addEventListener('click', (e) => {
+                e.stopPropagation();
+                openRenameModal(idx);
+            });
+
             slotsTableBody.appendChild(tag);
         });
     }
