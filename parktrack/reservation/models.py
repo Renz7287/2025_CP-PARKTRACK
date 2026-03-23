@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import timedelta
-from settings.models import ParkingSlot  # ← reuse the existing model
+from settings.models import ParkingSlot
 
 User = get_user_model()
 

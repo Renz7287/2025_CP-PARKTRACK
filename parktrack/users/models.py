@@ -8,7 +8,7 @@ class City(models.Model):
     id = models.AutoField(primary_key=True)
     psgcCode = models.CharField(max_length=255, db_column='psgcCode')
     citymunDesc = models.TextField(db_column='citymunDesc')
-    regDesc = models.CharField(max_length=255, db_column='regDesc')       # was regCode → actual col is regDesc
+    regDesc = models.CharField(max_length=255, db_column='regDesc')
     provCode = models.CharField(max_length=255, db_column='provCode')
     citymunCode = models.CharField(max_length=255, db_column='citymunCode')
 

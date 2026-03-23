@@ -12,8 +12,8 @@ class Camera(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering       = ['name']
-        verbose_name   = 'Camera'
+        ordering = ['name']
+        verbose_name = 'Camera'
         verbose_name_plural = 'Cameras'
 
     def __str__(self):

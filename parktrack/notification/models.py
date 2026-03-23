@@ -9,12 +9,12 @@ class Notification(models.Model):
         EXPIRED       = 'expired',       'Expired'
         CANCELLED     = 'cancelled',     'Cancelled'
 
-    recipient    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
-    notif_type   = models.CharField(max_length=20, choices=Type.choices)
-    message      = models.TextField()
-    is_read      = models.BooleanField(default=False)
-    created_at   = models.DateTimeField(auto_now_add=True)
-    reservation  = models.ForeignKey('reservation.Reservation', on_delete=models.SET_NULL, null=True, blank=True)
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    notif_type = models.CharField(max_length=20, choices=Type.choices)
+    message  = models.TextField()
+    is_read  = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    reservation = models.ForeignKey('reservation.Reservation', on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']

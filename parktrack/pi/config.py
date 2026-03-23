@@ -1,9 +1,6 @@
 from pathlib import Path
 
-# Production server URL
-# LAN testing:    DJANGO_BASE_URL = "http://10.246.146.103:8000"
-# PythonAnywhere: DJANGO_BASE_URL = "https://parktrack.pythonanywhere.com"
-# Local:          DJANGO_BASE_URL = "http://localhost:8000"
+# Server URL options: LAN, PythonAnywhere, or localhost
 DJANGO_BASE_URL = "https://parktrack.pythonanywhere.com"
 
 CAMERA_ID          = 1
@@ -12,16 +9,12 @@ REQUEST_TIMEOUT    = 5
 
 UPLOAD_API_KEY = "parktrack@2025"
 
-# Video source selection
-# Pre-recorded test video: both False (default)
-# USB webcam:              USE_USB_CAMERA = True
-# Pi Camera Module (CSI):  USE_PI_CAMERA  = True
-USE_PI_CAMERA    = True
-USE_USB_CAMERA   = False
+# Video source: set one to True to use a live camera, both False to use VIDEO_FILE
+USE_PI_CAMERA    = False
+USE_USB_CAMERA   = True
 USB_CAMERA_INDEX = 0
 
-# Local paths
-PROJECT_DIR = Path('/home/parktrack')
+PROJECT_DIR = Path('/home/parktrack')  # production Pi path
 # PROJECT_DIR = Path(__file__).resolve().parent.parent
 # VIDEO_FILE  = PROJECT_DIR / "media" / "video_stream" / "input.webm"
 
@@ -29,8 +22,7 @@ OUTPUT_WIDTH  = 1280
 OUTPUT_HEIGHT = 720
 OUTPUT_FPS    = 3
 
-# Stream output directories
-VIDEO_DIR    = Path('/home/parktrack/stream')
+VIDEO_DIR    = Path('/home/parktrack/stream')       # production Pi path
 SNAPSHOT_DIR = Path('/home/parktrack/stream/snapshots')
 # VIDEO_DIR    = PROJECT_DIR / "media" / "video_stream"
 # SNAPSHOT_DIR = PROJECT_DIR / "media" / "snapshots"
@@ -39,28 +31,20 @@ SNAPSHOT_INTERVAL = 60
 MAX_SNAPSHOTS     = 10
 
 YOLO_MODEL_PATH = PROJECT_DIR / "weights" / "best.pt"
-YOLO_CONFIDENCE = 0.35
+YOLO_CONFIDENCE = 0.65
 MIN_BOX_PIXELS  = 10
 
-# ── Detection thresholds ───────────────────────────────────────────────────────
-# A slot is occupied if EITHER:
-#   - the vehicle centroid is inside the polygon, OR
-#   - the vehicle box covers >= IOU_THRESHOLD of the slot's polygon area
-#
-# 0.20 = vehicle must cover at least 20% of the slot to trigger via IoU.
-# Raise this if adjacent vehicles cause false positives.
-# Lower this if a parked vehicle is being missed.
-IOU_THRESHOLD = 0.50
+# Smoothing: each frame appends 1 (vehicle present) or 0 (absent) to a rolling buffer.
+# At OUTPUT_FPS=3, HISTORY_LEN=9 covers a 3-second window.
+# SMOOTH_THRESHOLD=7 requires 7 of the last 9 frames to detect a vehicle before
+# flipping a slot occupied — reduces false positives from shadows or pedestrians.
+HISTORY_LEN      = 9   # rolling buffer length (3s at 3fps)
+SMOOTH_THRESHOLD = 7   # frames needed to flip occupied (≈7/9)
+IMPROPER_PARK_THRESHOLD = 0.5
 
-# ── Smoothing history ──────────────────────────────────────────────────────────
-# Each frame adds 1 (vehicle present) or 0 (absent) to a rolling buffer.
-# Max possible sum = HISTORY_LEN.
-#
-# At OUTPUT_FPS=3, HISTORY_LEN=9 = 3-second window.
-# SMOOTH_THRESHOLD=7 means 7 of the last 9 frames must detect a vehicle
-# before the slot flips occupied — filters pedestrians, shadows, glare.
-HISTORY_LEN      = 9   # rolling buffer length  (3 s at 3 fps)
-SMOOTH_THRESHOLD = 7   # hits needed to flip occupied  (≈7/9 frames)
+# Minimum fraction of slot area a vehicle box must overlap to trigger improper
+# when its centroid is outside the polygon. Raise to reduce false positives.
+IMPROPER_OVERLAP_THRESHOLD = 0.25
 
 WRITE_STATUS_EVERY = 3
 
@@ -74,7 +58,7 @@ STREAM_BATCH_DELETE_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/stream
 CLEAN_STREAM_BATCH_DELETE_URL = f"{DJANGO_BASE_URL}/parking-allotment/api/stream/batch-delete/"
 CLEAN_SNAPSHOT_PUSH_URL       = f"{DJANGO_BASE_URL}/parking-allotment/api/upload-clean-snapshot/"
 
-# FFmpeg writes HLS files locally — Python uploader thread pushes them to Django
+# FFmpeg writes HLS segments locally; the uploader thread pushes them to Django
 FFMPEG_CMD = [
     "ffmpeg",
     "-f",        "rawvideo",
